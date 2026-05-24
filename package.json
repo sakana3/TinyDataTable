@@ -1,0 +1,19 @@
+{
+  "name": "com.sakana3.tinydatatable",
+  "version": "1.0.0",
+  "displayName": "TinyDataTable",
+  "description": "Data Table for Unity.",
+  "unity": "2021.3",
+  "author": {
+    "name": "Sakana 3ede",
+    "email": "nosaka_online@hotmail.com",
+    "url": "https://github.com/sakana3/TinyDataTable"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Usage Sample",
+      "description": "An example of how to use this package.",
+      "path": "Samples~/BasicUsage"
+    }
+  ]
+}
