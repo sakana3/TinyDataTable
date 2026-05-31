@@ -22,6 +22,7 @@ namespace TinyDataTable
         public int id;
         public int index;
         public bool obsolete;
+        public Type type;
     }
 
     /// <summary>

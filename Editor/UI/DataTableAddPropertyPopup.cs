@@ -203,7 +203,7 @@ namespace TinyDataTable.Editor
                 text = "Input field name.";
                 messageType = HelpBoxMessageType.Info;
             }
-            else if (DataSheetPropertyUtility.CheckCSharpSafeName(PropertyName) is false)
+            else if (DataTableRecordUtility.CheckCSharpSafeName(PropertyName) is false)
             {
                 text = "Invalid field name.";
                 messageType = HelpBoxMessageType.Error;

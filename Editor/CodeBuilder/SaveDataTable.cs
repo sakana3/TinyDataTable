@@ -21,7 +21,7 @@ namespace TinyDataTable.Editor
 
 
 
-        private static (string scriptName, string namespaceName, string assetpath,string fullPath, string address ) MakeInfo(
+        private static (string scriptName, string namespaceName, string assetpath,string fullPath, string address,string assetPath ) MakeInfo(
             DataTableAsset dataTableAsset ,
             string newClassName ,
             string newNamespace,
@@ -60,8 +60,10 @@ namespace TinyDataTable.Editor
                 scriptName = newClassName;
                 namespaceName = newNamespace;
             }            
-            
-            return (scriptName, namespaceName, assetpath,fullPath, address);
+
+            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(dataTableAsset);
+
+            return (scriptName, namespaceName, assetpath,fullPath, address,assetPath);
         }
         
         /// <summary>
@@ -76,7 +78,6 @@ namespace TinyDataTable.Editor
         {
             if (dataTableAsset.classScript == null)
             {
-                Debug.Log(1);
                 return false;
             }
             
@@ -89,12 +90,21 @@ namespace TinyDataTable.Editor
                 return true;
             }
             
+            var record = dataTableAsset?.Record;
+            List<RecordFieldInfo> fileds = new();
+            if (dataTableAsset.RecordType != null)
+            {
+                fileds = DataTableRecordUtility.GetSerializableFields(dataTableAsset.RecordType);
+            }
+            
             var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
-                dataTableAsset,
+                record,
+                fileds,
                 info.scriptName,
                 info.namespaceName,
                 info.assetpath,
-                info.address
+                info.address,
+                info.assetPath
             );
 
             using (StreamReader reader = new StreamReader(info.fullPath, System.Text.Encoding.UTF8))
@@ -122,29 +132,54 @@ namespace TinyDataTable.Editor
 
                 return textIndex != code.Length;
             }
-        }        
+        }
+
+        public static bool SaveScript(DataTableAsset dataTableAsset, IList<RecordFieldInfo> fields)
+        {
+            var scriptPath = AssetDatabase.GetAssetPath(dataTableAsset.classScript);
+            var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
+
+            return SaveScript(
+                dataTableAsset, 
+                dataTableAsset.classScript.GetClass().Name,
+                dataTableAsset.classScript.GetClass().Namespace,
+                scriptDir,
+                fields);
+        }
+        
         
         public static bool SaveScript(
             DataTableAsset dataTableAsset ,
             string newClassName ,
             string newNamespace,
-            string scriptOutputPath )
+            string scriptOutputPath,
+            IList<RecordFieldInfo> fields = null)
         {
             var info = MakeInfo(
                 dataTableAsset, newClassName, newNamespace, scriptOutputPath);
        
+            var record = dataTableAsset?.Record;
+            if (fields == null)
+            {
+                if (dataTableAsset.RecordType != null)
+                {
+                    fields = DataTableRecordUtility.GetSerializableFields(dataTableAsset.RecordType);
+                }
+            }
             var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
-                dataTableAsset,
+                record,
+                fields,
                 info.scriptName,
                 info.namespaceName,
                 info.assetpath,
-                info.address
-            );            
+                info.address,
+                info.assetPath
+            );
 
             SaveScript(info.fullPath, code);
 
             // アセットデータベースを更新してUnityに認識させる
-            AssetDatabase.Refresh();
+            AssetDatabase.Refresh(ImportAssetOptions.Default);
             // セッションにデータを保存
             SessionState.SetBool(KeyIsGenerating, true);
             SessionState.SetString(ScriptFilePath, info.fullPath);
@@ -156,7 +191,7 @@ namespace TinyDataTable.Editor
             }
             else
             {
-                CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;                
+                CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
             }
 
             return true;

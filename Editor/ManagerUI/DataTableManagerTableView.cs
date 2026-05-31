@@ -23,12 +23,12 @@ namespace TinyDataTable.Editor
 
         private void CreateGUI()
         {
-            var property = new SerializedObject(asset)
-                .FindProperty("dataSheet");
-            
-            var sheet = new DataSheetField(Manager,property,IsStructureMode);            
+            if (asset.Record != null)
+            {
 
-            Add( sheet);            
+                var sheet = new DataSheetField(Manager,asset, IsStructureMode);
+                Add( sheet);            
+            }
         }
     }
 }

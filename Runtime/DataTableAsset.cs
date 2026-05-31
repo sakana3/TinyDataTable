@@ -9,18 +9,12 @@ namespace TinyDataTable
     {
         /// <summary> DataTable </summary>
         [SerializeReference] private IRecord record;
-        
-        /// <summary> DataTable </summary>
-        [SerializeField] private DataSheet dataSheet;
 
         /// <summary> Class Type </summary>
         public Type ClassType => record?.ClassType;
 
         /// <summary> Record Type </summary>
         public Type RecordType => record?.RecordType;
-
-        /// <summary> DataTable </summary>
-        public DataSheet DataSheet => dataSheet;
 
         /// <summary> Record Data </summary>
         public IRecord Record => record;
@@ -49,15 +43,18 @@ namespace TinyDataTable
         {
             var genericDefinition = typeof(DataTableRecord<,>);
             var constructedType = genericDefinition.MakeGenericType(classType,recordType);
-            record = Activator.CreateInstance(constructedType) as IRecord;            
+            if (record == null)
+            {
+                record = Activator.CreateInstance(constructedType) as IRecord;
+                record?.Initialize();
+            }
         }
 
-#endif
+        public static string nameOfRecord => nameof(DataTableAsset.record);
 
+#endif
         private void Reset()
         {
-            dataSheet = new DataSheet();
-            dataSheet.Initialize();
         }
 
         private void OnEnable()

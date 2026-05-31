@@ -16,22 +16,25 @@ namespace TinyDataTable.Editor
             public int index;
             public bool isObsolete;
         }
-        
-        private SerializedProperty _property = null;
+
+        public bool IsStructureMode { private set; get; }
         private MultiColumnListView _multiColumnListView;
         private static Color _obsoleteColor = new Color( Color.darkViolet.r,Color.darkViolet.g,Color.darkViolet.b , 0.25f );
         private List<TextField> idTextFieldList = new List<TextField>();
         private List<Item> rowIDList = new List<Item>();
         private List<int> columnIDList = new List<int>();
-        private ( List<string> fieldNames, List<string> recordNames ) _names = (null,null);
-        private List<int> fieldOrderList = new List<int>();
-        private bool IsStructureMode;
         private DataTableManager Manager;
-        
-        public DataSheetField( DataTableManager manager, SerializedProperty property,bool IsStructureMode)
+        private RecordProperty _recordProperty;
+        private DataTableAsset targetAsset;
+
+        public DataSheetField( 
+            DataTableManager manager,
+            DataTableAsset asset,
+            bool IsStructureMode)
         {
-            _property = property;
             Manager = manager;
+            targetAsset = asset;
+            _recordProperty = new(asset);
             this.IsStructureMode = IsStructureMode;
             
             // 拡張子 (.uss) を含めて指定します
@@ -41,17 +44,17 @@ namespace TinyDataTable.Editor
                 this.styleSheets.Add(styleSheet);
             }
   
-            _multiColumnListView = CreateListView(property);
+            _multiColumnListView = CreateListView();
             Add(_multiColumnListView);
         }
 
-        public MultiColumnListView CreateListView(SerializedProperty property)
+        public MultiColumnListView CreateListView()
         {
             idTextFieldList.Clear();
 
             var listView = new MultiColumnListView()
             {
-                name = property.displayName,
+                name = _recordProperty.Property.displayName,
                 reorderable = IsStructureMode,
                 reorderMode = ListViewReorderMode.Simple, //AnimatedにするとdragAndDropUpdateが来ない
 
@@ -69,7 +72,10 @@ namespace TinyDataTable.Editor
             listView.columns.resizable = true;
             listView.style.overflow = Overflow.Visible; // 通常はHiddenにしてスクロールバーに任せる
 
-            listView.itemIndexChanged += (form, to) => DataSheetPropertyUtility.MoveRow(property, form, to);
+            listView.itemIndexChanged += (form, to) =>
+            {
+                _recordProperty.MoveRow(form, to);
+            };
             //Invalidのドラッグ＆ドロップを禁止する
             listView.canStartDrag += args => args.id is not 0;
             //Invalidの上には移動できないようにする
@@ -79,32 +85,22 @@ namespace TinyDataTable.Editor
 
             if (IsStructureMode)
             {
-                listView.makeFooter = () => { return MakeFooter(property); };
+                listView.makeFooter = () => { return MakeFooter(); };
             }
 
-            this.TrackSerializedObjectValue(property.serializedObject, (prop) =>
+            this.TrackSerializedObjectValue(_recordProperty.Property.serializedObject, (prop) =>
             {
-                var columnChange = DataSheetPropertyUtility.CheckColums(property, columnIDList,!IsStructureMode);
-                if (columnChange is false)
+                if (_recordProperty.IsChanged)
                 {
-                    SetupColumns(property, listView);
-                }
-                
-                var rowList = DataSheetPropertyUtility.MakeRowIDList(property)
-                    .Where(i=> IsStructureMode || (i.id != 0 && i.isObsolete is false));
-                var rowChange = rowIDList
-                    .Select(i=>(i.id,i.isObsolete))
-                    .SequenceEqual(rowList);
-                if ((columnChange && rowChange) is false)
-                {
-                    SetupRows(property, listView);                    
+                    SetupColumns(listView);
+                    SetupRows(listView);                    
                     _multiColumnListView.Rebuild();
                 }
             });
             
-            SetupColumns(property, listView);
+            SetupColumns(listView);
 
-            SetupRows(property, listView);
+            SetupRows(listView);
             
             return listView;
         }
@@ -115,9 +111,9 @@ namespace TinyDataTable.Editor
         /// </summary>
         /// <param name="property"></param>
         /// <param name="listView"></param>
-        private void SetupRows(SerializedProperty property, MultiColumnListView listView)
+        private void SetupRows(MultiColumnListView listView)
         {
-            var list = DataSheetPropertyUtility.MakeRowIDList(property);
+            var list = _recordProperty.MakeRecordHeaderList();
 
             if (IsStructureMode)
             {
@@ -141,7 +137,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         /// <param name="property"></param>
         /// <param name="listView"></param>
-        private void SetupColumns(SerializedProperty property, MultiColumnListView listView)
+        private void SetupColumns(MultiColumnListView listView)
         {
             //Make Columns
             columnIDList.Clear();
@@ -153,43 +149,42 @@ namespace TinyDataTable.Editor
                 column.makeCell = null;
             }
 
-            fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(property);
+            //fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(property);
             
             listView.columns.Clear();
 
-            var indexColumn = MakeIndexColumn(property);
+            var indexColumn = MakeIndexColumn();
             listView.columns.Add(indexColumn);
             
-            var recordNameColumn = MakeIDNameColumn(property);
+            var recordNameColumn = MakeIDNameColumn();
             listView.columns.Add(recordNameColumn);
             
-            var columnsCount = DataSheetPropertyUtility.GetColumnCount(property);
-            for (int i = 0; i < columnsCount; i++)
+
+            for (int i = 0; i < _recordProperty.FieldInfos.Count; i++)
             {
-                if (DataSheetPropertyUtility.ColumObsolete(property, fieldOrderList[i]).boolValue is false)
+                if (_recordProperty.FieldInfos[i].obsolete is false)
                 {
-                    var columProp = MakePropertyColumn(property, i);
+                    var columProp = MakePropertyColumn(i);
                     listView.columns.Add(columProp);
                 }
             }
 
             if (IsStructureMode)
             {
-                var lastColumn = MakeLastColumn(property);
+                var lastColumn = MakeLastColumn();
                 listView.columns.Add(lastColumn);
             }
         }        
      
      
-        private Column MakeIDNameColumn(SerializedProperty property)
+        private Column MakeIDNameColumn()
         {
-            _names = (null,null);
             var colum = new Column()
             {
                 name = "ID",                
                 makeHeader = () =>
                 {
-                    var header = MakeColumHeader(property, "ID",  false, "ID");
+                    var header = MakeColumHeader( "ID",  false, "ID");
 //                    var manipulator = MakeMenuManipulator(property,header ,-1);
 //                    header.AddManipulator( manipulator);
                     return header;
@@ -218,7 +213,7 @@ namespace TinyDataTable.Editor
                     var textField = e.Q<TextField>();
                     if( textField != null )
                     {
-                        var nameProperty = DataSheetPropertyUtility.GetRowNameProperty(property,iRow);
+                        var nameProperty = _recordProperty.GetRecordNameProperty(iRow);
                         textField.BindProperty(nameProperty);
                         textField.RegisterValueChangedCallback(evt =>
                         {
@@ -229,7 +224,7 @@ namespace TinyDataTable.Editor
                         textField.SetEnabled(iRow > 0);
                         idTextFieldList.Add(textField);
                     }
-                    var isObsolete = DataSheetPropertyUtility.RowObsolete(property, iRow).boolValue;
+                    var isObsolete = _recordProperty.RowHeaders[iRow].obsolete;
                     e.style.backgroundColor = isObsolete?_obsoleteColor:new StyleColor();                        
                 },
                 unbindCell = (e,i) =>
@@ -247,12 +242,12 @@ namespace TinyDataTable.Editor
         }
       
         
-        private Column MakeIndexColumn(SerializedProperty property)
+        private Column MakeIndexColumn()
         {
             var colum = new Column()
             {
                 name = "Index",
-                makeHeader = () => MakeColumHeader(property,"Index",false,"Index"),
+                makeHeader = () => MakeColumHeader("Index",false,"Index"),
                 makeCell = () =>
                 {
                     var e= new VisualElement() { };
@@ -267,15 +262,14 @@ namespace TinyDataTable.Editor
                         var label = new Label();
                         label.text =$"{iRow - 1}";
                         label.style.unityTextAlign = TextAnchor.MiddleCenter;
-                        label.AddManipulator( MakeRowIndexManipulator(property,label,iRow) );
-                        var isObsolete = DataSheetPropertyUtility.RowObsolete(property, iRow).boolValue;
-                        e.style.backgroundColor = isObsolete?_obsoleteColor:new StyleColor();                        
+                        label.AddManipulator( MakeRowIndexManipulator(label,iRow) );
+                        e.style.backgroundColor = rowIDList[idx].isObsolete?_obsoleteColor:new StyleColor();                        
                         e.Clear();
                         e.Add(label);
                     }
                     else
                     {
-                        e.AddManipulator( MakeRowIndexManipulator(property,e,iRow) );
+                        e.AddManipulator( MakeRowIndexManipulator(e,iRow) );
                     }
                     e.parent.style.justifyContent = Justify.Center;
                 },
@@ -287,41 +281,50 @@ namespace TinyDataTable.Editor
             return colum;            
         }
 
-        private Column MakePropertyColumn(SerializedProperty property, int iColum )
+        private Column MakePropertyColumn( int iColum )
         {
             Column colum = new Column()
             {
                 makeHeader = () =>
                 {
-                    var iField = fieldOrderList[iColum];
-                    var (title,id,description,isObsolete) = DataSheetPropertyUtility.GetColumn(property,iField);
-                    var header = MakeColumHeader(property, title, isObsolete,description) as Label;
+                    var iField = iColum;
+                    var fieldInfo = _recordProperty.FieldInfos[iField];
+                    var header = MakeColumHeader( fieldInfo.name, fieldInfo.obsolete,fieldInfo.description) as Label;
                     if (IsStructureMode)
                     {
-                        var manipulator = MakeColumHeaderManipulator(property, header, iField);
+                        var manipulator = MakeColumHeaderManipulator( header, iField);
                         header.AddManipulator(manipulator);
                     }
-                    columnIDList.Add( id);
+                    columnIDList.Add( fieldInfo.name.GetHashCode());
                     return header;
                 },
                 makeCell = () => new VisualElement() { },
                 bindCell = (e,idx) =>
                 {
                     var iRow = rowIDList[idx].index;                            
-                    var iField = fieldOrderList[iColum];
+                    var iField = iColum;
                     
-                    var isObsoleteCol = DataSheetPropertyUtility.ColumObsolete(property,iField).boolValue;
-                    var isObsoleteRow = DataSheetPropertyUtility.RowObsolete(property,iRow).boolValue;
+                    var isObsoleteCol = _recordProperty.FieldInfos[iField].obsolete;
+                    var isObsoleteRow = rowIDList[idx].isObsolete;
                     e.style.flexGrow = 1.0f;
                     e.style.backgroundColor = (isObsoleteCol|isObsoleteRow)?_obsoleteColor:new StyleColor();
 
                     e.Clear();
-                    var prop = DataSheetPropertyUtility.GetCellProperty(property,iField,iRow);
-                    var propertyField = new PropertyField(prop, string.Empty);
-                    propertyField.BindProperty(prop);
-                    propertyField.AddToClassList("no-frame-field");
+                    if (_recordProperty.FieldInfos.Count > iField)
+                    {
+                        var prop = _recordProperty.Property
+                            .FindPropertyRelative("data")
+                            .GetArrayElementAtIndex(iRow)
+                            .FindPropertyRelative(_recordProperty.FieldInfos[iField].name);
+                        if (prop != null)
+                        {
+                            var propertyField = new PropertyField(prop, string.Empty);
+                            propertyField.BindProperty(prop);
+                            propertyField.AddToClassList("no-frame-field");
 //                    propertyField.AddToClassList("right-align-field");
-                    e.Add(propertyField);
+                            e.Add(propertyField);
+                        }
+                    }
                 },
                 unbindCell = (e,i) =>
                 {
@@ -336,7 +339,7 @@ namespace TinyDataTable.Editor
 
         private static Texture2D plusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image;        
         private static Texture2D minusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Minus").image;        
-        private Column MakeLastColumn(SerializedProperty property)
+        private Column MakeLastColumn()
         {
             Column colum = new Column()
             {
@@ -353,11 +356,11 @@ namespace TinyDataTable.Editor
                     {
                         if (t.button == 0)
                         {
-                            OpenAddFieldPopup(property, -1, button.worldBound);
+                            OpenAddFieldPopup( -1, button.worldBound);
                         }
                     });
                     button.tooltip = "Add Field";
-                    var manipulator = MakeAddFieldManipulator(_property,button);
+                    var manipulator = MakeAddFieldManipulator(button);
                     button.AddManipulator( manipulator);
                     return button;
                 },
@@ -368,7 +371,6 @@ namespace TinyDataTable.Editor
         }
 
         private VisualElement MakeColumHeader(
-            SerializedProperty property ,
             string name ,
             bool isObsolete,
             string description)
@@ -387,7 +389,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         private void ReloadIDText()
         {
-            _names = DataSheetPropertyUtility.MakeNameList(_property);
+            _recordProperty.ReloadInfo();
             foreach (var textField in idTextFieldList)
             {
                 ReloadIDText(textField);
@@ -399,11 +401,6 @@ namespace TinyDataTable.Editor
         /// </summary>
         private void ReloadIDText( TextField textField )
         {
-            if (_names.fieldNames == null || _names.recordNames == null)
-            {
-                _names = DataSheetPropertyUtility.MakeNameList(_property);
-            }
-
             var value = textField.value;
             
             var input = textField.Q(className: "unity-text-field__input");
@@ -414,13 +411,13 @@ namespace TinyDataTable.Editor
                     input.style.color = StyleKeyword.Null;
                     textField.tooltip = "Input ID name";                    
                 }
-                else if (DataSheetPropertyUtility.CheckCSharpSafeName(textField.value) is false)
+                else if (DataTableRecordUtility.CheckCSharpSafeName(textField.value) is false)
                 {
                     input.style.color = Color.red;
                     textField.tooltip = "Invalid C# identifier.";
                 }
-                else if (_names.recordNames.Count( t => t == value ) >= 2 ||
-                         _names.fieldNames.Contains(  value ) )
+                else if (_recordProperty.RowHeaders.Count( t => t.name == value ) >= 2 ||
+                         _recordProperty.FieldInfos.Select(f=>f.name).Contains(  value ) )
                 {
                     input.style.color = Color.yellow;
                     textField.tooltip = "This name is conflict.";
@@ -433,28 +430,28 @@ namespace TinyDataTable.Editor
             }
         }
 
-        private VisualElement MakeFooter(SerializedProperty property)
+        private VisualElement MakeFooter()
         {
             var root = new VisualElement();
             root.AddToClassList("unity-list-view__footer");
             
             var TableSizeField = new UnsignedIntegerField()
             {
-                value = (uint)DataSheetPropertyUtility.GetRowCount(property) -1
+                value = (uint)_recordProperty.RowHeaders.Count -1
             };
             TableSizeField.SendToBack();
             TableSizeField.style.marginRight = 4.0f;
-            TableSizeField.TrackPropertyValue(DataSheetPropertyUtility.GetRowArrayProp(property),
+            TableSizeField.TrackPropertyValue(_recordProperty.HeaderProperty,
                 (t) =>
                 {
-                    TableSizeField.SetValueWithoutNotify((uint)DataSheetPropertyUtility.GetRowCount(property)-1);
+                    TableSizeField.SetValueWithoutNotify((uint)_recordProperty.RowHeaders.Count-1);
                 });
             root.Add(TableSizeField);
 
             // 編集終了（Enterキー or フォーカス外れ）
             TableSizeField.RegisterCallback<FocusOutEvent>(evt =>
             {
-                DataSheetPropertyUtility.ResizeRow(property, TableSizeField.value+1);
+                _recordProperty.ResizeRow(TableSizeField.value+1);
             });
 
             //追加ボタン
@@ -465,8 +462,8 @@ namespace TinyDataTable.Editor
             {
                 if (t.button == 0)
                 {
-                    DataSheetPropertyUtility.AddRow(property);
-                    SetupRows(property, _multiColumnListView);
+                    _recordProperty.AddRow();
+                    SetupRows(_multiColumnListView);
                     _multiColumnListView.RefreshItems();                               
                 }
             });
@@ -475,7 +472,7 @@ namespace TinyDataTable.Editor
             //削除ボタン
             var removeButton = new VisualElement();
             removeButton.style.backgroundImage = minusTex;
-            removeButton.SetEnabled( DataSheetPropertyUtility.GetRowCount(property) > 1 );
+            removeButton.SetEnabled( _recordProperty.RowHeaders.Count > 1 );
             removeButton.AddToClassList("unity-button");
             removeButton.RegisterCallback<MouseDownEvent>((t) =>
             {
@@ -484,29 +481,29 @@ namespace TinyDataTable.Editor
                     var removeIndexList = _multiColumnListView.selectedIndices.Any()
                         ? _multiColumnListView.selectedIndices.ToArray()
                         : new int[] { rowIDList.Count - 1 };
-                    RemoveRow(property,removeIndexList);
+                    RemoveRow(removeIndexList);
                 }
             });
-            removeButton.TrackPropertyValue(DataSheetPropertyUtility.GetRowArrayProp(property),
+            removeButton.TrackPropertyValue( _recordProperty.HeaderProperty,
                 (t) =>
                 {
-                    removeButton.SetEnabled( DataSheetPropertyUtility.GetRowCount(property) > 1 );
+                    removeButton.SetEnabled( _recordProperty.RowHeaders.Count > 1 );
                 });            
             root.Add( removeButton);
             
             return root;
         }
         
-        private void RemoveRow( SerializedProperty property ,params int[] indexs)
+        private void RemoveRow( params int[] indexs)
         {
             var removes = indexs
                 .Where( i => i > 0 )
-                .Where(i => DataSheetPropertyUtility.RowObsolete(property, i).boolValue)
+                .Where(i => _recordProperty.RowHeaders[i].obsolete)
                 .OrderByDescending(i => i)
                 .ToArray();
             if (removes.Length > 0)
             {
-                DataSheetPropertyUtility.RemoveRows(property, removes);
+                _recordProperty.RemoveRows(removes);
 
                 foreach (var i in removes)
                 {
@@ -523,10 +520,9 @@ namespace TinyDataTable.Editor
             {
                 foreach (var index in indexs.Where( i => i > 0))
                 {
-                    DataSheetPropertyUtility.RowObsolete(property, index).boolValue = true;
-                    property.serializedObject.ApplyModifiedProperties();
-                    _multiColumnListView.RefreshItems();
+                    _recordProperty.SetRowObsolete(index, true);
                 }
+                _multiColumnListView.RefreshItems();
             }
         }
     }
