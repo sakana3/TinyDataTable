@@ -10,7 +10,7 @@ namespace TinyDataTable.Editor
     public class DataTableManagerTableOperator : VisualElement
     {
         private DataTableManager manager = null;
-        private DataTableAsset asset { set; get; } = null;
+        private DataTableRecordBase asset { set; get; } = null;
 
         private static Texture2D BuildIcon = EditorGUIUtility.IconContent("KnobCShape").image as Texture2D;
 
@@ -18,7 +18,7 @@ namespace TinyDataTable.Editor
 
         private bool isDirty = false;
         
-        public DataTableManagerTableOperator(DataTableManager manager, DataTableAsset asset)
+        public DataTableManagerTableOperator(DataTableManager manager, DataTableRecordBase asset)
         {
             this.manager = manager;
             this.asset = asset;
@@ -38,7 +38,7 @@ namespace TinyDataTable.Editor
         private void CreateGUI(SerializedObject so)
         {
             var assetField = new ObjectField();
-            assetField.objectType = typeof(DataTableAsset);
+            assetField.objectType = typeof(DataTableRecordBase);
             assetField.value = asset;
             assetField.SetEnabled(false);
             MakeMargine(assetField);            
@@ -64,19 +64,20 @@ namespace TinyDataTable.Editor
             
             var initializeOnLoadToggle = new Toggle();
             initializeOnLoadToggle.text = "InitializeOnLoad";
-            initializeOnLoadToggle.BindProperty(so.FindProperty("InitializeOnLoad"));
+            initializeOnLoadToggle.BindProperty(so.FindProperty("_initializeOnLoad"));
             buttonGroup.Add(initializeOnLoadToggle);
 
             var initializeOnLoadEditorToggle = new Toggle();
             initializeOnLoadEditorToggle.text = "InitializeOnLoadEditor";
-            initializeOnLoadEditorToggle.BindProperty(so.FindProperty("InitializeOnLoadEditor"));
+            initializeOnLoadEditorToggle.BindProperty(so.FindProperty("_initializeOnLoadEditor"));
             buttonGroup.Add(initializeOnLoadEditorToggle);
 
             var obsoleteField = new Toggle();
             obsoleteField.text = "Obsolete";
-            obsoleteField.BindProperty(so.FindProperty("obsolete"));
+            obsoleteField.BindProperty(so.FindProperty("_isObsolete"));
             buttonGroup.Add(obsoleteField);
 
+#if false            
             var scriptProp = so.FindProperty("classScript");
             if (scriptProp.objectReferenceValue != null)
             {
@@ -95,24 +96,17 @@ namespace TinyDataTable.Editor
                 classField.SetEnabled(false);
                 classGroup.Add(classField);
             }
-            
+#endif            
             exportButton = new Button()
             {
-                text = asset.classScript == null ? "Repair" : "Rebuild",
+                text = "Rebuild",
             };
             exportButton.iconImage = Background.FromTexture2D(BuildIcon);
             exportButton.clicked += () =>
             {
-//                SaveDataTable.CheckNeedEnsureAddressable(asset,false);
-                                
-                var scriptPath = AssetDatabase.GetAssetPath(asset.classScript);
-                var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
+                SaveDataTable.CheckNeedEnsureAddressable(asset,false);
 
-                SaveDataTable.SaveScript(
-                    asset,
-                    asset.classScript.GetClass().Name,
-                    manager.DefaultNamespace,
-                    scriptDir);
+                SaveDataTable.SaveScript(asset);
             };
 
             exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
@@ -121,10 +115,11 @@ namespace TinyDataTable.Editor
         }
 
 
-        public bool OnChange(DataTableAsset target)
+        public bool OnChange(DataTableRecordBase target)
         {
             if ( this.asset != target)
             {
+/*
                 isDirty = manager.CheckDirty(this.asset);
                 if (isDirty)
                 {
@@ -133,6 +128,7 @@ namespace TinyDataTable.Editor
                         "Yes,Build now", "Maybe Later");
                     if (select)
                     {
+
                         var scriptPath = AssetDatabase.GetAssetPath(asset.classScript);
                         var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
 
@@ -143,6 +139,7 @@ namespace TinyDataTable.Editor
                             scriptDir);
                     }
                 }
+*/                            
             }
             return true;
         }

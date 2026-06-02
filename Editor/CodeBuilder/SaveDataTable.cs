@@ -15,14 +15,14 @@ namespace TinyDataTable.Editor
     public static class SaveDataTable
     {
         private const string KeyIsGenerating = "TinyDataTable_IsGenerating";
+        private const string KeyIsCreateAsset = "TinyDataTable_IsCreateAsset";
         private const string CompilError = "TinyDataTable_CompilError";
-        private const string ScriptFilePath = "TinyDataTableScript_FilePath";        
-        private const string AssetFilePath = "TinyDataTableAsset_FilePath";
-
+        private const string ScriptFullPath = "TinyDataTable_Script_FilePath";        
+        private const string AssetFilePath = "TinyDataTable_Asset_FilePath";
 
 
         private static (string scriptName, string namespaceName, string assetpath,string fullPath, string address,string assetPath ) MakeInfo(
-            DataTableAsset dataTableAsset ,
+            DataTableRecordBase dataTableAsset ,
             string newClassName ,
             string newNamespace,
             string scriptOutputPath )            
@@ -43,23 +43,11 @@ namespace TinyDataTable.Editor
             {
                 address = GetAddressFromObject(dataTableAsset);
             }
-            
-            //未インポートだった場合、新規名をつける
-            if (dataTableAsset.classScript != null)
-            {
-                var script = dataTableAsset.classScript;
-                scriptName = script.GetClass().Name;
-                namespaceName = script.GetClass().Namespace;
-                fullPath = AssetDatabase.GetAssetPath(script);
-                address = GetAddressFromObject(dataTableAsset);                       
-            }
-            else
-            {
-                var fileName = $"{newClassName}.cs";
-                fullPath = Path.Combine(scriptOutputPath, fileName);
-                scriptName = newClassName;
-                namespaceName = newNamespace;
-            }            
+
+            var fileName = $"{newClassName}Record.cs";
+            fullPath = Path.Combine(scriptOutputPath, fileName);
+            scriptName = newClassName;
+            namespaceName = newNamespace;
 
             var assetPath = UnityEditor.AssetDatabase.GetAssetPath(dataTableAsset);
 
@@ -70,35 +58,28 @@ namespace TinyDataTable.Editor
         /// スクリプトが変更されているか確認する
         /// スクリプトの再生成と比較をするので結構重い
         /// </summary>
-        public static bool CheckScriptModified(
-            DataTableAsset dataTableAsset,
-            string newClassName,
-            string newNamespace,
-            string scriptOutputPath)
+        public static bool CheckScriptModified(DataTableRecordBase recordAsset)
         {
-            if (dataTableAsset.classScript == null)
-            {
-                return false;
-            }
-            
+            var script = MonoScript.FromScriptableObject(recordAsset);
+            var scriptPath = AssetDatabase.GetAssetPath(script);
+            var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
             
             var info = MakeInfo(
-                dataTableAsset, newClassName, newNamespace, scriptOutputPath);
+                recordAsset, recordAsset.BaseName, recordAsset.IdentifierType.Namespace, scriptDir);
 
             if (File.Exists(info.fullPath) is false)
             {
                 return true;
             }
             
-            var record = dataTableAsset?.Record;
             List<RecordFieldInfo> fileds = new();
-            if (dataTableAsset.RecordType != null)
+            if (recordAsset.RecordType != null)
             {
-                fileds = DataTableRecordUtility.GetSerializableFields(dataTableAsset.RecordType);
+                fileds = DataTableRecordUtility.GetSerializableFields(recordAsset.RecordType);
             }
             
             var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
-                record,
+                recordAsset,
                 fileds,
                 info.scriptName,
                 info.namespaceName,
@@ -134,40 +115,72 @@ namespace TinyDataTable.Editor
             }
         }
 
-        public static bool SaveScript(DataTableAsset dataTableAsset, IList<RecordFieldInfo> fields)
-        {
-            var scriptPath = AssetDatabase.GetAssetPath(dataTableAsset.classScript);
-            var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
 
-            return SaveScript(
-                dataTableAsset, 
-                dataTableAsset.classScript.GetClass().Name,
-                dataTableAsset.classScript.GetClass().Namespace,
-                scriptDir,
-                fields);
-        }
-        
-        
-        public static bool SaveScript(
-            DataTableAsset dataTableAsset ,
+
+
+        public static bool CreateNewScript(
             string newClassName ,
             string newNamespace,
-            string scriptOutputPath,
-            IList<RecordFieldInfo> fields = null)
+            string scriptPath,
+            string assetPath)
         {
+
+            var assetName = Path.Combine(assetPath, $"{newClassName}Record.asset");
+            var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
+                null,
+                new List<RecordFieldInfo>(),
+                newClassName,
+                newNamespace,
+                null,
+                null,//Path.Combine(assetPath, $"{newClassName}.asset"),
+                assetName
+            );
+
+            var fullPath = Path.Combine(scriptPath, $"{newClassName}Record.cs");
+            SaveScript(fullPath, code);
+
+            // アセットデータベースを更新してUnityに認識させる
+            AssetDatabase.Refresh(ImportAssetOptions.Default);
+            // セッションにデータを保存
+            SessionState.SetBool(KeyIsGenerating, true);
+            SessionState.SetString(ScriptFullPath, fullPath);
+            SessionState.SetString(AssetFilePath, assetName);
+            //コンパイラーが走ってないなら直接呼び出す
+            if (EditorApplication.isCompiling is false)
+            {
+                OnCompileFinished();
+            }
+            else
+            {
+                CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
+            }
+
+            return true;            
+        }
+        
+        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<RecordFieldInfo> fields = null)
+        {
+            var script = MonoScript.FromScriptableObject(dataTableAsset);
+            var scriptPath = AssetDatabase.GetAssetPath(script);
+            var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
+            
             var info = MakeInfo(
-                dataTableAsset, newClassName, newNamespace, scriptOutputPath);
+                dataTableAsset, dataTableAsset.BaseName, dataTableAsset.IdentifierType.Namespace, scriptDir);
        
-            var record = dataTableAsset?.Record;
+
             if (fields == null)
             {
                 if (dataTableAsset.RecordType != null)
                 {
                     fields = DataTableRecordUtility.GetSerializableFields(dataTableAsset.RecordType);
                 }
+                else
+                {
+                    fields = new List<RecordFieldInfo>();
+                }
             }
             var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
-                record,
+                dataTableAsset,
                 fields,
                 info.scriptName,
                 info.namespaceName,
@@ -182,8 +195,9 @@ namespace TinyDataTable.Editor
             AssetDatabase.Refresh(ImportAssetOptions.Default);
             // セッションにデータを保存
             SessionState.SetBool(KeyIsGenerating, true);
-            SessionState.SetString(ScriptFilePath, info.fullPath);
+            SessionState.SetString(ScriptFullPath, info.fullPath);
             SessionState.SetString(AssetFilePath, AssetDatabase.GetAssetPath(dataTableAsset));
+            
             //コンパイラーが走ってないなら直接呼び出す
             if (EditorApplication.isCompiling is false)
             {
@@ -206,48 +220,46 @@ namespace TinyDataTable.Editor
             CompilationPipeline.assemblyCompilationFinished -= OnCompilationFinished;            
         }
         
+        
+        /// <summary>
+        /// コンパイルが終了した後InitializeOnLoadMethodで呼び出される
+        /// </summary>
         [InitializeOnLoadMethod]
         private static void OnCompileFinished()
         {
-            if (!SessionState.GetBool(KeyIsGenerating, false)) return;
-            
-            string scriptPath = SessionState.GetString(ScriptFilePath, string.Empty);
+            string scriptPath = SessionState.GetString(ScriptFullPath, string.Empty);
             string assetPath = SessionState.GetString(AssetFilePath, string.Empty);
+            bool hasErrors = SessionState.GetBool(CompilError, false);
+            bool IsGenerating = SessionState.GetBool(KeyIsGenerating, false);
 
             SessionState.EraseBool(KeyIsGenerating);
             SessionState.EraseBool(CompilError);
-            SessionState.EraseString(ScriptFilePath);
-            SessionState.EraseString(AssetFilePath);            
+            SessionState.EraseString(ScriptFullPath);
+            SessionState.EraseString(AssetFilePath);
+
+            if (!IsGenerating || hasErrors) return;
+
             
-            MonoScript script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
-            DataTableAsset asset = AssetDatabase.LoadAssetAtPath<DataTableAsset>(assetPath);
-            if (script != null && asset != null)
+            if ( string.IsNullOrEmpty(assetPath) is false && File.Exists(assetPath) is false)
             {
-                asset.classScript = script;
-                var recordTypeProp = script.GetClass().GetProperty("RecordType" , BindingFlags.GetProperty | BindingFlags.Static | BindingFlags.NonPublic);
-                if (recordTypeProp != null)
+                MonoScript script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
+                var dataTableAsset = ScriptableObject.CreateInstance(script.GetClass()) as DataTableRecordBase;
+                var assetDir = System.IO.Path.GetDirectoryName(assetPath);
+                if (!System.IO.Directory.Exists(assetDir))
                 {
-                    asset.Bind( script.GetClass() , recordTypeProp.GetValue(null) as Type);
+                    System.IO.Directory.CreateDirectory(assetDir);
+                    AssetDatabase.Refresh();
                 }
-                else
-                {
-                    asset.Bind( script.GetClass() , null);
-                }
-                var serializedObject =  new SerializedObject(asset);
+
+                AssetDatabase.CreateAsset(dataTableAsset, assetPath);
+                EditorGUIUtility.SetIconForObject(dataTableAsset, DataTableManagerTreeView.ItemIcon as Texture2D);
+                EditorGUIUtility.SetIconForObject(script, DataTableManagerTreeView.ItemIcon as Texture2D);
+                AssetDatabase.Refresh();
+                AssetDatabase.SaveAssets();
                 
-                EditorUtility.SetDirty(asset);
-                serializedObject.Update();
-            }
-            else
-            {
-                if (script == null)
-                {
-                    Debug.LogError($"Failed to load script. {scriptPath} {script}");
-                }
-                if (asset == null)
-                {
-                    Debug.LogError($"Failed to load asset.  {assetPath} {asset}");
-                }
+                DataTableManager.OnCreateAsset(dataTableAsset);
+                
+//            SaveDataTable.CheckNeedEnsureAddressable(dataTableAsset,true);
             }
         }
         

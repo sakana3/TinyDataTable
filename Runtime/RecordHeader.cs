@@ -3,15 +3,6 @@ using System;
 namespace TinyDataTable
 {
     /// <summary>
-    /// レコードのヘッダ
-    /// </summary>
-    [Serializable]
-    public struct RecordHeader
-    {
-        public RecordFieldInfo[] fieldInfos;
-    }
-
-    /// <summary>
     /// レコードフィールド情報
     /// </summary>
     [Serializable]
@@ -23,18 +14,5 @@ namespace TinyDataTable
         public int index;
         public bool obsolete;
         public Type type;
-    }
-
-    /// <summary>
-    /// レコードデータヘッダ
-    /// </summary>
-    [Serializable]
-    public struct RecordDataHeader
-    {
-        public string name;
-        public string description;
-        public int id;
-        public int index;
-        public bool obsolete;
     }
 }

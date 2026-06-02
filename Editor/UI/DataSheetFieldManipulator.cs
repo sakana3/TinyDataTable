@@ -89,7 +89,7 @@ namespace TinyDataTable.Editor
                         "Add Record",
                         (action) =>
                         {
-                            _recordProperty.AddRow(index + 1);
+                            _recordPropertyUtil.AddRow(index + 1);
                             SetupRows( _multiColumnListView);
                             _multiColumnListView.RefreshItems();
                         });
@@ -155,7 +155,7 @@ namespace TinyDataTable.Editor
                 {
                     var rect = element.worldBound;
 
-                    var nameList = _recordProperty.FieldInfos.Select(f=>f.name).ToList();
+                    var nameList = _recordPropertyUtil.FieldInfos.Select(f=>f.name).ToList();
                     
                     DataSheetFieldOrderPopup.Show(nameList,OrderChange,rect);
                 });
@@ -178,8 +178,8 @@ namespace TinyDataTable.Editor
         {
             DataTableAddPropertyPopup.Show(
                 activatorRect,
-                _recordProperty.FieldInfos.Select(f=>f.name).ToList(),
-                _recordProperty.RowHeaders.Select(s=>s.name).ToList(), 
+                _recordPropertyUtil.FieldInfos.Select(f=>f.name).ToList(),
+                _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 DataTablePropertyUtil.ReservWords,
                 Manager?.Assemblies,
                 (type, fieldName, isArray,description) =>

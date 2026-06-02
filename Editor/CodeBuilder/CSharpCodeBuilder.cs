@@ -35,6 +35,15 @@ namespace TinyDataTable.Editor
         }
 
         /// <summary>
+        /// 行を追加する
+        /// </summary>
+        public CSharpCodeBuilder AppendLine()
+        {
+            _sb.AppendLine();
+            return this;
+        }        
+        
+        /// <summary>
         /// インデントなしで行を追加する（#if ディレクティブなど用）
         /// </summary>
         public CSharpCodeBuilder AppendLineNoIndent(string line)

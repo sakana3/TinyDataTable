@@ -135,7 +135,7 @@ namespace TinyDataTable.Editor
             }
         }
         
-        private bool OnSelectDataTableAsset(DataTableAsset asset)
+        private bool OnSelectDataTableAsset(DataTableRecordBase asset)
         {
             if ( tableOperator == null || tableOperator.OnChange(asset))
             {

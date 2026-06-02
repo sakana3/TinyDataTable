@@ -8,8 +8,7 @@ namespace TinyDataTable.Editor
     public static class ExportDataSheetToCSharp
     {
         public static string Export(
-//            DataTableAsset asset,
-            IRecord record,
+            DataTableRecordBase recordAsset,
             IList<RecordFieldInfo> fields,
             string className,
             string namespaceName,
@@ -32,37 +31,31 @@ namespace TinyDataTable.Editor
             cb.AddUsing("TinyDataTable");
             
             cb.AppendLine();
-            
+
+            var recordClassName = $"{className}Record";
+
+            //Make Record
+            //    [CreateAssetMenu(fileName = "ACBRecord", menuName = "Scriptable Objects/ACBRecord")]
+            using (cb.BeginNamespace("TinyDataTable.Record"))
+            {
+                using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<ID.Record.{className}>", isPartial: true))
+                {
+                    cb.AppendLine($"public override Type IdentifierType => typeof({namespaceName}.{className});");
+                    cb.AppendLine($"public override Type RecordType => typeof(ID.Record.{className});");
+                    cb.AppendLine($"public override string BaseName => \"{className}\";");
+                }
+            }
+
+            cb.AppendLine();
+
+            //Make ID
             using (cb.BeginNamespace(namespaceName))
             {
-//                cb.AddAttribute(asset.Obsolete ? "Serializable,Obsolete" : "Serializable");
-
-                using (cb.BeginStruct(className,
-                           inherit: $"IIdentifier, IEquatable<{className}>, IEquatable<{className}.Enum>",
-                           isPartial: true))
+                //Record Struct
+                using (cb.BeginNamespace("Record"))
                 {
-                    //Enum
-                    using (cb.AddAttribute("Serializable").BeginEnum("Enum"))
+                    using (cb.AddAttribute("Serializable").BeginStruct(className, "public"))
                     {
-                        if (record != null)
-                        {
-                            var enums = record.Headers
-                                .Select((h, i) => ($"[EnumOrder({i})] {h.name}", $"0x{h.id:X8}", h.description,
-                                    h.obsolete ? "Obsolete" : ""))
-                                .ToList();
-                            cb.AddEnums(enums);
-                        }
-                        else
-                        {
-                            cb.AppendLine("[EnumOrder(0)] Invalid = 0x00000000");
-                        }
-                    }
-                    cb.AppendLine();
-
-                    //Record Struct
-                    using (cb.AddAttribute("Serializable").BeginStruct("Record" , "private"))
-                    {
-//                        foreach (var info in data.record.Header.fieldInfos.Zip( data.record.GetFieldTypes() , (info,type) => (info,type) ))
                         if (fields.Any())
                         {
                             foreach (var field in fields)
@@ -71,23 +64,55 @@ namespace TinyDataTable.Editor
                                 {
                                     cb.AppendLine("[Obsolete(\"This field is obsolete.\")]");
                                 }
+
                                 cb.AddCode($"public {field.type.FullName} {field.name}");
                             }
                         }
                         else
                         {
-                            //空の構造体はエラーになるのでダミーを追加しておく
-                            cb.AddCode($"[SerializeField,HideInInspector] private bool __dummy");
+                            cb.AppendLine($"[SerializeField,HideInInspector,Obsolete]");
+                            cb.AppendLine($"public bool __dummy; // dummy for avoiding compile error");
                         }
                     }
-                    cb.AddComment("Record Type");
-                    cb.AddCode($"private static Type RecordType => typeof(Record)");
+                }
+                cb.AppendLine();                
+
+                //Enum
+                using (cb.BeginNamespace("Enum"))
+                {
+                    using (cb.AddAttribute("Serializable").BeginEnum($"{className} : Int32"))
+                    {
+                        if (recordAsset != null)
+                        {
+                            var enums = recordAsset.Headers
+                                .Select((h, i) => ($"[EnumOrder({i})] {h.name}", $"0x{h.id:X8}", h.description,
+                                    h.obsolete ? "Obsolete" : ""))
+                                .ToList();
+                            cb.AddEnums(enums);
+                        }
+                        else
+                        {
+                            cb.AppendLine("[EnumOrder(0)] Invalid = 0x00000000,");
+                        }
+                    }
+                }
+                cb.AppendLine();                
+                
+//                cb.AddAttribute(asset.Obsolete ? "Serializable,Obsolete" : "Serializable");
+                string enumName = $"ID.Enum.{className}";
+                cb.AddAttribute("Serializable");
+                using (cb.BeginStruct(className,
+                           inherit: $"IIdentifier, IEquatable<{className}>, IEquatable<{enumName}>",
+                           isPartial: true))
+                {
+                    
+                    cb.AppendLine($"public static readonly Type AssetType = typeof(TinyDataTable.Record.{className}Record);");
                     cb.AppendLine();
+
 
                     //プライベートメンバー
                     cb.AddComment("Private member");
-                    cb.AddField("DataTableAsset", "_dataTable", "private static");
-                    cb.AddField("Record[]", "_recordArray", "private static");
+                    cb.AddField($"ID.Record.{className}[]", "_recordArray", "private static");
                     
                     if (string.IsNullOrEmpty(addressName) is false)
                     {
@@ -102,14 +127,14 @@ namespace TinyDataTable.Editor
                     //メンバー
                     cb.AddComment("Member");
                     cb.AddAttribute("SerializeField");
-                    cb.AddField("Enum", "_value", "private");
+                    cb.AddField($"{enumName}", "_value", "private");
                     cb.AddAttribute("NonSerialized");
                     cb.AddField("int", "_index", "private");
                     cb.AppendLine();
 
                     //コンストラクター
                     cb.AddComment("Constructor");
-                    using (cb.BeginConstructor(className, "Enum value, int index", "private"))
+                    using (cb.BeginConstructor(className, $"{enumName} value, int index", "private"))
                     {
                         cb.AddCode("this._value = value");
                         cb.AddCode("this._index = index");
@@ -117,7 +142,7 @@ namespace TinyDataTable.Editor
 
                     cb.AppendLine();
                     cb.AddComment("Constructor");
-                    using (cb.BeginConstructor(className, "Enum value",
+                    using (cb.BeginConstructor(className, $"{enumName} value",
                                "public", "this(value, EnumToIndex(value))"))
                     {
                     }
@@ -181,7 +206,6 @@ namespace TinyDataTable.Editor
                         }
                     }
                     cb.AppendLine();
-#endif
                     cb.AddComment("Data Bind(Call for DataTableAsset.OnEnable by reflrection)");
                     using (cb.BeginMethod("void", "BindAsset", "DataTableAsset tableAsset", "private static"))
                     {
@@ -189,6 +213,7 @@ namespace TinyDataTable.Editor
                         cb.AddCode("_recordArray = _dataTable == null ? null : (Record[])_dataTable.Record.Data");
                     }
                     cb.AppendLine();
+#endif
                     
                     
                     //Index
@@ -199,7 +224,7 @@ namespace TinyDataTable.Editor
                         {
                             using (cb.BeginIf("_index == 0"))
                             {
-                                using (cb.BeginIf("_value == Enum.Invalid"))
+                                using (cb.BeginIf($"_value == {enumName}.Invalid"))
                                 {
                                     cb.AddCode("return 0");
                                 }
@@ -217,15 +242,15 @@ namespace TinyDataTable.Editor
                     cb.AddComment("Valid records");
                     cb.AddCode($"public static IReadOnlyCollection<{className}> ValidIDList => _validIDs");
                     cb.AddComment("Valid Enums");
-                    cb.AddCode($"public static IReadOnlyCollection<{className}.Enum> ValidEnumList => _validEnums");
+                    cb.AddCode($"public static IReadOnlyCollection<{enumName}> ValidEnumList => _validEnums");
                     cb.AddComment("Is this record is valid");
                     cb.AddCode($"public bool IsValid => _validEnums.Contains( _value )");
                     cb.AppendLine();
 
                     cb.AddComment("propieries");
-                    if (record != null)
+                    if (recordAsset != null)
                     {
-                        foreach (var (header, idx) in record.Headers.Select((header, idx) => (header, idx)))
+                        foreach (var (header, idx) in recordAsset.Headers.Select((header, idx) => (header, idx)))
                         {
                             var name = header.name;
                             var index = idx;
@@ -234,12 +259,12 @@ namespace TinyDataTable.Editor
                                 cb.AppendLine("[Obsolete]");
                             }
 
-                            cb.AddCode($"public static readonly {className} {name} = new (Enum.{name}, {index})");
+                            cb.AddCode($"public static readonly {className} {name} = new ({enumName}.{name}, {index})");
                         }
                     }
                     else
                     {
-                        cb.AddCode($"public static readonly {className} Invalid = new (Enum.Invalid, 0)");
+                        cb.AddCode($"public static readonly {className} Invalid = new ({enumName}.Invalid, 0)");
                     }
                     cb.AppendLine();
 
@@ -262,14 +287,14 @@ namespace TinyDataTable.Editor
                     //operators
                     cb.AddComment("operators");
                     cb.AddCode($"public bool Equals({className} other) => _value == other._value");
-                    cb.AddCode($"public bool Equals({className}.Enum other) => _value == other");
+                    cb.AddCode($"public bool Equals({enumName} other) => _value == other");
                     cb.AddCode($"public override bool Equals(object obj) => obj is {className} other && Equals(other)");
                     cb.AddCode($"public override int GetHashCode() => (int)_value");
                     cb.AddCode($"public override string ToString() => _value.ToString()");
                     cb.AddCode($"public static bool operator ==({className} left, {className} right) => left.Equals(right)");
                     cb.AddCode($"public static bool operator !=({className} left, {className} right) => !left.Equals(right)");
-                    cb.AddCode($"public static bool operator ==({className} left, {className}.Enum right) => left.Equals(right)");
-                    cb.AddCode($"public static bool operator !=({className} left, {className}.Enum right) => !left.Equals(right)");
+                    cb.AddCode($"public static bool operator ==({className} left, {enumName} right) => left.Equals(right)");
+                    cb.AddCode($"public static bool operator !=({className} left, {enumName} right) => !left.Equals(right)");
                     
   //                  cb.AddCode($"public static bool operator ==({className} left, {className} right) => left._value == right._value");
   //                  cb.AddCode($"public static bool operator !=({className} left, {className} right) => left._value != right._value");
@@ -277,15 +302,15 @@ namespace TinyDataTable.Editor
   //                  cb.AddCode($"public static bool operator !=({className} left, {className}.Enum right) => left._value != right");
   //                  cb.AddCode($"public static bool operator ==({className}.Enum left, {className} right) => left == right._value");
   //                  cb.AddCode($"public static bool operator !=({className}.Enum left, {className} right) => left != right._value");
-                    cb.AddCode($"public static implicit operator {className}({className}.Enum value) => new {className}(value)");
-                    cb.AddCode($"public static implicit operator {className}.Enum({className} value) => value._value");
+                    cb.AddCode($"public static implicit operator {className}({enumName} value) => new {className}(value)");
+                    cb.AddCode($"public static implicit operator {enumName}({className} value) => value._value");
                     cb.AppendLine();
                     
                     //静的テーブル
                     cb.AddComment("static id table");
-                    var valids = record == null ?
-                        Array.Empty<RecordDataHeader>() :
-                        record.Headers.Where(h => h.id > 0 && h.obsolete is false).ToArray();
+                    var valids = recordAsset == null ?
+                        Array.Empty<DataTableRecordBase.HeaderData>() :
+                        recordAsset.Headers.Where(h => h.id > 0 && h.obsolete is false).ToArray();
                     if (valids.Any())
                     {
                         using (cb.BeginBlock($"private static readonly {className}[] _validIDs = new[]").Footer(";"))
@@ -308,35 +333,35 @@ namespace TinyDataTable.Editor
                     cb.AddComment("static enum table");
                     if ( valids.Any())
                     {
-                        using (cb.BeginBlock($"private static readonly {className}.Enum[] _validEnums = new[]").Footer(";"))
+                        using (cb.BeginBlock($"private static readonly {enumName}[] _validEnums = new[]").Footer(";"))
                         {
                             foreach (var header in valids)
                             {
-                                cb.AppendLine($"Enum.{header.name},");
+                                cb.AppendLine($"{enumName}.{header.name},");
                             }
                         }
                     }
                     else
                     {
-                        cb.AddCode(($"private static readonly {className}.Enum[] _validEnums = Array.Empty<{className}.Enum>()"));
+                        cb.AddCode(($"private static readonly {enumName}[] _validEnums = Array.Empty<{enumName}>()"));
                     }
                     cb.AppendLine();
                     
                     //EnumをIndexに変換するメソッド（静的にテーブル展開されるので高速）
                     cb.AddComment("Enum to index");
                     
-                    using (cb.BeginBlock("private static int EnumToIndex(Enum value) => value switch").Footer(";"))
+                    using (cb.BeginBlock($"private static int EnumToIndex({enumName} value) => value switch").Footer(";"))
                     {
-                        if (record != null)
+                        if (recordAsset != null)
                         {
-                            foreach (var (header, idx) in record.Headers.Select((header, idx) => (header, idx)))
+                            foreach (var (header, idx) in recordAsset.Headers.Select((header, idx) => (header, idx)))
                             {
-                                cb.AppendLine($"Enum.{header.name} => {idx},");
+                                cb.AppendLine($"{enumName}.{header.name} => {idx},");
                             }
                         }
                         else
                         {
-                            cb.AppendLine($"Enum.Invalid => 0,");
+                            cb.AppendLine($"{enumName}.Invalid => 0,");
                         }
                         cb.AppendLine($"_ => 0");
                     }
@@ -369,7 +394,7 @@ namespace TinyDataTable.Editor
 #endif                        
                         //プロパティドロワー（仮）
                         cb.AppendLine($"[UnityEditor.CustomPropertyDrawer(typeof({className}))]");
-                        using (cb.BeginClass($"{className}PropertyDrawer" , "private" ,$"TinyDataTable.Editor.IDPropertyDrawerBase<{className}.Enum>" ))
+                        using (cb.BeginClass($"{className}PropertyDrawer" , "private" ,$"TinyDataTable.Editor.IDPropertyDrawerBase<{enumName}>" ))
                         {
                         }
                     }

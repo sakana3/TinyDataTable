@@ -9,10 +9,10 @@ namespace TinyDataTable.Editor
     public class DataTableManagerTableView : VisualElement
     {
         private DataTableManager Manager = null;
-        private DataTableAsset asset;
+        private DataTableRecordBase asset;
         private bool IsStructureMode { set; get; } = false;
 
-        public DataTableManagerTableView(DataTableManager manager,DataTableAsset asset,bool isStructureMode)
+        public DataTableManagerTableView(DataTableManager manager,DataTableRecordBase asset,bool isStructureMode)
         {
             this.Manager = manager;
             this.IsStructureMode = isStructureMode;
@@ -23,12 +23,8 @@ namespace TinyDataTable.Editor
 
         private void CreateGUI()
         {
-            if (asset.Record != null)
-            {
-
-                var sheet = new DataSheetField(Manager,asset, IsStructureMode);
-                Add( sheet);            
-            }
+            var sheet = new DataSheetField(Manager,asset, IsStructureMode);
+            Add( sheet);            
         }
     }
 }

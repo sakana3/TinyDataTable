@@ -17,7 +17,7 @@ namespace TinyDataTable.Editor
         private DataTableManager Manager = null;
         private bool IsStructureMode = false;
 
-        public Func<DataTableAsset,bool> OnSelectDataTableAsset;
+        public Func<DataTableRecordBase,bool> OnSelectDataTableAsset;
         
         public DataTableManagerTreeView(DataTableManager manager,bool isStructureMode)
         {
@@ -30,7 +30,7 @@ namespace TinyDataTable.Editor
         {
             var so = new SerializedObject(Manager);
 
-            var treeView = new SerializableTreeView<DataTableAsset>(Manager.Tree,IsStructureMode);
+            var treeView = new SerializableTreeView<DataTableRecordBase>(Manager.Tree,IsStructureMode);
             treeView.hierarchyChanged += tree =>
             {
                 Undo.RecordObject(Manager, "Update DataTableManager HierarchyChanged");
@@ -134,35 +134,19 @@ namespace TinyDataTable.Editor
             }
         }
 
-        DataTableAsset CreateDataTableAsset(string name)
+        DataTableRecordBase CreateDataTableAsset(string name)
         {
-            var dataTableAsset = ScriptableObject.CreateInstance<DataTableAsset>();
-            
-            if (!System.IO.Directory.Exists(Manager.TablesPath))
-            {
-                System.IO.Directory.CreateDirectory(Manager.TablesPath);
-            
-                // Unity側にフォルダが作成されたことを認識させる
-                AssetDatabase.Refresh();
-            }
-            
-            AssetDatabase.CreateAsset(dataTableAsset, $"{Manager.TablesPath}\\{name}.asset");
-            EditorGUIUtility.SetIconForObject(dataTableAsset, DataTableManagerTreeView.ItemIcon as Texture2D);
-            AssetDatabase.Refresh();
-            AssetDatabase.SaveAssets();
-            
-            SaveDataTable.CheckNeedEnsureAddressable(dataTableAsset,true);
 
-            SaveDataTable.SaveScript(
-                dataTableAsset,
-                dataTableAsset.name,
+            SaveDataTable.CreateNewScript(
+                name,
                 Manager.DefaultNamespace,
-                Manager.ScriptsPath);
+                Manager.ScriptsPath,
+                Manager.TablesPath);
             
-            return dataTableAsset;
+            return null;
         }
 
-        void RemoveDataTableAsset( IEnumerable<DataTableAsset> assets)
+        void RemoveDataTableAsset( IEnumerable<DataTableRecordBase> assets)
         {
             if (assets == null) return;
 
@@ -171,9 +155,9 @@ namespace TinyDataTable.Editor
                 string assetPath = AssetDatabase.GetAssetPath(asset);
                 if (!string.IsNullOrEmpty(assetPath))
                 {
-                    var classScript = asset.classScript;
+                    var classScript = MonoScript.FromScriptableObject(asset);
                     AssetDatabase.DeleteAsset(assetPath);
-                    if (asset.classScript != null)
+                    if (classScript != null)
                     {
                         string scriptPath = AssetDatabase.GetAssetPath(classScript);
                         AssetDatabase.DeleteAsset(scriptPath);
