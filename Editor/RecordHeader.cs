@@ -11,7 +11,6 @@ namespace TinyDataTable
         public string name;
         public string description;
         public int id;
-        public int index;
         public bool obsolete;
         public Type type;
     }

@@ -128,7 +128,7 @@ namespace TinyDataTable.Editor
                     .Where( i => i.id != 0 && i.isObsolete is false)
                     .ToList();
             }
-
+            
             listView.itemsSource = rowIDList;                    
         }        
         
@@ -512,8 +512,8 @@ namespace TinyDataTable.Editor
                 //これをやらないと変更が通知されないことがある？
                 _multiColumnListView.itemsSource = rowIDList;
                 _multiColumnListView.ClearSelection();
-                _multiColumnListView.RefreshItems();
-//                            _multiColumnListView.Rebuild();
+//                _multiColumnListView.RefreshItems();
+                _multiColumnListView.Rebuild();
             }
             else
             {

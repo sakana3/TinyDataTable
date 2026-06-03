@@ -7,8 +7,13 @@ namespace TinyDataTable
     public abstract class DataTableRecordBase : ScriptableObject
     {
         [SerializeField] private bool _initializeOnLoad;
+        public bool InitializeOnLoadEditor => _initializeOnLoadEditor;
+        
         [SerializeField] private bool _initializeOnLoadEditor;
+        public bool InitializeOnLoad => _initializeOnLoad;
+
         [SerializeField] private bool _isObsolete;
+        public bool IsObsolete => _isObsolete;
 
         /// <summary> レコードデータヘッダ </summary>
         [Serializable]
@@ -17,7 +22,6 @@ namespace TinyDataTable
             public string name;
             public string description;
             public int id;
-            public int index;
             public bool obsolete;
         }
         
@@ -35,7 +39,6 @@ namespace TinyDataTable
         DataTableRecordBase 
         where TRecord : struct
     {
-
         [SerializeField]
         private TRecord[] _records;
         public TRecord[] Records => _records;
@@ -49,11 +52,31 @@ namespace TinyDataTable
                     id = 0,
                     name = "Invalid",
                     description = string.Empty,
-                    index = 0,
                     obsolete = false
                 }
             };
             _records = new TRecord[1];
-        }        
+        }
+
+        public static DataTableRecordBase<TRecord> Instance
+        {
+            protected set;
+            get;
+        }
+
+        private void OnEnable()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+        }
+        private void OnDisable()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
     }
 }

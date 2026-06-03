@@ -95,51 +95,48 @@ namespace TinyDataTable.Editor
                         });
                     if (index > 0)
                     {
-/*                        
+                   
                         evt.menu.AppendAction(
                             "Obsolete Record",
                             (action) =>
                             {
                                 if (_multiColumnListView.selectedIndices.Contains(index))
                                 {
-                                    var isObsolete = _recordProperty.RowHeaders[index].obsolete;
+                                    var isObsolete = _recordPropertyUtil.RowHeaders[index].obsolete;
                                     foreach (var idx in _multiColumnListView.selectedIndices.Where(i => i > 0))
                                     {
-                                        var obsolete = DataSheetPropertyUtility.RowObsolete(property, idx);
-                                        obsolete.boolValue = isObsolete;
+                                        _recordPropertyUtil.SetRowObsolete(idx ,!isObsolete);
                                     }
-
-                                    property.serializedObject.ApplyModifiedProperties();
                                     _multiColumnListView.RefreshItems();
                                 }
                             },
                             (action) =>
                             {
-                                var obsolete = DataSheetPropertyUtility.RowObsolete(property, index);
-                                return obsolete.boolValue
+                                return _recordPropertyUtil.RowHeaders[index].obsolete
                                     ? DropdownMenuAction.Status.Checked
                                     : DropdownMenuAction.Status.Normal;
                             });
-*/                            
-/*
+
                         evt.menu.AppendAction(
                             "Remove Record",
                             (action) =>
                             {
                                 if (_multiColumnListView.selectedIndices.Contains(index))
                                 {
-                                    RemoveRow(property, _multiColumnListView.selectedIndices.ToArray());
+                                    _recordPropertyUtil.RemoveRows(_multiColumnListView.selectedIndices);
+                                    SetupRows(_multiColumnListView);
+                                    _multiColumnListView.itemsSource = rowIDList;
                                     _multiColumnListView.ClearSelection();
+                                    _multiColumnListView.Rebuild();                                    
                                 }
                             },
                             (action) =>
                             {
-                                var obsolete = DataSheetPropertyUtility.RowObsolete(property, index);
-                                return obsolete.boolValue
+                                return _recordPropertyUtil.RowHeaders[index].obsolete
                                     ? DropdownMenuAction.Status.Normal
                                     : DropdownMenuAction.Status.Disabled;
                             });
-*/                            
+                    
                     }
                     evt.menu.AppendSeparator();                
                 }
@@ -192,7 +189,6 @@ namespace TinyDataTable.Editor
                             name = fieldName,
                             description = description,
                             id = 0,
-                            index = index,
                             obsolete = false,
                             type = type
                         };

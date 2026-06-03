@@ -48,7 +48,6 @@ namespace TinyDataTable.Editor
                             name = field.Name,
                             description = "",
                             id = 0,
-                            index = 0,
                             obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
                             type =  field.FieldType
                         };

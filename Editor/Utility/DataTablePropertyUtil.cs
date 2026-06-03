@@ -39,7 +39,6 @@ namespace TinyDataTable.Editor
                 {
                     name = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.name)).stringValue ,
                     id = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.id)).intValue,
-                    index = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.index)).intValue,
                     description = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.description)).stringValue,
                     obsolete = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue,
                 } )
@@ -85,9 +84,10 @@ namespace TinyDataTable.Editor
             
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = $"record_{idx - 1:0000}";
-            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.index)).intValue = headerProp.arraySize;
 
             _serializedObject.ApplyModifiedProperties();
+
+            ReloadInfo();
         }        
         
 
@@ -101,6 +101,8 @@ namespace TinyDataTable.Editor
             dataProp.DeleteArrayElementAtIndex(index);
             headerProp.DeleteArrayElementAtIndex(index);
             _serializedObject.ApplyModifiedProperties();
+            
+            ReloadInfo();
         }        
 
         public void RemoveRows( IEnumerable<int> indexs )
@@ -112,15 +114,17 @@ namespace TinyDataTable.Editor
                 dataProp.DeleteArrayElementAtIndex(index);
                 headerProp.DeleteArrayElementAtIndex(index);
             }
-            _serializedObject.ApplyModifiedProperties();                
+            _serializedObject.ApplyModifiedProperties();
+            
+            ReloadInfo();
         }
         
 
         public void ResizeRow(uint size)
         {
-            var dataProp = RecordProperty;
+            var recordProp = RecordProperty;
             var headerProp = HeaderProperty;                      
-            if (headerProp.arraySize == size && dataProp.arraySize == size)
+            if (headerProp.arraySize == size && recordProp.arraySize == size)
             {
                 return;
             }
@@ -135,7 +139,8 @@ namespace TinyDataTable.Editor
 
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = $"record_{index - 1:0000}";
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.index)).intValue = headerProp.arraySize;
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.description)).stringValue = "";
 
                     //TODO: 名前のチェックちゃんとやる
 /*
@@ -143,21 +148,38 @@ namespace TinyDataTable.Editor
                     {
                         nameProp.stringValue += "_";
                     }
-*/                   
+*/
                 }
                 else
                 {
                     headerProp.DeleteArrayElementAtIndex(headerProp.arraySize - 1);                        
                 }
             }
-            _serializedObject.ApplyModifiedProperties();                
+
+            while (recordProp.arraySize != size)
+            {
+                if (recordProp.arraySize < size)
+                {
+                    var index = recordProp.arraySize;                        
+                    recordProp.InsertArrayElementAtIndex(index);
+                    recordProp.GetArrayElementAtIndex(index);                    
+                }
+                else
+                {
+                    recordProp.DeleteArrayElementAtIndex(recordProp.arraySize - 1);                             
+                }
+            }
+
+            _serializedObject.ApplyModifiedProperties();         
+            ReloadInfo();
         }
         
         public void MoveRow( int from, int to)
         {
             RecordProperty.MoveArrayElement(from, to);
             HeaderProperty.MoveArrayElement(from, to);
-            SerializedObject.ApplyModifiedProperties();            
+            SerializedObject.ApplyModifiedProperties();        
+            ReloadInfo();
         }
 
         public IEnumerable<SerializedProperty> GetRowProperties()
@@ -213,7 +235,7 @@ namespace TinyDataTable.Editor
             var t = RowHeaders[iRow];
             t.obsolete = isObsolete;
             RowHeaders[iRow] = t;
-            _serializedObject.ApplyModifiedProperties();           
+            _serializedObject.ApplyModifiedProperties();
         }
         
         public List<(int id,string name,bool isObsolete)> MakeRecordHeaderList()

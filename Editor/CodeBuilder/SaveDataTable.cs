@@ -15,10 +15,10 @@ namespace TinyDataTable.Editor
     public static class SaveDataTable
     {
         private const string KeyIsGenerating = "TinyDataTable_IsGenerating";
-        private const string KeyIsCreateAsset = "TinyDataTable_IsCreateAsset";
-        private const string CompilError = "TinyDataTable_CompilError";
-        private const string ScriptFullPath = "TinyDataTable_Script_FilePath";        
-        private const string AssetFilePath = "TinyDataTable_Asset_FilePath";
+        private const string KeyCompilError = "TinyDataTable_CompilError";
+        private const string KeyScriptFullPath = "TinyDataTable_Script_FilePath";        
+        private const string KeyAssetFilePath = "TinyDataTable_Asset_FilePath";
+        private const string KeyBackuoCode = "TinyDataTable_BackupCode";
 
 
         private static (string scriptName, string namespaceName, string assetpath,string fullPath, string address,string assetPath ) MakeInfo(
@@ -143,8 +143,8 @@ namespace TinyDataTable.Editor
             AssetDatabase.Refresh(ImportAssetOptions.Default);
             // セッションにデータを保存
             SessionState.SetBool(KeyIsGenerating, true);
-            SessionState.SetString(ScriptFullPath, fullPath);
-            SessionState.SetString(AssetFilePath, assetName);
+            SessionState.SetString(KeyScriptFullPath, fullPath);
+            SessionState.SetString(KeyAssetFilePath, assetName);
             //コンパイラーが走ってないなら直接呼び出す
             if (EditorApplication.isCompiling is false)
             {
@@ -189,14 +189,19 @@ namespace TinyDataTable.Editor
                 info.assetPath
             );
 
+            if (File.Exists(info.fullPath))
+            {
+                var original = File.ReadAllText(info.fullPath);
+                SessionState.SetString(KeyBackuoCode, original);
+            }
             SaveScript(info.fullPath, code);
 
             // アセットデータベースを更新してUnityに認識させる
             AssetDatabase.Refresh(ImportAssetOptions.Default);
             // セッションにデータを保存
             SessionState.SetBool(KeyIsGenerating, true);
-            SessionState.SetString(ScriptFullPath, info.fullPath);
-            SessionState.SetString(AssetFilePath, AssetDatabase.GetAssetPath(dataTableAsset));
+            SessionState.SetString(KeyScriptFullPath, info.fullPath);
+            SessionState.SetString(KeyAssetFilePath, AssetDatabase.GetAssetPath(dataTableAsset));
             
             //コンパイラーが走ってないなら直接呼び出す
             if (EditorApplication.isCompiling is false)
@@ -216,8 +221,22 @@ namespace TinyDataTable.Editor
             // エラーメッセージが含まれているかチェック
             bool hasErrors = messages.Any(m => m.type == CompilerMessageType.Error);
 
-            SessionState.SetBool(CompilError, hasErrors);                
-            CompilationPipeline.assemblyCompilationFinished -= OnCompilationFinished;            
+            SessionState.SetBool(KeyCompilError, hasErrors);
+            CompilationPipeline.assemblyCompilationFinished -= OnCompilationFinished;
+            if (hasErrors)
+            {
+                var originalCode = SessionState.GetString(KeyBackuoCode, string.Empty);
+                Debug.Log($"Compilation failed. {assemblyPath}");
+                Debug.Log(originalCode);
+                if (string.IsNullOrEmpty(originalCode) is false)
+                {
+                    Debug.LogWarning("Reverting changes because a compilation error occurred.");
+                    
+                    string scriptPath = SessionState.GetString(KeyScriptFullPath, string.Empty);                    
+                    SaveScript(scriptPath, originalCode);
+                    AssetDatabase.Refresh(ImportAssetOptions.Default);
+                }
+            }
         }
         
         
@@ -227,19 +246,24 @@ namespace TinyDataTable.Editor
         [InitializeOnLoadMethod]
         private static void OnCompileFinished()
         {
-            string scriptPath = SessionState.GetString(ScriptFullPath, string.Empty);
-            string assetPath = SessionState.GetString(AssetFilePath, string.Empty);
-            bool hasErrors = SessionState.GetBool(CompilError, false);
-            bool IsGenerating = SessionState.GetBool(KeyIsGenerating, false);
+            string scriptPath = SessionState.GetString(KeyScriptFullPath, string.Empty);
+            string assetPath = SessionState.GetString(KeyAssetFilePath, string.Empty);
+            bool hasErrors = SessionState.GetBool(KeyCompilError, false);
+            bool isGenerating = SessionState.GetBool(KeyIsGenerating, false);
 
             SessionState.EraseBool(KeyIsGenerating);
-            SessionState.EraseBool(CompilError);
-            SessionState.EraseString(ScriptFullPath);
-            SessionState.EraseString(AssetFilePath);
+            SessionState.EraseBool(KeyCompilError);
+            SessionState.EraseString(KeyScriptFullPath);
+            SessionState.EraseString(KeyAssetFilePath);
+            SessionState.EraseString(KeyBackuoCode);
 
-            if (!IsGenerating || hasErrors) return;
+            if (!isGenerating ) return;            
 
-            
+            if ( hasErrors)
+            {
+                return;
+            }
+
             if ( string.IsNullOrEmpty(assetPath) is false && File.Exists(assetPath) is false)
             {
                 MonoScript script = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);

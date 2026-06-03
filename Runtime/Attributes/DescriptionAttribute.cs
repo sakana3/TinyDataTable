@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-
+    
 namespace TinyDataTable
 {
     /// <summary>
@@ -10,13 +10,13 @@ namespace TinyDataTable
     /// </summary>
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
-    public class EnumOrderAttribute : Attribute
+    public class DescriptionAttribute : Attribute
     {
-        private readonly int _order;
+        private readonly string _description;
 
-        public int Order => _order;
+        public string Description => _description;
         
         // コンストラクタ
-        public EnumOrderAttribute( int order ) => this._order = order;
+        public DescriptionAttribute( string description ) => this._description = description;
     }
 }
