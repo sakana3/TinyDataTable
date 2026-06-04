@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Runtime.CompilerServices;
 
 namespace TinyDataTable
 {
@@ -58,24 +59,36 @@ namespace TinyDataTable
             _records = new TRecord[1];
         }
 
-        public static DataTableRecordBase<TRecord> Instance
-        {
-            protected set;
-            get;
-        }
+        public TRecord this[int index] => Records[index];
 
-        private void OnEnable()
+        public TRecord this[string key]
         {
-            if (Instance == null)
+            get
             {
-                Instance = this;
+                var idx = Array.FindIndex(Headers, h => h.name == key);
+                return idx >= 0 ? Records[idx] : default;
             }
         }
-        private void OnDisable()
+        
+        protected static DataTableRecordBase<TRecord> _instance;
+        public static DataTableRecordBase<TRecord> Instance
         {
-            if (Instance == this)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _instance;
+        }
+
+        protected virtual void OnEnable()
+        {
+            if (_instance == null)
             {
-                Instance = null;
+                _instance = this;
+            }
+        }
+        protected virtual void OnDisable()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
             }
         }
     }
