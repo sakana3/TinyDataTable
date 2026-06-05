@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
     
-namespace TinyDataTable
+namespace TinyDataTable.Description
 {
     /// <summary>
     /// Enumの並び順を指定するためのアトリビュート
@@ -15,8 +15,8 @@ namespace TinyDataTable
         private readonly string _description;
 
         public string Description => _description;
-        
+
         // コンストラクタ
-        public DescriptionAttribute( string description ) => this._description = description;
+        public DescriptionAttribute(string description) => this._description = description;
     }
 }

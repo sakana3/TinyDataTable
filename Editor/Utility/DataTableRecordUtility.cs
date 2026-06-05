@@ -6,6 +6,7 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace TinyDataTable.Editor
 {
@@ -32,7 +33,6 @@ namespace TinyDataTable.Editor
                     continue;
                 }
                 
-                // 2. 常にシリアライズ対象になる条件（public かつ [HideInInspector] ではない、または [SerializeField] がついている）
                 bool hasSerializeField = field.IsDefined(typeof(SerializeField), true);
                 
                 // Unity 2024.1以降などの新機能を考慮する場合、[SerializeReference] も対象に含める
@@ -40,13 +40,12 @@ namespace TinyDataTable.Editor
 
                 if (field.IsPublic || hasSerializeField || hasSerializeReference)
                 {
-                    // 3. 型自体がUnityでシリアライズ可能かどうかを判定
                     if (IsUnitySerializableType(field.FieldType))
                     {
                         var info = new RecordFieldInfo()
                         {
                             name = field.Name,
-                            description = "",
+                            description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
                             id = 0,
                             obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
                             type =  field.FieldType

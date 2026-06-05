@@ -163,11 +163,8 @@ namespace TinyDataTable.Editor
 
         private void OrderChange(List<string> newOrder)
         {
-/*            
-            DataSheetPropertyUtility.ChangeFieldOrderList(_dataSheetProperty, newOrder);
-            fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(_dataSheetProperty);        
-            _multiColumnListView.Rebuild();
-*/            
+            var newList = newOrder.Select(n => _recordPropertyUtil.FieldInfos.FirstOrDefault(f => f.name == n)).ToList();
+            SaveDataTable.SaveScript(targetAsset, newList);
         }
 
         

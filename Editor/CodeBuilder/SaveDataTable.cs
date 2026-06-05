@@ -233,8 +233,8 @@ namespace TinyDataTable.Editor
                     Debug.LogWarning("Reverting changes because a compilation error occurred.");
                     
                     string scriptPath = SessionState.GetString(KeyScriptFullPath, string.Empty);                    
-                    SaveScript(scriptPath, originalCode);
-                    AssetDatabase.Refresh(ImportAssetOptions.Default);
+//                    SaveScript(scriptPath, originalCode);
+//                    AssetDatabase.Refresh(ImportAssetOptions.Default);
                 }
             }
         }

@@ -14,15 +14,15 @@ namespace TinyDataTable.Editor
 
         public enum Mode
         {
-            Edit ,
-            Structure ,
+            DesignMode ,
+            BuildMode ,
             Preference,
             Addressable,
         }
 
         private string[] ModeStr = new[]
         {
-            "Edit Mode","Structure Mode","Preference","Addressable"
+            "Design Mode","Build Mode","Preference","Addressable"
         };
         
         public static Texture ItemIcon = EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image;
@@ -48,7 +48,7 @@ namespace TinyDataTable.Editor
 
         private Toolbar toolbar;
         private DataTableManagerTreeView treeView;
-        private bool isStructureMode => mode == Mode.Structure;
+        private bool isStructureMode => mode == Mode.BuildMode;
         private DataTableManagerTableOperator tableOperator;
 
         private void CreateGUI()
@@ -68,19 +68,19 @@ namespace TinyDataTable.Editor
                 action =>
                 {
                     modeMenu.text = action.name;
-                    mode = Mode.Edit;
+                    mode = Mode.DesignMode;
                     CreateTreeView();
                 },
-                a => mode == Mode.Edit ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
+                a => mode == Mode.DesignMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );            
             modeMenu.menu.AppendAction(ModeStr[1],
                 action =>
                 {
                     modeMenu.text = action.name;
-                    mode = Mode.Structure;
+                    mode = Mode.BuildMode;
                     CreateTreeView();
                 },
-                a => mode == Mode.Structure ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
+                a => mode == Mode.BuildMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
             toolbar.Add(modeMenu);
             modeMenu.menu.AppendAction(ModeStr[2],

@@ -26,37 +26,43 @@ namespace TinyDataTable.Editor
             
             cb.AppendLine("#pragma warning disable CS0612");
             cb.AddUsing("System");
+            cb.AddUsing("System.Collections.Generic");
+            cb.AddUsing("System.Runtime.CompilerServices");
             cb.AddUsing("System.Linq");
             cb.AddUsing("UnityEngine");
-            cb.AddUsing("System.Collections.Generic");
             cb.AddUsing("TinyDataTable");
-            
+            cb.AppendLineNoIndent("#if UNITY_EDITOR");
+            cb.AddUsing("System.ComponentModel");
+            cb.AppendLineNoIndent("#else");
+            cb.AddUsing("TinyDataTable.Description");
+            cb.AppendLineNoIndent("#endif");
             cb.AppendLine();
 
             var recordClassName = $"{className}Record";
 
-            //Make Record
-            using (cb.BeginNamespace("TinyDataTable.Record"))
-            {
-                if (isObsolete)
-                {
-                    cb.AppendLine("[Obsolete]");
-                }
-                using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<ID.Record.{className}>", isPartial: true))
-                {
-                    cb.AppendLine($"public override Type IdentifierType => typeof({namespaceName}.{className});");
-                    cb.AppendLine($"public override Type RecordType => typeof(ID.Record.{className});");
-                    cb.AppendLine($"public override string BaseName => \"{className}\";");
-                }
-            }
-
-            cb.AppendLine();
-
             //Make ID
             using (cb.BeginNamespace(namespaceName))
             {
+                //ScriptableObject
+                cb.AddComment("ScriptableObject");                
+                using (cb.BeginNamespace("Asset"))
+                {
+                    if (isObsolete)
+                    {
+                        cb.AppendLine("[Obsolete]");
+                    }
+                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<ID.Struct.{className}>", isPartial: true))
+                    {
+                        cb.AppendLine($"public override Type IdentifierType => typeof({namespaceName}.{className});");
+                        cb.AppendLine($"public override Type RecordType => typeof(ID.Struct.{className});");
+                        cb.AppendLine($"public override string BaseName => \"{className}\";");
+                    }                    
+                }
+                cb.AppendLine();
+
                 //Record Struct
-                using (cb.BeginNamespace("Record"))
+                cb.AddComment("Record Struct");                
+                using (cb.BeginNamespace("Struct"))
                 {
                     if (isObsolete)
                     {
@@ -72,7 +78,10 @@ namespace TinyDataTable.Editor
                                 {
                                     cb.AppendLine("[Obsolete(\"This field is obsolete.\")]");
                                 }
-
+                                if ( string.IsNullOrEmpty(field.description) is false )
+                                {
+                                    cb.AppendLine($"[Description(\"{field.description}\")]");
+                                }
                                 cb.AddCode($"public {field.type.FullName} {field.name}");
                             }
                         }
@@ -86,6 +95,7 @@ namespace TinyDataTable.Editor
                 cb.AppendLine();                
 
                 //Enum
+                cb.AddComment("ID Enum");                
                 using (cb.BeginNamespace("Enum"))
                 {
                     if (isObsolete)
@@ -97,7 +107,10 @@ namespace TinyDataTable.Editor
                         if (recordAsset != null)
                         {
                             var enums = recordAsset.Headers
-                                .Select((h, i) => ($"[EnumOrder({i})] {h.name}", $"0x{h.id:X8}", h.description,
+                                .Select((h, i) => (
+                                    $"[EnumOrder({i})] {h.name}",
+                                    $"0x{h.id:X8}",
+                                    h.description,
                                     h.obsolete ? "Obsolete" : ""))
                                 .ToList();
                             cb.AddEnums(enums);
@@ -120,12 +133,16 @@ namespace TinyDataTable.Editor
                            inherit: $"IIdentifier, IEquatable<{className}>, IEquatable<{enumName}>",
                            isPartial: true))
                 {
-//                    cb.AppendLine($"public static readonly Type AssetType = typeof(TinyDataTable.Record.{className}Record);");
+//                    cb.AppendLine($"public static readonly Type AssetType = typeof(ID.Asset.{className}Record);");
 //                    cb.AppendLine();
 
                     //プライベートメンバー
                     cb.AddComment("Private member");
-                    cb.AppendLine($"private static ID.Record.{className}[] _recordArray => TinyDataTable.Record.{recordClassName}.Instance.Records;");
+                    using (cb.BeginBlock($"private static ID.Struct.{className}[] _recordArray"))
+                    {
+                        cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
+                        cb.AddCode($"get => ID.Asset.{recordClassName}.Instance.Records");
+                    }
                     
                     if (string.IsNullOrEmpty(addressName) is false)
                     {
@@ -233,7 +250,7 @@ namespace TinyDataTable.Editor
                     cb.AddComment("Index of this ID");
                     using (cb.BeginBlock("public int Index"))
                     {
-                        cb.AddAttribute("System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)");
+                        cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
                         using (cb.BeginBlock("get"))
                         {
                             using (cb.BeginIf("_index == 0"))

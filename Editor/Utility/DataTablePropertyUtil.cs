@@ -84,6 +84,7 @@ namespace TinyDataTable.Editor
             
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = $"record_{idx - 1:0000}";
+            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
 
             _serializedObject.ApplyModifiedProperties();
 

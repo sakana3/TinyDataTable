@@ -162,7 +162,7 @@ namespace TinyDataTable.Editor
 
             for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
             {
-                if (_recordPropertyUtil.FieldInfos[i].obsolete is false)
+                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].obsolete is false)
                 {
                     var columProp = MakePropertyColumn(i);
                     listView.columns.Add(columProp);

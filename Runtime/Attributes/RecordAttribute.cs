@@ -3,11 +3,7 @@ using System.Diagnostics;
 
 namespace TinyDataTable
 {
-    /// <summary>
-    /// Enumの並び順を指定するためのアトリビュート
-    /// Enumには固有のIDをつけているがEnumは値でソートされるため
-    /// このアトリビュートでオーダーを指定する
-    /// </summary>
+    /// <summary> </summary>
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Class , AllowMultiple = false)]
     public class RecordAttribute : Attribute
