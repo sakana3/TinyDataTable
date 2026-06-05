@@ -38,10 +38,12 @@ namespace TinyDataTable.Editor
             this.IsStructureMode = IsStructureMode;
             
             // 拡張子 (.uss) を含めて指定します
-            var styleSheet = EditorGUIUtility.Load("TinyDataTableMultiColumListViewStyle.uss") as StyleSheet;
-            if (styleSheet != null)
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(DataSheetField).Assembly);
+            string ussPath = $"Packages/{packageInfo.assetPath}/Editor/Assets/UIElement/TinyDataTableMultiColumListViewStyle.uss";
+            StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
+            if (stylesheet != null)
             {
-                this.styleSheets.Add(styleSheet);
+                this.styleSheets.Add(stylesheet);
             }
   
             _multiColumnListView = CreateListView();
