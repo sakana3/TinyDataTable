@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
 
         public void ReloadInfo()
         {
-            FieldInfos = DataTableRecordUtility.GetSerializableFields(TargeTableAsset.RecordType);
+            FieldInfos = RecordFieldInfo.FieldsFromType(TargeTableAsset.RecordType);
             
             RowHeaders = GetRowProperties()
                 .Select(p => new DataTableRecordBase.HeaderData()
@@ -276,36 +276,31 @@ namespace TinyDataTable.Editor
                 return false;
             }
 
-            foreach (var header in TargeTableAsset.Headers)
+            if (TargeTableAsset.Headers.Any(f => f.name == name))
             {
-                if (header.name == name)
-                {
-                    return false;
-                }
+                return false;
             }
 
-            foreach (var recordFieldInfo in FieldInfos)
+            if (FieldInfos.Any(f => f.Type.Name == name))
             {
-                if (recordFieldInfo.name == name)
-                {
-                    return false;
-                }
+                return false;
+            }
+
+            if (ReservWords.Contains(name))
+            {
+                return false;
             }
             
             return true;
         }
-    }
- 
-    public static class DataTablePropertyUtil
-    {
 
         public static List<string> ReservWords = new List<string>()
         {
             "ToString", "GetHashCode", "GetType","Equals",
-            "Invalid","IsValid","Prepare","Terminate","EnumToIndex","Enum","Index",
+            "Invalid","IsValid","Terminate","EnumToIndex","Index",
             "ValidEnumList","ValidIDList",
             "_dataTable","_assetPath","_value","_index","_validEnums","_validIDs",
 //            "Size"
-        };        
+        };
     }
 }

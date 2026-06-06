@@ -24,9 +24,10 @@ namespace TinyDataTable.Editor
         private HelpBox _notifyLabel;
         private Button _decideButton;
         private string[] _assemblys;
-        public List<string> propNames  {set; get; } = new List<string>();
-        public List<string> idNames {set; get; }= new List<string>();
-        public List<string> reservNames {set; get; }= new List<string>();
+        private string _baseClassName;
+        private IReadOnlyCollection<string> propNames  {set; get; } = new List<string>();
+        private IReadOnlyCollection<string> idNames {set; get; }= new List<string>();
+        private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
         
         public DataTableAddPropertyPopup(string[] assemblys,Action<Type, string, bool,string> onAdd)
         {
@@ -104,14 +105,16 @@ namespace TinyDataTable.Editor
         // 呼び出し用の静的ヘルパーメソッド
         public static void Show(
             Rect activatorRect,
-            List<string> propNames,
-            List<string> idNames,
-            List<string> reservNames,
+            string baseClassName,
+            IReadOnlyCollection<string> propNames,
+            IReadOnlyCollection<string> idNames,
+            IReadOnlyCollection<string> reservNames,
             string[] assermblys,
             Action<Type, string, bool,string> onAdd)
         {
             var popup = new DataTableAddPropertyPopup(assermblys,onAdd)
             {
+                _baseClassName = baseClassName,
                 propNames = propNames,
                 idNames = idNames,
                 reservNames = reservNames
@@ -181,9 +184,14 @@ namespace TinyDataTable.Editor
                 text = "Input field name.";
                 messageType = HelpBoxMessageType.Info;
             }
-            else if (DataTableRecordUtility.CheckCSharpSafeName(PropertyName) is false)
+            else if (SerializableUtility.CheckCSharpSafeName(PropertyName) is false)
             {
                 text = "Invalid field name.";
+                messageType = HelpBoxMessageType.Error;
+            }
+            else if( _baseClassName == PropertyName )
+            {
+                text = "It has the same name as the class.";
                 messageType = HelpBoxMessageType.Error;
             }
             else if (propNames.Any( t => t == PropertyName))

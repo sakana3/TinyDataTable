@@ -82,7 +82,7 @@ namespace TinyDataTable.Editor
                 {
                     var itemContextMenu = new ContextualMenuManipulator((e) =>
                         {
-                            e.menu.AppendAction("Create Folder", (p) => InsertNewTree(i, "New Folder"));
+                            e.menu.AppendAction("Create Folder", (p) => InsertNewTree(i, "New Folder",null,true));
                             e.menu.AppendAction("Create Table", (p) => CreateItem(p.eventInfo.mousePosition, i));
                             e.menu.AppendAction("Remove", (p) => RemoveTree(i));
                         }
@@ -93,7 +93,7 @@ namespace TinyDataTable.Editor
             {
                 var itemContextMenu = new ContextualMenuManipulator((e) =>
                     {
-                        e.menu.AppendAction("Create Folder", (p) => { InsertNewTree(-1, "New Folder"); });
+                        e.menu.AppendAction("Create Folder", (p) => { InsertNewTree(-1, "New Folder", null,true); });
                         e.menu.AppendAction("Create Table", (p) => { CreateItem(p.eventInfo.mousePosition, -1); });
                     }
                 ) { target = treeView };
@@ -122,7 +122,7 @@ namespace TinyDataTable.Editor
                     treeView.SetSelectionWithoutNotify(_previousSelectedIndices);
                 }
             };
-            
+            treeView.fixedItemHeight = 16;
             treeView.viewDataKey = $"SerializableTreeView<{nameof(ITEM)}>";
             Add(treeView);
             
@@ -167,10 +167,10 @@ namespace TinyDataTable.Editor
         public void CreateItem( Vector2 positon, int rootID )
         {
             var mouseRect = new Rect(positon, Vector2.one);
-            onCreateItem?.Invoke( mouseRect , (className,item) => InsertNewTree(rootID, className,item) );
+            onCreateItem?.Invoke( mouseRect , (className,item) => InsertNewTree(rootID, className,item,false) );
         }
         
-        public void InsertNewTree(int rootID, string name,ITEM nodeItem = null)
+        public void InsertNewTree(int rootID, string name,ITEM nodeItem , bool isFolder )
         {
             if(infoBox != null)
             {
@@ -201,7 +201,8 @@ namespace TinyDataTable.Editor
                 {
                     Name = name,
                     Parent = -1,
-                    Item = nodeItem
+                    Item = nodeItem,
+                    IsFolder =  isFolder,
                 },
                 children = new(),
                 index = newId
@@ -280,6 +281,7 @@ namespace TinyDataTable.Editor
                 var childrenIds = treeView.viewController.GetChildrenIds(node);
                 treeNode.node.Name = data.node.Name;
                 treeNode.node.Item = data.node.Item;
+                treeNode.node.IsFolder = data.node.IsFolder;
                 treeNode.node.Parent = parentIdx;
                 treeNode.children = TraverseTree(childrenIds, data.index);
                 tree.Add(treeNode);

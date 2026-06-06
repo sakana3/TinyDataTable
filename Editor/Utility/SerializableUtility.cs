@@ -10,55 +10,9 @@ using System.ComponentModel;
 
 namespace TinyDataTable.Editor
 {
-    public static class DataTableRecordUtility
+    public static class SerializableUtility
     {
-        public static List<RecordFieldInfo> GetSerializableFields(Type type)
-        {
-            var serializableFields = new List<RecordFieldInfo>();
-
-            // クラス内のすべてのインスタンスフィールド（public / private / protected）を取得
-            FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            foreach (FieldInfo field in allFields)
-            {
-                // 1. [NonSerialized] 属性がついている場合は除外
-                if (field.IsDefined(typeof(NonSerializedAttribute), true))
-                {
-                    continue;
-                }
-
-                // __dummyは除外
-                if (field.Name == "__dummy")
-                {
-                    continue;
-                }
-                
-                bool hasSerializeField = field.IsDefined(typeof(SerializeField), true);
-                
-                // Unity 2024.1以降などの新機能を考慮する場合、[SerializeReference] も対象に含める
-                bool hasSerializeReference = field.IsDefined(typeof(SerializeReference), true);
-
-                if (field.IsPublic || hasSerializeField || hasSerializeReference)
-                {
-                    if (IsUnitySerializableType(field.FieldType))
-                    {
-                        var info = new RecordFieldInfo()
-                        {
-                            name = field.Name,
-                            description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
-                            id = 0,
-                            obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
-                            type =  field.FieldType
-                        };
-                        serializableFields.Add(info);
-                    }
-                }
-            }
-
-            return serializableFields;
-        }
-
-        private static bool IsUnitySerializableType(Type type)
+        public static bool IsUnitySerializableType(Type type)
         {
             // プリミティブ型、string、一部の組み込み型（Vector3など）
             if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal)) return true;

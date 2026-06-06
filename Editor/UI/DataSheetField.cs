@@ -25,7 +25,7 @@ namespace TinyDataTable.Editor
         private List<int> columnIDList = new List<int>();
         private DataTableManager Manager;
         private RecordPropertyUtil _recordPropertyUtil;
-        private DataTableRecordBase targetAsset;
+        private DataTableRecordBase targetAsset => _recordPropertyUtil.TargeTableAsset;
 
         public DataSheetField( 
             DataTableManager manager,
@@ -33,7 +33,6 @@ namespace TinyDataTable.Editor
             bool IsStructureMode)
         {
             Manager = manager;
-            targetAsset = asset;
             _recordPropertyUtil = new(asset);
             this.IsStructureMode = IsStructureMode;
             
@@ -46,8 +45,8 @@ namespace TinyDataTable.Editor
                 this.styleSheets.Add(stylesheet);
             }
 
-  
             _multiColumnListView = CreateListView();
+
             Add(_multiColumnListView);
         }
 
@@ -104,10 +103,8 @@ namespace TinyDataTable.Editor
             SetupColumns(listView);
 
             SetupRows(listView);
-            
             return listView;
         }
-
 
         /// <summary>
         /// 行をセットアップする
@@ -165,7 +162,7 @@ namespace TinyDataTable.Editor
 
             for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
             {
-                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].obsolete is false)
+                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].Obsolete is false)
                 {
                     var columProp = MakePropertyColumn(i);
                     listView.columns.Add(columProp);
@@ -240,7 +237,7 @@ namespace TinyDataTable.Editor
                 stretchable = false,
                 width = 120,
             };
-    
+            LoadColumnWidths(colum);
             return colum;                        
         }
       
@@ -288,36 +285,35 @@ namespace TinyDataTable.Editor
         {
             Column colum = new Column()
             {
+                name = _recordPropertyUtil.FieldInfos[iColum].Name,
                 makeHeader = () =>
                 {
-                    var iField = iColum;
-                    var fieldInfo = _recordPropertyUtil.FieldInfos[iField];
-                    var header = MakeColumHeader( fieldInfo.name, fieldInfo.obsolete,fieldInfo.description) as Label;
+                    var fieldInfo = _recordPropertyUtil.FieldInfos[iColum];
+                    var header = MakeColumHeader( fieldInfo.Name, fieldInfo.Obsolete,fieldInfo.Description) as Label;
                     if (IsStructureMode)
                     {
-                        var manipulator = MakeColumHeaderManipulator( header, iField);
+                        var manipulator = MakeColumHeaderManipulator( header, iColum);
                         header.AddManipulator(manipulator);
                     }
-                    columnIDList.Add( fieldInfo.name.GetHashCode());
+                    columnIDList.Add( fieldInfo.Name.GetHashCode());
                     return header;
                 },
                 makeCell = () => new VisualElement() { },
                 bindCell = (e,idx) =>
                 {
                     var iRow = rowIDList[idx].index;                            
-                    var iField = iColum;
                     
-                    var isObsoleteCol = _recordPropertyUtil.FieldInfos[iField].obsolete;
+                    var isObsoleteCol = _recordPropertyUtil.FieldInfos[iColum].Obsolete;
                     var isObsoleteRow = rowIDList[idx].isObsolete;
                     e.style.flexGrow = 1.0f;
                     e.style.backgroundColor = (isObsoleteCol|isObsoleteRow)?_obsoleteColor:new StyleColor();
 
                     e.Clear();
-                    if (_recordPropertyUtil.FieldInfos.Count > iField)
+                    if (_recordPropertyUtil.FieldInfos.Count > iColum)
                     {
                         var prop = _recordPropertyUtil.RecordProperty
                             .GetArrayElementAtIndex(iRow)
-                            .FindPropertyRelative(_recordPropertyUtil.FieldInfos[iField].name);
+                            .FindPropertyRelative(_recordPropertyUtil.FieldInfos[iColum].Name);
                         if (prop != null)
                         {
                             var propertyField = new PropertyField(prop, string.Empty);
@@ -336,6 +332,7 @@ namespace TinyDataTable.Editor
                 resizable = true,
                 width = 80,
             };
+            LoadColumnWidths(colum);
             return colum;
         }
 
@@ -383,6 +380,7 @@ namespace TinyDataTable.Editor
             label.style.paddingBottom = 2.0f;
             label.style.backgroundColor = isObsolete?_obsoleteColor:new StyleColor();
             label.tooltip = description;
+            RegisterColumnResizeCallbacks(label,name);
             return label;
         }
 
@@ -413,13 +411,13 @@ namespace TinyDataTable.Editor
                     input.style.color = StyleKeyword.Null;
                     textField.tooltip = "Input ID name";                    
                 }
-                else if (DataTableRecordUtility.CheckCSharpSafeName(textField.value) is false)
+                else if (SerializableUtility.CheckCSharpSafeName(textField.value) is false)
                 {
                     input.style.color = Color.red;
                     textField.tooltip = "Invalid C# identifier.";
                 }
                 else if (_recordPropertyUtil.RowHeaders.Count( t => t.name == value ) >= 2 ||
-                         _recordPropertyUtil.FieldInfos.Select(f=>f.name).Contains(  value ) )
+                         _recordPropertyUtil.FieldInfos.Select(f=>f.Name).Contains(  value ) )
                 {
                     input.style.color = Color.yellow;
                     textField.tooltip = "This name is conflict.";

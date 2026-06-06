@@ -75,7 +75,7 @@ namespace TinyDataTable.Editor
             List<RecordFieldInfo> fileds = new();
             if (recordAsset.RecordType != null)
             {
-                fileds = DataTableRecordUtility.GetSerializableFields(recordAsset.RecordType);
+                fileds = RecordFieldInfo.FieldsFromType(recordAsset.RecordType);
             }
             
             var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
@@ -172,7 +172,7 @@ namespace TinyDataTable.Editor
             {
                 if (dataTableAsset.RecordType != null)
                 {
-                    fields = DataTableRecordUtility.GetSerializableFields(dataTableAsset.RecordType);
+                    fields = RecordFieldInfo.FieldsFromType(dataTableAsset.RecordType);
                 }
                 else
                 {

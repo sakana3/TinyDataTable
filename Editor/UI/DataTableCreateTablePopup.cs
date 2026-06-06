@@ -81,14 +81,14 @@ namespace TinyDataTable.Editor
                 infoBox.style.display = DisplayStyle.Flex;
                 infoBox.messageType = HelpBoxMessageType.Warning;
             }
-            else if (DataTableRecordUtility.CheckCSharpSafeName(className) is false )
+            else if (SerializableUtility.CheckCSharpSafeName(className) is false )
             {
                 infoBox.text = "Invalid table name.";
                 confirmButton.SetEnabled( false);
                 infoBox.style.display = DisplayStyle.Flex;
                 infoBox.messageType = HelpBoxMessageType.Error;
             }
-            else if (DataTableRecordUtility.CheckExistClass( namespaceName,className) )
+            else if (SerializableUtility.CheckExistClass( namespaceName,className) )
             {
                 infoBox.text = "This name is already used.";
                 confirmButton.SetEnabled( false);              

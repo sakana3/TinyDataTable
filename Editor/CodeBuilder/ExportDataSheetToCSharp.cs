@@ -74,15 +74,15 @@ namespace TinyDataTable.Editor
                         {
                             foreach (var field in fields)
                             {
-                                if (field.obsolete)
+                                if (field.Obsolete)
                                 {
                                     cb.AppendLine("[Obsolete(\"This field is obsolete.\")]");
                                 }
-                                if ( string.IsNullOrEmpty(field.description) is false )
+                                if ( string.IsNullOrEmpty(field.Description) is false )
                                 {
-                                    cb.AppendLine($"[Description(\"{field.description}\")]");
+                                    cb.AppendLine($"[Description(\"{field.Description}\")]");
                                 }
-                                cb.AddCode($"public {field.type.GetCSharpAliasFull()} {field.name}");
+                                cb.AddCode($"public {field.Type.GetCSharpAliasFull()} {field.Name}");
                             }
                         }
                         else
@@ -304,13 +304,13 @@ namespace TinyDataTable.Editor
                     cb.AddComment($"filed propieries");
                     foreach (var field in fields)
                     {
-                        if (field.obsolete)
+                        if (field.Obsolete)
                         {
                             cb.AppendLine("[Obsolete]");
                         }
-                        var typename = field.type.GetCSharpAliasFull();
-                        var left = $"public {typename} {field.name}";
-                        var right = $"_recordArray[Index].{field.name}";
+                        var typename = field.Type.GetCSharpAliasFull();
+                        var left = $"public {typename} {field.Name}";
+                        var right = $"_recordArray[Index].{field.Name}";
 #if true
                         cb.AddCode($"{left} => {right}");
 #else

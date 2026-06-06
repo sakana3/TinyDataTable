@@ -8,6 +8,9 @@ using UnityEditor.UIElements;
 
 namespace TinyDataTable.Editor
 {
+    /// <summary>
+    /// コンテキストメニュー周りの処理
+    /// </summary>
     public partial class DataSheetField
     {
         private ContextualMenuManipulator MakeColumHeaderManipulator(
@@ -31,7 +34,7 @@ namespace TinyDataTable.Editor
                         (action) =>
                         {
                             var info = _recordPropertyUtil.FieldInfos[index];
-                            info.obsolete = info.obsolete ? false : true;
+                            info.Obsolete = info.Obsolete ? false : true;
                             _recordPropertyUtil.FieldInfos[index] = info;
 
                             SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.FieldInfos);
@@ -39,7 +42,7 @@ namespace TinyDataTable.Editor
                         (action) =>
                         {
                             var info = _recordPropertyUtil.FieldInfos[index];
-                            return info.obsolete ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+                            return info.Obsolete ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
                         });
                   
                     evt.menu.AppendAction(
@@ -138,7 +141,7 @@ namespace TinyDataTable.Editor
                 {
                     var rect = element.worldBound;
 
-                    var nameList = _recordPropertyUtil.FieldInfos.Select(f=>f.name).ToList();
+                    var nameList = _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList();
                     
                     DataSheetFieldOrderPopup.Show(nameList,OrderChange,rect);
                 });
@@ -149,7 +152,7 @@ namespace TinyDataTable.Editor
 
         private void OrderChange(List<string> newOrder)
         {
-            var newList = newOrder.Select(n => _recordPropertyUtil.FieldInfos.FirstOrDefault(f => f.name == n)).ToList();
+            var newList = newOrder.Select(n => _recordPropertyUtil.FieldInfos.FirstOrDefault(f => f.Name == n)).ToList();
             SaveDataTable.SaveScript(targetAsset, newList);
         }
 
@@ -158,22 +161,23 @@ namespace TinyDataTable.Editor
         {
             DataTableAddPropertyPopup.Show(
                 activatorRect,
-                _recordPropertyUtil.FieldInfos.Select(f=>f.name).ToList(),
+                targetAsset.BaseName,
+                _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
-                DataTablePropertyUtil.ReservWords,
+                RecordPropertyUtil.ReservWords,
                 Manager?.Assemblies,
                 (type, fieldName, isArray,description) =>
                 {
                     if (string.IsNullOrEmpty(fieldName) is false)
                     {
-                        var fields = DataTableRecordUtility.GetSerializableFields(targetAsset.RecordType);                        
+                        var fields = RecordFieldInfo.FieldsFromType(targetAsset.RecordType);                        
                         var field = new RecordFieldInfo()
                         {
-                            name = fieldName,
-                            description = description,
-                            id = 0,
-                            obsolete = false,
-                            type = type
+                            Name = fieldName,
+                            Description = description,
+                            ID = 0,
+                            Obsolete = false,
+                            Type = isArray ? type.MakeArrayType() : type
                         };
                         fields.Insert(index>=0 ? index : fields.Count ,field);
                         

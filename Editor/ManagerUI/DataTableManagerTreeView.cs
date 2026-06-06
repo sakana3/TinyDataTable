@@ -123,7 +123,7 @@ namespace TinyDataTable.Editor
                         clickCreateButton = className =>
                         {
                             var tableAsset = CreateDataTableAsset(className);
-                            treeView.InsertNewTree(-1,className,tableAsset);
+                            treeView.InsertNewTree(-1,className,tableAsset,true);
                         }
                     };
                     // 1. ボタンの左上を (0, 0) とした相対座標

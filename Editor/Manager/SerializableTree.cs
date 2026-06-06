@@ -14,6 +14,7 @@ namespace TinyDataTable
             public string Name;
             public ITEM Item;
             public int Parent;
+            public bool IsFolder;
 
             public int CompareTo(Node other)
             {
@@ -23,8 +24,6 @@ namespace TinyDataTable
                 }
                 return 1;
             }
-            
-            public bool IsFolder => Item == null;
         }
         [Serializable]
         public class TreeNode
@@ -61,7 +60,7 @@ namespace TinyDataTable
                 foreach (var node in nodes)
                 {
                     var i = flatTree.Count;
-                    flatTree.Add( new Node(){ Name = node.node.Name, Parent = parentID, Item = node.node.Item } );
+                    flatTree.Add( new Node(){ Name = node.node.Name, Parent = parentID, Item = node.node.Item,IsFolder = node.node.IsFolder} );
                     FlattenTree( node.children , i );
                 }
             }
