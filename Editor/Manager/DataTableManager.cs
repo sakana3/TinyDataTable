@@ -1,9 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System;
-using System.Diagnostics;
 using System.Linq;
-using Debug = UnityEngine.Debug;
 
 namespace TinyDataTable.Editor
 {
@@ -17,14 +15,14 @@ namespace TinyDataTable.Editor
     {
         public enum DataType
         {
+            Manual,
             Resources,
-            Addresable
         }
 
         [SerializeField] public DataType dataType;
         [SerializeField] public string RootPath;
         [SerializeField] public string DefaultNamespace;
-        [SerializeField] public int MaxRow = 1000;
+        [SerializeField] public int RowLimit = 1000;
         [SerializeField] public DataTableTree Tree = new();
         [SerializeField] public string TablesPath;
         [SerializeField] public string ScriptsPath;
@@ -39,8 +37,16 @@ namespace TinyDataTable.Editor
             this.dataType = dataType;
             this.RootPath = RootPath;
             this.DefaultNamespace = DefaultNamespace;
-            this.TablesPath = $"Assets\\{RootPath}\\Tables";
-            this.ScriptsPath = $"Assets\\{RootPath}\\Scripts";
+            if (dataType == DataType.Manual)
+            {
+                this.TablesPath = $"Assets\\{RootPath}\\Tables";
+                this.ScriptsPath = $"Assets\\{RootPath}\\Scripts";
+            }
+            else
+            {
+                this.TablesPath = $"Assets\\{RootPath}\\Resources\\TinyDataTables";
+                this.ScriptsPath = $"Assets\\{RootPath}\\Scripts";
+            }
         }
 
         public static void MakeDirectory(string directory)

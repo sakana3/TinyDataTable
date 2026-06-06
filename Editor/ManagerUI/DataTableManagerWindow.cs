@@ -36,7 +36,6 @@ namespace TinyDataTable.Editor
                     dataTableManager = AssetDatabase.LoadAssetAtPath<DataTableManager>(path);
                 }
             }
-
         }
         
         public void CreateGUI()

@@ -48,9 +48,9 @@ namespace TinyDataTable.Editor
             Add(ScriptsPathTextField);
 
             //Root Path
-            var maxRowField = new IntegerField("Max Row");
+            var maxRowField = new IntegerField("Row Limit");
             maxRowField.Bind(so);
-            maxRowField.bindingPath = "MaxRow";
+            maxRowField.bindingPath = nameof(DataTableManager.RowLimit);
             Add(maxRowField);
             
             //Assemblies

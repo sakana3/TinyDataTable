@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+#if USE_ADDRESSABLES
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 
 namespace TinyDataTable.Editor
 {
@@ -163,3 +163,5 @@ namespace TinyDataTable.Editor
         }
     }
 }
+
+#endif

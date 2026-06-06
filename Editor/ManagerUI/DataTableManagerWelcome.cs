@@ -12,7 +12,7 @@ namespace TinyDataTable.Editor
 
         private TextField textInput1;
         private TextField textInput2;
-        private DataTableManager.DataType dataType = DataTableManager.DataType.Resources;
+        private DataTableManager.DataType dataType = DataTableManager.DataType.Manual;
         
         public Action<DataTableManager> OnClickStart;
         
@@ -34,26 +34,36 @@ namespace TinyDataTable.Editor
             root.style.marginLeft = 16;
             root.style.marginRight = 16;
             
-            var label = new Label("Welcome to the Tiny Data Table");
+            var label = new Label("Welcome to the T.I.N.Y Data Table");
             label.style.alignSelf = Align.Center;
             label.style.fontSize = 24;
             root.Add(label);
             AddSpace(root, 20);
             AddLabel(root, "First. Please make changes if there are any necessary items.");
             AddSpace(root, 20);
-            
+
             var toggleGroup = new ToggleButtonGroup("Data type");
-            var button1 = new Button() { text = "Resources" };
-            button1.clicked += () => { dataType = DataTableManager.DataType.Resources; };
-            toggleGroup.Add(button1);
-            var button2 = new Button() { text = "Addresable" };
-            button2.clicked += () => { dataType = DataTableManager.DataType.Addresable; };
+            
+#if USE_ADDRESSABLES            
+            var button2 = new Button() { text = "Manual(Addressables)" };
+#else
+            var button2 = new Button() { text = "Manual" };
+#endif
             toggleGroup.Add(button2);
+            
+            var button1 = new Button() { text = "Resources" };
+            toggleGroup.Add(button1);
+
+            toggleGroup.RegisterValueChangedCallback(state =>
+            {
+                dataType = state.newValue[0] ? DataTableManager.DataType.Manual : DataTableManager.DataType.Resources;
+            });
+            
             toggleGroup.value = new ToggleButtonGroupState(1,2);
             root.Add(toggleGroup);
-            
+
             textInput1 = AddText(root,"Root Path", "TinyDataTable");
-            textInput2 = AddText(root,"ID namespace", "ID");
+            textInput2 = AddText(root,"Table namespace", "TBL");
 
             AddSpace(root,16);
             

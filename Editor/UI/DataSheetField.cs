@@ -38,7 +38,7 @@ namespace TinyDataTable.Editor
             
             // 拡張子 (.uss) を含めて指定します
             var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(DataSheetField).Assembly);
-            string ussPath = $"Packages/{packageInfo.assetPath}/Editor/Assets/UIElement/TinyDataTableMultiColumListViewStyle.uss";
+            string ussPath = $"{packageInfo.assetPath}/Editor/Assets/UIElement/TinyDataTableMultiColumListViewStyle.uss";
             StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
             if (stylesheet != null)
             {
@@ -66,7 +66,7 @@ namespace TinyDataTable.Editor
                 showAlternatingRowBackgrounds = AlternatingRowBackground.All,
                 showBoundCollectionSize = false,
 //                showFoldoutHeader = true,
-                selectionType = IsStructureMode ? SelectionType.Multiple : SelectionType.None
+                selectionType = IsStructureMode ? SelectionType.Multiple : SelectionType.Single
             };
             _multiColumnListView = listView;
             listView.columns.reorderable = false;
@@ -260,9 +260,10 @@ namespace TinyDataTable.Editor
                     if (iRow > 0)
                     {
                         var label = new Label();
-                        label.text =$"{iRow - 1}";
+                        label.text =$"{iRow }";
                         label.style.unityTextAlign = TextAnchor.MiddleCenter;
                         label.AddManipulator( MakeRowIndexManipulator(label,iRow) );
+                        label.style.flexGrow = 1.0f ;
                         e.style.backgroundColor = rowIDList[idx].isObsolete?_obsoleteColor:new StyleColor();                        
                         e.Clear();
                         e.Add(label);
@@ -451,7 +452,7 @@ namespace TinyDataTable.Editor
             // 編集終了（Enterキー or フォーカス外れ）
             TableSizeField.RegisterCallback<FocusOutEvent>(evt =>
             {
-                _recordPropertyUtil.ResizeRow( Math.Min((int)TableSizeField.value+1,Manager.MaxRow+1) );
+                _recordPropertyUtil.ResizeRow( Math.Min((int)TableSizeField.value+1,Manager.RowLimit+1) );
                 SetupRows(_multiColumnListView);
                 _multiColumnListView.ClearSelection();
                 _multiColumnListView.Rebuild();                

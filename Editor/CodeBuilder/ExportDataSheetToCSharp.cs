@@ -51,10 +51,10 @@ namespace TinyDataTable.Editor
                     {
                         cb.AppendLine("[Obsolete]");
                     }
-                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<ID.Struct.{className}>", isPartial: true))
+                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{namespaceName}.Struct.{className}>", isPartial: true))
                     {
                         cb.AppendLine($"public override Type IdentifierType => typeof({namespaceName}.{className});");
-                        cb.AppendLine($"public override Type RecordType => typeof(ID.Struct.{className});");
+                        cb.AppendLine($"public override Type RecordType => typeof({namespaceName}.Struct.{className});");
                         cb.AppendLine($"public override string BaseName => \"{className}\";");
                     }                    
                 }
@@ -123,7 +123,7 @@ namespace TinyDataTable.Editor
                 }
                 cb.AppendLine();                
                 
-                string enumName = $"ID.Enum.{className}";
+                string enumName = $"{namespaceName}.Enum.{className}";
                 if (isObsolete)
                 {
                     cb.AppendLine("[Obsolete]");
@@ -138,10 +138,10 @@ namespace TinyDataTable.Editor
 
                     //プライベートメンバー
                     cb.AddComment("Private member");
-                    using (cb.BeginBlock($"private static ID.Struct.{className}[] _recordArray"))
+                    using (cb.BeginBlock($"private static {namespaceName}.Struct.{className}[] _recordArray"))
                     {
                         cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
-                        cb.AddCode($"get => ID.Asset.{recordClassName}.Instance.Records");
+                        cb.AddCode($"get => {namespaceName}.Asset.{recordClassName}.Instance.Records");
                     }
                     
                     if (string.IsNullOrEmpty(addressName) is false)

@@ -23,6 +23,7 @@
 
 }
 
+
 /* ネストされたListView（もしあれば）の選択行はデフォルトに戻す、または別の色にする */
 .unity-multi-column-view__cell .unity-collection-view__item--selected {
     background-color: #2C5D87; /* デフォルトっぽい色、または透明 */

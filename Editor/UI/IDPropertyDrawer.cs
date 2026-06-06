@@ -6,9 +6,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEditor.IMGUI.Controls;
-using UnityEditor.Rendering;
 
 namespace TinyDataTable.Editor
 {
@@ -32,7 +30,7 @@ namespace TinyDataTable.Editor
                     string enumName = string.Empty;
                     try
                     {
-                        enumName = prop.GetEnumName<T>();
+                        enumName = GetEnumName(prop);
                     }
                     catch (Exception )
                     {
@@ -61,7 +59,7 @@ namespace TinyDataTable.Editor
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.Label(preferredLabel, GUILayout.Width(EditorGUIUtility.labelWidth));
                     Rect rect = EditorGUILayout.GetControlRect();
-                    guiContext.text = prop.GetEnumName<T>();
+                    guiContext.text = GetEnumName(prop);
                     if (EditorGUI.DropdownButton(rect,guiContext, FocusType.Keyboard))
                     {
                         PopupEnumList(rect, prop, property.displayName);
@@ -89,6 +87,8 @@ namespace TinyDataTable.Editor
             );
             dropdown.Show(rect);
         }
+        
+        public static string GetEnumName( SerializedProperty property) => property.enumNames[property.enumValueIndex];
         
 #if false        
         public override VisualElement CreatePropertyGUI(SerializedProperty property)

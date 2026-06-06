@@ -289,6 +289,7 @@ namespace TinyDataTable.Editor
         
         private static string GetAddressFromObject(UnityEngine.Object obj)
         {
+#if USE_ADDRESSABLES            
             if (obj == null) return null;
 
             string path = AssetDatabase.GetAssetPath(obj);
@@ -302,7 +303,7 @@ namespace TinyDataTable.Editor
             {
                 return entry.address; // アドレスを返す
             }
-
+#endif
             return null; // Addressableではない
         }
                
@@ -374,7 +375,7 @@ namespace TinyDataTable.Editor
             var t = AssetDatabase.CreateFolder(parentFolder, newFolder);
         }
         
-
+#if USE_ADDRESSABLES
         public static bool CheckNeedEnsureAddressable(UnityEngine.Object asset , bool setAddressIfNotEntry)
         {
             if (asset == null) return false;
@@ -409,6 +410,6 @@ namespace TinyDataTable.Editor
             
             return entry == null;
         }        
-        
+#endif        
     }
 }

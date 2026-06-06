@@ -37,17 +37,32 @@ namespace TinyDataTable.Editor
 
         private void CreateGUI(SerializedObject so)
         {
-            var assetField = new ObjectField();
-            assetField.objectType = typeof(DataTableRecordBase);
-            assetField.value = asset;
-            assetField.SetEnabled(false);
-            MakeMargine(assetField);            
-            Add(assetField);          
-            
+            {
+                var assetGroup = new VisualElement();
+                assetGroup.style.flexDirection = FlexDirection.Row;
+                Add(assetGroup);
+                MakeMargine(assetGroup);
+                
+                var assetField = new ObjectField();
+                assetField.name = "Asset";
+                assetField.objectType = typeof(DataTableRecordBase);
+                assetField.value = asset;
+                assetField.SetEnabled(false);
+                assetGroup.Add(assetField);
+
+                MonoScript script = MonoScript.FromScriptableObject(asset);
+                var classField = new ObjectField();
+//                classField.objectType = typeof(DataTableRecordBase);
+                classField.value = script;
+                classField.SetEnabled(false);
+                assetGroup.Add(classField);
+            }
+
+#if USE_ADDRESSABLES            
             var addressableElement = new AddressableElement(asset);
             MakeMargine(addressableElement);
             Add(addressableElement);
-            
+#endif
             var propGroup = new VisualElement();
             propGroup.style.flexDirection = FlexDirection.Row;
             MakeMargine(propGroup);            
@@ -77,26 +92,6 @@ namespace TinyDataTable.Editor
             obsoleteField.BindProperty(so.FindProperty("_isObsolete"));
             buttonGroup.Add(obsoleteField);
 
-#if false            
-            var scriptProp = so.FindProperty("classScript");
-            if (scriptProp.objectReferenceValue != null)
-            {
-                var classGroup = new VisualElement();
-                classGroup.style.flexDirection = FlexDirection.Row;
-                root.Add(classGroup);                
-                
-                var typeNameField = new PropertyField(so.FindProperty("classType"));
-                typeNameField.SetEnabled(false);
-                typeNameField.style.flexGrow = 1;
-                classGroup.Add(typeNameField);            
-                
-                var classField = new ObjectField();
-                classField.BindProperty(scriptProp);
-                classField.style.flexGrow = 1;
-                classField.SetEnabled(false);
-                classGroup.Add(classField);
-            }
-#endif            
             exportButton = new Button()
             {
                 text = "Rebuild",
@@ -104,7 +99,7 @@ namespace TinyDataTable.Editor
             exportButton.iconImage = Background.FromTexture2D(BuildIcon);
             exportButton.clicked += () =>
             {
-                SaveDataTable.CheckNeedEnsureAddressable(asset,false);
+//                SaveDataTable.CheckNeedEnsureAddressable(asset,false);
 
                 SaveDataTable.SaveScript(asset);
             };
