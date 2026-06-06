@@ -123,6 +123,39 @@ namespace TinyDataTable.Editor
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
                 .Any(t => t.Name == className && t.Namespace == namespaceName);
-        }          
+        }
+
+        public static readonly Dictionary<Type, string> TypeAliases = new()
+        {
+            { typeof(bool), "bool" },
+            { typeof(byte), "byte" },
+            { typeof(sbyte), "sbyte" },
+            { typeof(char), "char" },
+            { typeof(decimal), "decimal" },
+            { typeof(double), "double" },
+            { typeof(float), "float" },
+            { typeof(int), "int" },
+            { typeof(uint), "uint" },
+            { typeof(long), "long" },
+            { typeof(ulong), "ulong" },
+            { typeof(short), "short" },
+            { typeof(ushort), "ushort" },
+            { typeof(object), "object" },
+            { typeof(string), "string" },
+            { typeof(void), "void" }
+        };
+        
+        // C#の別名を取得する拡張メソッド
+        public static string GetCSharpAlias(this Type type)
+        {
+            // 辞書にあれば別名を返し、なければ通常の本名（Name）を返す
+            return TypeAliases.TryGetValue(type, out var alias) ? alias : type.Name;
+        }
+        public static string GetCSharpAliasFull(this Type type)
+        {
+            // 辞書にあれば別名を返し、なければ通常の本名（Name）を返す
+            return TypeAliases.TryGetValue(type, out var alias) ? alias : type.FullName;
+        }
+        
     }
 }

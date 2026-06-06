@@ -75,15 +75,20 @@ namespace TinyDataTable.Editor
             var dataProp = RecordProperty;
             var headerProp = HeaderProperty;
             
-            var idx = index >= 0 ? index : headerProp.   arraySize;
+            var idx = index >= 0 ? index : headerProp.arraySize;
 
             dataProp.InsertArrayElementAtIndex(idx);
             headerProp.InsertArrayElementAtIndex(idx);
 
-            var newHeaderProp = headerProp.GetArrayElementAtIndex(idx);
+            var tmpName = $"record_{idx:0000}";
+            while (CheckName(tmpName) == false)
+            {
+                tmpName += "_";
+            }
             
+            var newHeaderProp = headerProp.GetArrayElementAtIndex(idx);
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
-            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = $"record_{idx - 1:0000}";
+            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = tmpName;
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
 
             _serializedObject.ApplyModifiedProperties();
@@ -121,7 +126,7 @@ namespace TinyDataTable.Editor
         }
         
 
-        public void ResizeRow(uint size)
+        public void ResizeRow(int size)
         {
             var recordProp = RecordProperty;
             var headerProp = HeaderProperty;                      
@@ -130,7 +135,7 @@ namespace TinyDataTable.Editor
                 return;
             }
 
-            while (headerProp.arraySize != size)
+            while (headerProp.arraySize != size )
             {
                 if (headerProp.arraySize < size)
                 {
@@ -138,18 +143,16 @@ namespace TinyDataTable.Editor
                     headerProp.InsertArrayElementAtIndex(index);
                     var newHeaderProp = headerProp.GetArrayElementAtIndex(index);
 
+                    var tmpName = $"record_{index - 1:0000}";
+
+                    while (CheckName(tmpName) == false)
+                    {
+                        tmpName += "_";
+                    }
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = $"record_{index - 1:0000}";
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = tmpName;
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.description)).stringValue = "";
-
-                    //TODO: 名前のチェックちゃんとやる
-/*
-                    while (CheckName(property, nameProp) == false)
-                    {
-                        nameProp.stringValue += "_";
-                    }
-*/
                 }
                 else
                 {
@@ -253,7 +256,7 @@ namespace TinyDataTable.Editor
                     var isObs = header.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete));
                     idList.Add((idProp.intValue,nameProp.stringValue,isObs.boolValue));
                 }
-            }            
+            }
             return idList;
         }
         
@@ -264,9 +267,35 @@ namespace TinyDataTable.Editor
                 .FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name));
             return nameProp;
         }        
+
+        public bool CheckName(string name)
+        {
+            //クラスと同じ名前は付けられない
+            if (TargeTableAsset.BaseName == name)
+            {
+                return false;
+            }
+
+            foreach (var header in TargeTableAsset.Headers)
+            {
+                if (header.name == name)
+                {
+                    return false;
+                }
+            }
+
+            foreach (var recordFieldInfo in FieldInfos)
+            {
+                if (recordFieldInfo.name == name)
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
     }
-    
-    
+ 
     public static class DataTablePropertyUtil
     {
 

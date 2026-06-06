@@ -45,6 +45,7 @@ namespace TinyDataTable.Editor
             {
                 this.styleSheets.Add(stylesheet);
             }
+
   
             _multiColumnListView = CreateListView();
             Add(_multiColumnListView);
@@ -452,7 +453,10 @@ namespace TinyDataTable.Editor
             // 編集終了（Enterキー or フォーカス外れ）
             TableSizeField.RegisterCallback<FocusOutEvent>(evt =>
             {
-                _recordPropertyUtil.ResizeRow(TableSizeField.value+1);
+                _recordPropertyUtil.ResizeRow( Math.Min((int)TableSizeField.value+1,Manager.MaxRow+1) );
+                SetupRows(_multiColumnListView);
+                _multiColumnListView.ClearSelection();
+                _multiColumnListView.Rebuild();                
             });
 
             //追加ボタン

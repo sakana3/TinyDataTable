@@ -28,28 +28,6 @@ namespace TinyDataTable.Editor
         public List<string> idNames {set; get; }= new List<string>();
         public List<string> reservNames {set; get; }= new List<string>();
         
-        private static Type[] types = new []
-        {
-            typeof(int),
-            typeof(float),
-            typeof(bool),
-            typeof(string),
-            typeof(long),
-            typeof(double),
-            typeof(Color),
-            typeof(Vector2),
-            typeof(Vector3),
-            typeof(Vector4),
-            typeof(Quaternion),
-            typeof(Rect),
-            typeof(Bounds),
-            typeof(AnimationCurve),
-            typeof(Gradient),
-            typeof(Sprite),
-        };
-
-
-        
         public DataTableAddPropertyPopup(string[] assemblys,Action<Type, string, bool,string> onAdd)
         {
             _assemblys = assemblys;
@@ -151,7 +129,7 @@ namespace TinyDataTable.Editor
                     GUILayout.Label("Field type", GUILayout.Width(120));
                     Rect rect = EditorGUILayout.GetControlRect();
                     rect.width -= 32;
-                    if (EditorGUI.DropdownButton(rect, new GUIContent(PropertyType.Name), FocusType.Keyboard))
+                    if (EditorGUI.DropdownButton(rect, new GUIContent(PropertyType.GetCSharpAlias()), FocusType.Keyboard))
                     {
                         var state = new AdvancedDropdownState();                        
                         var dropdown = new TypeSelectorDropdown(state, _assemblys, (selectedType) => 

@@ -46,6 +46,12 @@ namespace TinyDataTable.Editor
             ScriptsPathTextField.Bind(so);
             ScriptsPathTextField.bindingPath = "ScriptsPath";
             Add(ScriptsPathTextField);
+
+            //Root Path
+            var maxRowField = new IntegerField("Max Row");
+            maxRowField.Bind(so);
+            maxRowField.bindingPath = "MaxRow";
+            Add(maxRowField);
             
             //Assemblies
             var assembliesProp = so.FindProperty("Assemblies");

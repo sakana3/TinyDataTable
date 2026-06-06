@@ -151,7 +151,7 @@ namespace TinyDataTable.Editor
                 }
             }
 
-            var item = new TypeDropdownItem(type.Name,type.FullName, type);
+            var item = new TypeDropdownItem(type.GetCSharpAlias(), type);
             parent.AddChild(item);
         }
 
@@ -168,7 +168,7 @@ namespace TinyDataTable.Editor
         {
             public Type Type { get; }
 
-            public TypeDropdownItem(string name,string fullName, Type type) : base(name)
+            public TypeDropdownItem(string name, Type type) : base(name)
             {
                 Type = type;
                 icon = EditorGUIUtility.ObjectContent(null, type).image as Texture2D; // 型のアイコンがあれば設定

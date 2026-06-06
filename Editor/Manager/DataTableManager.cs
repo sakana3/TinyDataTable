@@ -24,6 +24,7 @@ namespace TinyDataTable.Editor
         [SerializeField] public DataType dataType;
         [SerializeField] public string RootPath;
         [SerializeField] public string DefaultNamespace;
+        [SerializeField] public int MaxRow = 1000;
         [SerializeField] public DataTableTree Tree = new();
         [SerializeField] public string TablesPath;
         [SerializeField] public string ScriptsPath;

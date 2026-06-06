@@ -82,7 +82,7 @@ namespace TinyDataTable.Editor
                                 {
                                     cb.AppendLine($"[Description(\"{field.description}\")]");
                                 }
-                                cb.AddCode($"public {field.type.FullName} {field.name}");
+                                cb.AddCode($"public {field.type.GetCSharpAliasFull()} {field.name}");
                             }
                         }
                         else
@@ -308,7 +308,7 @@ namespace TinyDataTable.Editor
                         {
                             cb.AppendLine("[Obsolete]");
                         }
-                        var typename = field.type.FullName;
+                        var typename = field.type.GetCSharpAliasFull();
                         var left = $"public {typename} {field.name}";
                         var right = $"_recordArray[Index].{field.name}";
 #if true

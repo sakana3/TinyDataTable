@@ -17,59 +17,45 @@ namespace TinyDataTable.Editor
             var manipulator = new ContextualMenuManipulator((evt) =>
             {
                 // メニュー項目を追加
-/*
                     evt.menu.AppendAction(
                         "Add Field",
                         (action) =>
                         {
-                            OpenAddFieldPopup(property,index, action.eventInfo.mousePosition);
+                            var rect = element.worldBound; //action.eventInfo.mousePosition
+                            OpenAddFieldPopup(index+1,rect );
                         });
-*/
-                /*
+
                     evt.menu.AppendAction(
                         
                         "Obsolete Field",
                         (action) =>
                         {
-                            var obsolete = DataSheetPropertyUtility.ColumObsolete(property, index);
-                            obsolete.boolValue = !obsolete.boolValue;
-                            property.serializedObject.ApplyModifiedProperties();
-                            element.style.backgroundColor =  obsolete.boolValue?_obsoleteColor:new StyleColor();
-                            _multiColumnListView.RefreshItems();
+                            var info = _recordPropertyUtil.FieldInfos[index];
+                            info.obsolete = info.obsolete ? false : true;
+                            _recordPropertyUtil.FieldInfos[index] = info;
+
+                            SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.FieldInfos);
                         },
                         (action) =>
                         {
-                            var obsolete = DataSheetPropertyUtility.ColumObsolete(property, index);
-                            return obsolete.boolValue ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
-                        });]
-*/                        
-/*                
+                            var info = _recordPropertyUtil.FieldInfos[index];
+                            return info.obsolete ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+                        });
+                  
                     evt.menu.AppendAction(
                         "Remove Field",
                         (action) =>
                         {
-                            DataSheetPropertyUtility.RemoveColum(property, index);
-//                            fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(_dataSheetProperty);   
-                            
-                            //消したはずのセルのコールバックが走ってしまうので一旦nullにする
-                            foreach (var column in _multiColumnListView.columns)
-                            {
-                                column.bindCell = null;
-                                column.makeCell = null;
-                                column.makeHeader = null;
-                            }
-                            
-                            SetupColumns(property, _multiColumnListView);
-                            _multiColumnListView.RefreshItems();
-                            _multiColumnListView.Rebuild();
+                            var newInfos = _recordPropertyUtil.FieldInfos.ToList();
+                            newInfos.RemoveAt(index);
+                            SaveDataTable.SaveScript(targetAsset, newInfos);
                         },
                         (action) =>
                         {
-                            var obsolete = DataSheetPropertyUtility.ColumObsolete(property, index);
-                            return obsolete.boolValue ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
+                            var obsolete = _recordPropertyUtil.RowHeaders[index].obsolete;
+                            return obsolete ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
                         });
                     evt.menu.AppendSeparator();
-*/                    
             });  
             return manipulator;
         }
@@ -189,26 +175,9 @@ namespace TinyDataTable.Editor
                             obsolete = false,
                             type = type
                         };
-                        fields.Add(field);
+                        fields.Insert(index>=0 ? index : fields.Count ,field);
                         
                         SaveDataTable.SaveScript(targetAsset, fields);
-
-#if false
-                        var sheet = DataSheetPropertyUtility.GetValue(property) as DataSheet;
-                        if (sheet != null)
-                        {
-                            sheet.AddField(type, fieldName, isArray);
-                            property.serializedObject.Update();
-                            property.serializedObject.ApplyModifiedProperties();
-                            
-//                            fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(_dataSheetProperty);   
-                            
-                            var newIndex = sheet.record.Header.fieldInfos.Length;
-                            var newColumn = MakePropertyColumn(property, sheet.record.Header.fieldInfos.Length-1);
-                            _multiColumnListView.columns.Insert( _multiColumnListView.columns.Count - 1, newColumn );
-                            _multiColumnListView.RefreshItems();
-                        }
-#endif
                     }
                 });
         }

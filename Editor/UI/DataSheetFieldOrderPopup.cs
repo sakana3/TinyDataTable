@@ -41,8 +41,17 @@ namespace TinyDataTable.Editor
             
             listView.reorderMode = ListViewReorderMode.Animated;
             listView.reorderable = true;
-            listView.makeItem = () => new Label();
-            listView.bindItem = (element, i) => (element as Label).text = fieldList[i];
+            listView.makeItem = () => new VisualElement();
+            listView.bindItem = (element, i) =>
+            {
+                element.Clear();
+                var label = new Label()
+                {
+                    text = fieldList[i],
+                };
+                label.style.flexGrow = 1;
+                element.Add(label);
+            };
             
             listView.itemsSource = fieldList;
             
