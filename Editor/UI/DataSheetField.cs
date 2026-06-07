@@ -317,11 +317,19 @@ namespace TinyDataTable.Editor
                             .FindPropertyRelative(_recordPropertyUtil.FieldInfos[iColum].Name);
                         if (prop != null)
                         {
-                            var propertyField = new PropertyField(prop, string.Empty);
-                            propertyField.BindProperty(prop);
-                            propertyField.AddToClassList("no-frame-field");
+                            if (prop.isArray && prop.propertyType == SerializedPropertyType.Generic)
+                            {
+                                var arrayField = new TinyReordableListField( prop);                                
+                                e.Add(arrayField);
+                            }
+                            else
+                            {
+                                var propertyField = new PropertyField(prop, string.Empty);
+                                propertyField.BindProperty(prop);
+                                propertyField.AddToClassList("no-frame-field");
 //                    propertyField.AddToClassList("right-align-field");
-                            e.Add(propertyField);
+                                e.Add(propertyField);
+                            }
                         }
                     }
                 },
