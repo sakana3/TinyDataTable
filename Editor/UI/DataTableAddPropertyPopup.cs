@@ -12,7 +12,7 @@ namespace TinyDataTable.Editor
     // ポップアップウィンドウのコンテンツ
     public class DataTableAddPropertyPopup : PopupWindowContent
     {
-        private readonly Action<Type, string, bool,string> _onAdd;
+        private readonly Action<RecordFieldInfo> _onAdd;
         private Vector2 _windowSize = new Vector2(300, 200);
 
         public string PropertyName { set; get; } = "";
@@ -25,11 +25,13 @@ namespace TinyDataTable.Editor
         private Button _decideButton;
         private string[] _assemblys;
         private string _baseClassName;
+        private List<string> _customAttributes = new List<string> { };
         private IReadOnlyCollection<string> propNames  {set; get; } = new List<string>();
         private IReadOnlyCollection<string> idNames {set; get; }= new List<string>();
         private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
+        private VisualElement attributeRoot;
         
-        public DataTableAddPropertyPopup(string[] assemblys,Action<Type, string, bool,string> onAdd)
+        public DataTableAddPropertyPopup(string[] assemblys,Action<RecordFieldInfo> onAdd)
         {
             _assemblys = assemblys;
             _onAdd = onAdd;
@@ -43,7 +45,26 @@ namespace TinyDataTable.Editor
         // ウィンドウが開いたときの初期化        
         public override void OnOpen()
         {
-            var root = editorWindow.rootVisualElement;
+//            var root = editorWindow.rootVisualElement;
+            
+            var root = new ScrollView(ScrollViewMode.Vertical);
+            root.style.flexGrow = 1; 
+            root.style.height = Length.Percent(100);            
+            root.style.width = Length.Percent(100);            
+            
+            var container = root.contentContainer;
+            container.style.height = StyleKeyword.Auto;
+            container.style.width = StyleKeyword.Auto;            
+
+            editorWindow.rootVisualElement.Add(root);           
+            
+            root.contentContainer.RegisterCallback<GeometryChangedEvent>( 
+                evt =>
+                {
+                    var size = evt.newRect.size;
+                    size.x = 300;
+                    _windowSize = size;
+                });
             root.Add(new Label("Add Field"));
 
             root.Add(new ToolbarSpacer());
@@ -53,7 +74,6 @@ namespace TinyDataTable.Editor
             {
                 label = "Field Name",
                 value = PropertyName,
-                
             };
             textField.RegisterValueChangedCallback(evt => OnClassNameChangeCallback(textField,evt));
             textField.textEdition.placeholder = "Input field name...";　
@@ -72,13 +92,18 @@ namespace TinyDataTable.Editor
             var typeSelectButton = MakeTypeSelectorPopup();
             root.Add( typeSelectButton );
     
+            //Is Array
             var boolField = new UnityEngine.UIElements.Toggle("Is Array")
             {
                 value = IsArray,
             };
             boolField.RegisterValueChangedCallback(evt => IsArray = evt.newValue);
             root.Add( boolField );
-
+            
+            attributeRoot = new VisualElement();
+            OnTypeSelectChangeCallback(PropertyType);
+            root.Add(attributeRoot);
+            
             var DescriptionField = new TextField("Description")
             {
 
@@ -110,7 +135,7 @@ namespace TinyDataTable.Editor
             IReadOnlyCollection<string> idNames,
             IReadOnlyCollection<string> reservNames,
             string[] assermblys,
-            Action<Type, string, bool,string> onAdd)
+            Action<RecordFieldInfo> onAdd)
         {
             var popup = new DataTableAddPropertyPopup(assermblys,onAdd)
             {
@@ -138,6 +163,7 @@ namespace TinyDataTable.Editor
                         var dropdown = new TypeSelectorDropdown(state, _assemblys, (selectedType) => 
                         {
                             PropertyType = selectedType;
+                            OnTypeSelectChangeCallback(selectedType);
                         });
                         dropdown.Show(rect);                        
                     }
@@ -160,6 +186,7 @@ namespace TinyDataTable.Editor
                 {
                     PropertyType = selectedType;
                     popup.buttonText.text = PropertyType.Name;
+                    OnTypeSelectChangeCallback(selectedType);
                 });
 
                 dropdown.Show(popup.button.worldBound);
@@ -172,6 +199,22 @@ namespace TinyDataTable.Editor
         {
             PropertyName = evt.newValue;
             CheckClassName();
+        }
+
+        private AttributeOptionBase[] attributeOptions = Array.Empty<AttributeOptionBase>();
+        
+        private void OnTypeSelectChangeCallback( Type type)
+        {
+            attributeRoot.Clear();
+            attributeOptions = AttributeOptionBase.FindAttributeOptions(type);
+            foreach (var option in attributeOptions)
+            {
+                var element = option.MakeUI();
+                if (element != null)
+                {
+                    attributeRoot.Add(element);
+                }
+            }
         }
 
         private void CheckClassName()
@@ -229,7 +272,19 @@ namespace TinyDataTable.Editor
         
         private void InvokeOnAdd()
         {
-            _onAdd(PropertyType, PropertyName, IsArray,Description);
+            RecordFieldInfo info = new()
+            {
+                Type = !IsArray ? PropertyType : PropertyType.MakeArrayType(),
+                Description = Description,
+                Name = PropertyName,
+            };
+            info.CustomAttributes = attributeOptions
+                .Where(t => t.IsEnable)
+                .Select(t => t.ToCode())
+                .Where(t => !string.IsNullOrEmpty(t))
+                .ToArray();
+            
+            _onAdd(info);
             editorWindow.Close();
         }
     }

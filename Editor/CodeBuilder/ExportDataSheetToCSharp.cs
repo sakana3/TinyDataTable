@@ -64,24 +64,13 @@ namespace TinyDataTable.Editor
                 cb.AddComment("Record Struct");                
                 using (cb.BeginNamespace("Struct"))
                 {
-                    if (isObsolete)
-                    {
-                        cb.AppendLine("[Obsolete]");
-                    }
                     using (cb.AddAttribute("Serializable").BeginStruct(className, "public"))
                     {
                         if (fields.Any())
                         {
                             foreach (var field in fields)
                             {
-                                if (field.Obsolete)
-                                {
-                                    cb.AppendLine("[Obsolete(\"This field is obsolete.\")]");
-                                }
-                                if ( string.IsNullOrEmpty(field.Description) is false )
-                                {
-                                    cb.AppendLine($"[Description(\"{field.Description}\")]");
-                                }
+                                cb.AddAttribute(field.ToAttributeString(true));
                                 cb.AddCode($"public {field.Type.GetCSharpAliasFull()} {field.Name}");
                             }
                         }
@@ -289,7 +278,6 @@ namespace TinyDataTable.Editor
                             {
                                 cb.AppendLine("[Obsolete]");
                             }
-
                             cb.AddCode($"public static readonly {className} {name} = new ({enumName}.{name}, {index})");
                         }
                     }
@@ -304,10 +292,8 @@ namespace TinyDataTable.Editor
                     cb.AddComment($"filed propieries");
                     foreach (var field in fields)
                     {
-                        if (field.Obsolete)
-                        {
-                            cb.AppendLine("[Obsolete]");
-                        }
+                        cb.AddAttribute(field.ToAttributeString(false));
+                        
                         var typename = field.Type.GetCSharpAliasFull();
                         var left = $"public {typename} {field.Name}";
                         var right = $"_recordArray[Index].{field.Name}";

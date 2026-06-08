@@ -18,12 +18,53 @@ namespace TinyDataTable.Editor
     {
         public string Name { set; get; }
         public string Description { set; get; }
-        public int ID { set; get; }
         public bool Obsolete { set; get; }
         public Type Type { set; get; }
+        public string[] CustomAttributes { set; get; }
 
         public bool IsArray => Type.IsArray;
+        public bool IsValid => Type != null && string.IsNullOrEmpty(Name) is false;
+        
+        public string ToAttributeString( bool hasCustomAttributes )
+        {
+            string str = "";
 
+            if (Obsolete)
+            {
+                if (string.IsNullOrEmpty(str) is false)
+                {
+                    str += ",";
+                }
+                str += $"Obsolete";
+            }
+            if (string.IsNullOrEmpty(Description) is false)
+            {
+                if (string.IsNullOrEmpty(str) is false)
+                {
+                    str += ",";
+                }
+                str += $"Description(\"{Description}\")";
+            }
+
+            if (hasCustomAttributes)
+            {
+                if (CustomAttributes != null && CustomAttributes.Length > 0)
+                {
+                    if (string.IsNullOrEmpty(str) is false)
+                    {
+                        str += ",";
+                    }
+
+                    foreach (var attr in CustomAttributes)
+                    {
+                        str += $"{attr},";
+                    }
+
+                    str += $"CustomAttribute({string.Join(",", CustomAttributes.Select(s => $"\"{s}\""))})";
+                }
+            }
+            return str;
+        }
 
         /// <summary>
         /// フィールドを取得する
@@ -61,10 +102,10 @@ namespace TinyDataTable.Editor
                         var info = new RecordFieldInfo()
                         {
                             Name = field.Name,
-                            Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
-                            ID = 0,
+                            Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? String.Empty,
                             Obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
-                            Type =  field.FieldType
+                            Type =  field.FieldType,
+                            CustomAttributes = field.GetCustomAttribute<CustomAttributeAttribute>()?.Attributes ?? Array.Empty<string>(),
                         };
                         serializableFields.Add(info);
                     }
@@ -73,7 +114,5 @@ namespace TinyDataTable.Editor
 
             return serializableFields;
         }
-        
-        
     }
 }

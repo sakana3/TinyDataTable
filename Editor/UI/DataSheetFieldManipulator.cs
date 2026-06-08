@@ -166,19 +166,11 @@ namespace TinyDataTable.Editor
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
                 Manager?.Assemblies,
-                (type, fieldName, isArray,description) =>
+                (field) =>
                 {
-                    if (string.IsNullOrEmpty(fieldName) is false)
+                    if ( field.IsValid )
                     {
                         var fields = RecordFieldInfo.FieldsFromType(targetAsset.RecordType);                        
-                        var field = new RecordFieldInfo()
-                        {
-                            Name = fieldName,
-                            Description = description,
-                            ID = 0,
-                            Obsolete = false,
-                            Type = isArray ? type.MakeArrayType() : type
-                        };
                         fields.Insert(index>=0 ? index : fields.Count ,field);
                         
                         SaveDataTable.SaveScript(targetAsset, fields);

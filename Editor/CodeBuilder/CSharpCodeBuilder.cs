@@ -101,7 +101,10 @@ namespace TinyDataTable.Editor
         /// </summary>
         public CSharpCodeBuilder AddAttribute( string attributres )
         {
-            AppendLine($"[{attributres}]");
+            if (string.IsNullOrEmpty(attributres) is false)
+            {
+                AppendLine($"[{attributres}]");
+            }
             return this;
         }        
         
