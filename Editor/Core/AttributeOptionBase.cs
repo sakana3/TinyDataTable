@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using System.Globalization;
+using JetBrains.Annotations;
 
 namespace TinyDataTable.Editor
 {
@@ -14,7 +15,8 @@ namespace TinyDataTable.Editor
         public abstract string Title { get; }
         public abstract string[] ToCode();
         public abstract void FromCode( Type attributeType,  string[] code );
-        protected abstract VisualElement CreateUI();
+        protected abstract void CreateUI(VisualElement root);
+        public virtual bool DefaultEnable => false;
         
         public bool IsEnable { set; get; } = false;
         VisualElement optionUI;
@@ -34,6 +36,7 @@ namespace TinyDataTable.Editor
         
         public VisualElement MakeUI()
         {
+            IsEnable = DefaultEnable;
             var root = new VisualElement();
 
             root.style.backgroundColor = new Color(0.2f,0.2f,0.2f,0.5f);
@@ -43,22 +46,20 @@ namespace TinyDataTable.Editor
             toggle.RegisterValueChangedCallback((evt) => OnChangeEnable(evt.newValue));
     
             root.Add( toggle );
-            optionUI = CreateUI();
-            if (optionUI != null)
-            {
-                root.Add(optionUI);
-                optionUI.enabledSelf = IsEnable;
-            }
+            optionUI = new VisualElement();
+            root.Add(optionUI);
+            CreateUI(optionUI);
+            OnChangeEnable(IsEnable);
 
             return root;            
         }
 
-        public static string[] ToArgs(params object[] args)
+        public static string[] ToArgStrings(params object[] args)
         {
-            return args.Select( a => ToArg(a)).ToArray();
+            return args.Select( a => ToArgString(a)).ToArray();
         }
         
-        public static string ToArg(object arg)
+        public static string ToArgString(object arg)
         {
             // null の場合は C# の null リテラル
             if (arg is null) return "null";
@@ -91,7 +92,8 @@ namespace TinyDataTable.Editor
             };
         }
 
-        public static object? FromArg(string argStr)
+        [CanBeNull]
+        public static object FromArg(string argStr)
         {
             if (string.IsNullOrWhiteSpace(argStr)) return null;
             
@@ -205,6 +207,7 @@ namespace TinyDataTable.Editor
             if( optionUI != null)
             {
                 optionUI.enabledSelf = isEnable;
+                optionUI.style.display = isEnable ? DisplayStyle.Flex : DisplayStyle.None;
             }
         }
         

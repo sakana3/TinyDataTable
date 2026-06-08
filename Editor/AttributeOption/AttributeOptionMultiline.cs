@@ -9,15 +9,21 @@ namespace TinyDataTable.Editor
     [AttributeOption( typeof(MultilineAttribute),typeof(string) )]
     public class AttributeOptionMultiline : AttributeOptionBase
     {
-        public override string Title => "Multi Line";
+        public int lines = 3;
         
-        public override string[] ToCode() => Array.Empty<string>();
+        public override string Title => "Multi Line";
+
+        public override bool DefaultEnable => false;
+
+        public override string[] ToCode() => ToArgStrings(lines);
         public override void FromCode( Type attributeType,  string[] code )
         {
         }
-        protected override VisualElement CreateUI()
+        protected override void CreateUI(VisualElement root)
         {
-            return null;
+            var minField = new IntegerField("Lines") { value = lines };
+            minField.RegisterValueChangedCallback( evt => lines = evt.newValue );
+            root.Add( minField);
         }
     }
 }
