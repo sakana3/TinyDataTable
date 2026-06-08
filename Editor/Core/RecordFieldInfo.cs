@@ -20,12 +20,12 @@ namespace TinyDataTable.Editor
         public string Description { set; get; }
         public bool Obsolete { set; get; }
         public Type Type { set; get; }
-        public string[] CustomAttributes { set; get; }
+        public (Type Type , string[] args)[] CustomAttributes { set; get; }
 
         public bool IsArray => Type.IsArray;
         public bool IsValid => Type != null && string.IsNullOrEmpty(Name) is false;
         
-        public string ToAttributeString( bool hasCustomAttributes )
+        public string ToBaseAttributeString()
         {
             string str = "";
 
@@ -45,27 +45,45 @@ namespace TinyDataTable.Editor
                 }
                 str += $"Description(\"{Description}\")";
             }
-
-            if (hasCustomAttributes)
-            {
-                if (CustomAttributes != null && CustomAttributes.Length > 0)
-                {
-                    if (string.IsNullOrEmpty(str) is false)
-                    {
-                        str += ",";
-                    }
-
-                    foreach (var attr in CustomAttributes)
-                    {
-                        str += $"{attr},";
-                    }
-
-                    str += $"CustomAttribute({string.Join(",", CustomAttributes.Select(s => $"\"{s}\""))})";
-                }
-            }
             return str;
         }
 
+        public IEnumerable<string> ToAttributesString()
+        {
+            if (CustomAttributes != null && CustomAttributes.Length > 0)
+            {
+                foreach (var attr in CustomAttributes)
+                {
+                    var attrCode = ToAttributeCodeString(attr.Type);
+                    if (attr.args == null || attr.args.Length <= 0)
+                    {
+                        var str = $"{attrCode},AttributeMetaData(typeof({attr.Type}))";
+                        yield return str;
+                    }
+                    else
+                    {
+                        var args = attr.args;
+                        var codes = attr.args.Select( t => $"\"{t}\"");
+                        var str = $"{attrCode}({string.Join(",",args)}),AttributeMetaData(typeof({attr.Type}),{string.Join(",",codes)})";
+                        yield return str;
+                    }
+                }
+            }
+        }
+
+        private string ToAttributeCodeString(Type type)
+        {
+            string input = type.FullName;
+            string suffix = "Attribute";
+
+            if (input.EndsWith(suffix))
+            {
+                // 末尾から「Attribute」の文字数分を削る
+                return input.Substring(0, input.Length - suffix.Length);
+            }
+            return input;       
+        }       
+        
         /// <summary>
         /// フィールドを取得する
         /// </summary>
@@ -105,7 +123,10 @@ namespace TinyDataTable.Editor
                             Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? String.Empty,
                             Obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
                             Type =  field.FieldType,
-                            CustomAttributes = field.GetCustomAttribute<CustomAttributeAttribute>()?.Attributes ?? Array.Empty<string>(),
+                            CustomAttributes = field
+                                .GetCustomAttributes<AttributeMetaDataAttribute>()
+                                .Select( f => f.Attribute )
+                                .ToArray()
                         };
                         serializableFields.Add(info);
                     }

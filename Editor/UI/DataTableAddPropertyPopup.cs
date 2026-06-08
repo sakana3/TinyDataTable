@@ -278,12 +278,13 @@ namespace TinyDataTable.Editor
                 Description = Description,
                 Name = PropertyName,
             };
+          
             info.CustomAttributes = attributeOptions
                 .Where(t => t.IsEnable)
-                .Select(t => t.ToCode())
-                .Where(t => !string.IsNullOrEmpty(t))
+                .Select(t => t.AttributeValue )
+                .Where(t =>t.type != null )
                 .ToArray();
-            
+     
             _onAdd(info);
             editorWindow.Close();
         }

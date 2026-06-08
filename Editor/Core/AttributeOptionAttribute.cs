@@ -9,13 +9,13 @@ namespace TinyDataTable.Editor
     public class AttributeOptionAttribute : Attribute
     {
         public Type[] TargetTypes { private set; get; }
-        public Type TargetAttributeType { private set; get; }
+        public Type AttributeType { private set; get; }
 
         public bool HasType(Type type) => TargetTypes.Contains(type);
 
-        public AttributeOptionAttribute( Type targetAttributeType,params Type[] targetTypes)
+        public AttributeOptionAttribute( Type attributeType,params Type[] targetTypes)
         {
-            TargetAttributeType = targetAttributeType;
+            AttributeType = attributeType;
             TargetTypes = targetTypes;
         }
     }

@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Reflection;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 
@@ -36,9 +37,11 @@ namespace TinyDataTable
         protected HeaderData[] _headers;
         public HeaderData[] Headers => _headers;
 
-        public virtual Type RecordType => null;
-        public virtual Type IdentifierType => null;
-        public virtual string BaseName => string.Empty;
+#if UNITY_EDITOR        
+        public Type RecordType => this.GetType().GetCustomAttribute<RecordAttribute>().RecordType;
+        public Type IdentifierType => this.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
+        public string BaseName => this.GetType().GetCustomAttribute<RecordAttribute>().BaseName;
+#endif
     }
 
     /// <summary> Represents the base class for data table records. </summary>
@@ -49,21 +52,6 @@ namespace TinyDataTable
         [SerializeField]
         private TRecord[] _records;
         public TRecord[] Records => _records;
-        
-        private void Reset()
-        {
-            _headers = new[]
-            {
-                new HeaderData()
-                {
-                    id = 0,
-                    name = "Invalid",
-                    description = string.Empty,
-                    obsolete = false
-                }
-            };
-            _records = new TRecord[1];
-        }
 
         public TRecord this[int index] => Records[index];
 
@@ -96,6 +84,21 @@ namespace TinyDataTable
             {
                 _instance = null;
             }
+        }
+        
+        private void Reset()
+        {
+            _headers = new[]
+            {
+                new HeaderData()
+                {
+                    id = 0,
+                    name = "Invalid",
+                    description = string.Empty,
+                    obsolete = false
+                }
+            };
+            _records = new TRecord[1];
         }
     }
 }

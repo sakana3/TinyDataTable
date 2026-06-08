@@ -9,14 +9,10 @@ namespace TinyDataTable.Editor
     [AttributeOption( typeof(MultilineAttribute),typeof(string) )]
     public class AttributeOptionMultiline : AttributeOptionBase
     {
-        public override string Name => "Multi Line";
-        public override float Height => 0;
+        public override string Title => "Multi Line";
         
-        public override string ToCode()
-        {
-            return "Multiline";
-        }
-        public override void FromCode( string code )
+        public override string[] ToCode() => Array.Empty<string>();
+        public override void FromCode( Type attributeType,  string[] code )
         {
         }
         protected override VisualElement CreateUI()

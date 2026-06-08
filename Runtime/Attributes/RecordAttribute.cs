@@ -15,8 +15,8 @@ namespace TinyDataTable
         // コンストラクタ
         public RecordAttribute( Type recordType , Type identifierType , string baseName )
         {
-            IdentifierType = identifierType;
             RecordType = recordType;
+            IdentifierType = identifierType;
             BaseName = baseName;
         }
     }

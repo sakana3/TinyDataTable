@@ -43,23 +43,6 @@ namespace TinyDataTable.Editor
             //Make ID
             using (cb.BeginNamespace(namespaceName))
             {
-                //ScriptableObject
-                cb.AddComment("ScriptableObject");                
-                using (cb.BeginNamespace("Asset"))
-                {
-                    if (isObsolete)
-                    {
-                        cb.AppendLine("[Obsolete]");
-                    }
-                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{namespaceName}.Struct.{className}>", isPartial: true))
-                    {
-                        cb.AppendLine($"public override Type IdentifierType => typeof({namespaceName}.{className});");
-                        cb.AppendLine($"public override Type RecordType => typeof({namespaceName}.Struct.{className});");
-                        cb.AppendLine($"public override string BaseName => \"{className}\";");
-                    }                    
-                }
-                cb.AppendLine();
-
                 //Record Struct
                 cb.AddComment("Record Struct");                
                 using (cb.BeginNamespace("Struct"))
@@ -70,7 +53,11 @@ namespace TinyDataTable.Editor
                         {
                             foreach (var field in fields)
                             {
-                                cb.AddAttribute(field.ToAttributeString(true));
+                                cb.AddAttribute(field.ToBaseAttributeString());
+                                foreach (var attr in field.ToAttributesString())
+                                {
+                                    cb.AddAttribute(attr);
+                                }
                                 cb.AddCode($"public {field.Type.GetCSharpAliasFull()} {field.Name}");
                             }
                         }
@@ -112,6 +99,23 @@ namespace TinyDataTable.Editor
                 }
                 cb.AppendLine();                
                 
+                //ScriptableObject
+                cb.AddComment("ScriptableObject");
+                using (cb.BeginNamespace("Asset"))
+                {
+                    if (isObsolete)
+                    {
+                        cb.AppendLine("[Obsolete]");
+                    }
+
+                    cb.AddAttribute($"Record(typeof({namespaceName}.Struct.{className}),typeof({namespaceName}.{className}),\"{className}\")");
+                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{namespaceName}.Struct.{className}>", isPartial: true))
+                    {
+                    }                    
+                }
+                cb.AppendLine();                
+                
+                //ID
                 string enumName = $"{namespaceName}.Enum.{className}";
                 if (isObsolete)
                 {
@@ -292,7 +296,7 @@ namespace TinyDataTable.Editor
                     cb.AddComment($"filed propieries");
                     foreach (var field in fields)
                     {
-                        cb.AddAttribute(field.ToAttributeString(false));
+                        cb.AddAttribute(field.ToBaseAttributeString());
                         
                         var typename = field.Type.GetCSharpAliasFull();
                         var left = $"public {typename} {field.Name}";
