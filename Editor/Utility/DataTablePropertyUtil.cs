@@ -18,7 +18,7 @@ namespace TinyDataTable.Editor
         public SerializedObject SerializedObject => _serializedObject;
         
         public List<DataTableRecordBase.HeaderData> RowHeaders { private set; get; }
-        public List<RecordFieldInfo> FieldInfos { private set; get; }
+        public List<SchemaInfo> SchemaInfos { private set; get; }
 
         public RecordPropertyUtil( DataTableRecordBase targeTableAsset )
         {
@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
 
         public void ReloadInfo()
         {
-            FieldInfos = RecordFieldInfo.FieldsFromType(TargeTableAsset.RecordType);
+            SchemaInfos = SchemaInfo.FieldsFromType(TargeTableAsset.RecordType);
             
             RowHeaders = GetRowProperties()
                 .Select(p => new DataTableRecordBase.HeaderData()
@@ -281,7 +281,7 @@ namespace TinyDataTable.Editor
                 return false;
             }
 
-            if (FieldInfos.Any(f => f.Type.Name == name))
+            if (SchemaInfos.Any(f => f.Type.Name == name))
             {
                 return false;
             }

@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace TinyDataTable.Editor
 {
-    public static class ExportDataSheetToCSharp
+    public static class ExportRecordToCSharp
     {
         public static string Export(
             DataTableRecordBase recordAsset,
-            IList<RecordFieldInfo> fields,
+            IList<SchemaInfo> fields,
             string className,
             string namespaceName,
             string resourcePath,
@@ -39,15 +39,23 @@ namespace TinyDataTable.Editor
             cb.AppendLine();
 
             var recordClassName = $"{className}Record";
+            string enumName = $"{recordClassName}.Enum";
+            string schemaName = $"{recordClassName}.Schema";
 
             //Make ID
             using (cb.BeginNamespace(namespaceName))
             {
-                //Record Struct
-                cb.AddComment("Record Struct");                
-                using (cb.BeginNamespace("Struct"))
+                //Record ScriptableObject
+                cb.AddComment("Record ScriptableObject");
+                if (isObsolete)
                 {
-                    using (cb.AddAttribute("Serializable").BeginStruct(className, "public"))
+                    cb.AppendLine("[Obsolete]");
+                }
+                cb.AddAttribute($"Record(typeof({schemaName}),typeof({namespaceName}.{className}),\"{className}\")");
+                using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{schemaName}>", isPartial: true))
+                {
+                    //Record Struct
+                    using (cb.AddAttribute("Serializable").BeginStruct("Schema", "public"))
                     {
                         if (fields.Any())
                         {
@@ -58,6 +66,7 @@ namespace TinyDataTable.Editor
                                 {
                                     cb.AddAttribute(attr);
                                 }
+
                                 cb.AddCode($"public {field.Type.GetCSharpAliasFull()} {field.Name}");
                             }
                         }
@@ -67,18 +76,13 @@ namespace TinyDataTable.Editor
                             cb.AppendLine($"public bool __dummy; // dummy for avoiding compile error");
                         }
                     }
-                }
-                cb.AppendLine();                
-
-                //Enum
-                cb.AddComment("ID Enum");                
-                using (cb.BeginNamespace("Enum"))
-                {
+                    cb.AppendLine();
+                    
                     if (isObsolete)
                     {
                         cb.AppendLine("[Obsolete]");
                     }
-                    using (cb.AddAttribute("Serializable").BeginEnum($"{className} : Int32"))
+                    using (cb.AddAttribute("Serializable").BeginEnum($"Enum : Int32"))
                     {
                         if (recordAsset != null)
                         {
@@ -99,24 +103,8 @@ namespace TinyDataTable.Editor
                 }
                 cb.AppendLine();                
                 
-                //ScriptableObject
-                cb.AddComment("ScriptableObject");
-                using (cb.BeginNamespace("Asset"))
-                {
-                    if (isObsolete)
-                    {
-                        cb.AppendLine("[Obsolete]");
-                    }
-
-                    cb.AddAttribute($"Record(typeof({namespaceName}.Struct.{className}),typeof({namespaceName}.{className}),\"{className}\")");
-                    using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{namespaceName}.Struct.{className}>", isPartial: true))
-                    {
-                    }                    
-                }
-                cb.AppendLine();                
-                
-                //ID
-                string enumName = $"{namespaceName}.Enum.{className}";
+                //IIdentifier
+                cb.AddComment("Identifier");
                 if (isObsolete)
                 {
                     cb.AppendLine("[Obsolete]");
@@ -126,15 +114,12 @@ namespace TinyDataTable.Editor
                            inherit: $"IIdentifier, IEquatable<{className}>, IEquatable<{enumName}>",
                            isPartial: true))
                 {
-//                    cb.AppendLine($"public static readonly Type AssetType = typeof(ID.Asset.{className}Record);");
-//                    cb.AppendLine();
-
                     //プライベートメンバー
                     cb.AddComment("Private member");
-                    using (cb.BeginBlock($"private static {namespaceName}.Struct.{className}[] _recordArray"))
+                    using (cb.BeginBlock($"private static {schemaName}[] _recordArray"))
                     {
                         cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
-                        cb.AddCode($"get => {namespaceName}.Asset.{recordClassName}.Instance.Records");
+                        cb.AddCode($"get => {namespaceName}.{recordClassName}.Instance.Records");
                     }
                     
                     if (string.IsNullOrEmpty(addressName) is false)
@@ -394,21 +379,11 @@ namespace TinyDataTable.Editor
                         }
                         cb.AppendLine($"_ => 0");
                     }
-                    cb.AppendLine();
-                    
-#if false                    
-                    cb.AddComment("AssetTags");
-                    using (cb.BeginBlock("private static readonly string[] _assetTags = new string[]").Footer(";"))
-                    {
-                        var tags = string.Join(",", asset.Tags.Select(t=>$"\"{t}\"") );
-                        cb.AppendLine(tags);                        
-                    }
-                    cb.AddCode("public static bool HasTag(string tag) => _assetTags.Contains(tag)");
-                    cb.AppendLine();
-#endif                    
+//                    cb.AppendLine();
+         
+#if false                        
                     using (cb.BeginIfdef("UNITY_EDITOR"))
                     {
-#if false                        
                         if (asset.InitializeOnLoadEditor)
                         {
                             cb.AddAttribute("UnityEditor.InitializeOnLoadMethod");
@@ -420,13 +395,8 @@ namespace TinyDataTable.Editor
                                 }
                             }
                         }
-#endif                        
-                        //プロパティドロワー（仮）
-                        cb.AppendLine($"[UnityEditor.CustomPropertyDrawer(typeof({className}))]");
-                        using (cb.BeginClass($"{className}PropertyDrawer" , "private" ,$"TinyDataTable.Editor.IDPropertyDrawerBase<{enumName}>" ))
-                        {
-                        }
                     }
+#endif                        
                 }    //End of struct
             }   //End of namespace
 

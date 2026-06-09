@@ -14,7 +14,7 @@ namespace TinyDataTable.Editor
     /// <summary>
     /// レコードフィールド情報
     /// </summary>
-    public struct RecordFieldInfo
+    public class SchemaInfo
     {
         public string Name { set; get; }
         public string Description { set; get; }
@@ -87,9 +87,9 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static List<RecordFieldInfo> FieldsFromType(Type type)
+        public static List<SchemaInfo> FieldsFromType(Type type)
         {
-            var serializableFields = new List<RecordFieldInfo>();
+            var serializableFields = new List<SchemaInfo>();
 
             // クラス内のすべてのインスタンスフィールド（public / private / protected）を取得
             FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -117,7 +117,7 @@ namespace TinyDataTable.Editor
                 {
                     if (SerializableUtility.IsUnitySerializableType(field.FieldType))
                     {
-                        var info = new RecordFieldInfo()
+                        var info = new SchemaInfo()
                         {
                             Name = field.Name,
                             Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? String.Empty,

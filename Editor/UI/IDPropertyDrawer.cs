@@ -10,72 +10,79 @@ using UnityEditor.IMGUI.Controls;
 
 namespace TinyDataTable.Editor
 {
-    public class IDPropertyDrawerBase<T> : PropertyDrawer where T : Enum 
+    [UnityEditor.CustomPropertyDrawer(typeof(IIdentifier), true)]
+    public class IDPropertyDrawer : PropertyDrawer
     {
         private static Texture2D dropdownTexture2D = EditorGUIUtility.IconContent("d_dropdown@2x").image as Texture2D;
-        GUIContent guiContext = new GUIContent();
       
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
+            var enumType = fieldInfo.FieldType
+                .GetField("_value", BindingFlags.NonPublic | BindingFlags.Instance)
+                .FieldType;
+
             var prop = property.FindPropertyRelative("_value");
             //AdvancedDropdownがエラーを吐くのでIMGUIを使う
             var container = new IMGUIContainer();
             container.onGUIHandler = () =>
             {
+                bool isObsolete = false;
+                bool isRetired = false;
+                string enumName = string.Empty;
+                try
+                {
+                    enumName = GetEnumName(prop);
+                }
+                catch (Exception )
+                {
+                    enumName = "Retired";
+                    isRetired = true;
+                }
+                FieldInfo field = enumType.GetField(enumName);
+                if (field != null)
+                {
+                    isObsolete = field.GetCustomAttribute<ObsoleteAttribute>() is not null;
+                }
+                Color originalColor = GUI.backgroundColor;
+                var color = (isObsolete|isRetired)?Color.red:originalColor;
+                var text = (isObsolete ) ? $"{enumName}(Obsolete)" :enumName;
+
+                GUI.backgroundColor = color;
+                GUIContent guiContext = new GUIContent(text);
+                
                 if (string.IsNullOrEmpty(preferredLabel))
                 {
                     Rect rect = EditorGUILayout.GetControlRect();
-                    bool isObsolete = false;
-                    bool isRetired = false;
-                    string enumName = string.Empty;
-                    try
-                    {
-                        enumName = GetEnumName(prop);
-                    }
-                    catch (Exception )
-                    {
-                        enumName = "Retired";
-                        isRetired = true;
-                    }
-                    FieldInfo field = typeof(T).GetField(enumName);
-
-                    if (field != null)
-                    {
-                        isObsolete = field.GetCustomAttribute<ObsoleteAttribute>() is not null;
-                    }
-                    guiContext.text = (isObsolete ) ? $"{enumName}(Obsolete)" :enumName;       
-                    Color originalColor = GUI.backgroundColor;
-                    guiContext.text = (isObsolete ) ? $"{enumName}(Obsolete)" :enumName;       
-                    GUI.backgroundColor = (isObsolete|isRetired)?Color.red:originalColor;
                     if (EditorGUI.DropdownButton(rect,guiContext, FocusType.Keyboard))
                     {
-                        PopupEnumList(rect, prop, property.displayName);
+                        PopupEnumList(enumType,rect, prop, property.displayName);
                     }
-
-                    GUI.backgroundColor = originalColor;
                 }
                 else
                 {
-                    EditorGUILayout.BeginHorizontal();
-                    GUILayout.Label(preferredLabel, GUILayout.Width(EditorGUIUtility.labelWidth));
                     Rect rect = EditorGUILayout.GetControlRect();
-                    guiContext.text = GetEnumName(prop);
-                    if (EditorGUI.DropdownButton(rect,guiContext, FocusType.Keyboard))
+
+                    int indent = EditorGUI.indentLevel;
+                    EditorGUI.indentLevel = 0;Rect controlRect = EditorGUI.PrefixLabel(rect, new GUIContent(preferredLabel));
+                    
+                    if (EditorGUI.DropdownButton(controlRect,guiContext, FocusType.Keyboard))
                     {
-                        PopupEnumList(rect, prop, property.displayName);
+                        PopupEnumList(enumType,rect, prop, property.displayName);
                     }
-                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUI.indentLevel = indent;
                 }
+                GUI.backgroundColor = originalColor;
             };
 
             return container;
         }
 
-        private void PopupEnumList( Rect rect,SerializedProperty propValue , string displayName)
+        private void PopupEnumList( Type enumType , Rect rect,SerializedProperty propValue , string displayName)
         {
             var dropdown = new EnumAdvancedDropdown(
                 new AdvancedDropdownState(),
-                typeof(T),
+                enumType,
                 displayName,
                 propValue.enumValueIndex,
                 (index, name) =>
@@ -241,6 +248,11 @@ namespace TinyDataTable.Editor
                 foreach (var (item,index) in _items.Select((t,i)=>(t,i)))
                 {
                     bool isObsolete = item.attr.obsoletes.Any();
+                    if (isObsolete && (_index != item.info.index))
+                    {
+                        continue;
+                    }
+
                     var name = isObsolete ? $"{item.info.name}(Obsolete)" : item.info.name;
                     var dropdownItem = new EnumAdvancedDropdownItem(name)
                     {

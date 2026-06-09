@@ -45,17 +45,17 @@ namespace TinyDataTable
     }
 
     /// <summary> Represents the base class for data table records. </summary>
-    public abstract class DataTableRecordBase<TRecord> :
+    public abstract class DataTableRecordBase<TSchema> :
         DataTableRecordBase 
-        where TRecord : struct
+        where TSchema : struct
     {
         [SerializeField]
-        private TRecord[] _records;
-        public TRecord[] Records => _records;
+        private TSchema[] _records;
+        public TSchema[] Records => _records;
 
-        public TRecord this[int index] => Records[index];
+        public TSchema this[int index] => Records[index];
 
-        public TRecord this[string key]
+        public TSchema this[string key]
         {
             get
             {
@@ -64,8 +64,8 @@ namespace TinyDataTable
             }
         }
         
-        protected static DataTableRecordBase<TRecord> _instance;
-        public static DataTableRecordBase<TRecord> Instance
+        protected static DataTableRecordBase<TSchema> _instance;
+        public static DataTableRecordBase<TSchema> Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _instance;
@@ -98,7 +98,7 @@ namespace TinyDataTable
                     obsolete = false
                 }
             };
-            _records = new TRecord[1];
+            _records = new TSchema[1];
         }
     }
 }

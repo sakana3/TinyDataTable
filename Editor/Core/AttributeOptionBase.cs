@@ -33,10 +33,9 @@ namespace TinyDataTable.Editor
                 return (null, null);
             }
         }
-        
+
         public VisualElement MakeUI()
         {
-            IsEnable = DefaultEnable;
             var root = new VisualElement();
 
             root.style.backgroundColor = new Color(0.2f,0.2f,0.2f,0.5f);
@@ -54,6 +53,11 @@ namespace TinyDataTable.Editor
             return root;            
         }
 
+        public void FromAttributeOption( AttributeOptionAttribute attribute )
+        {
+            
+        }
+        
         public static string[] ToArgStrings(params object[] args)
         {
             return args.Select( a => ToArgString(a)).ToArray();

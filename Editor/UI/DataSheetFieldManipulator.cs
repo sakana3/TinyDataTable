@@ -21,41 +21,47 @@ namespace TinyDataTable.Editor
             {
                 // メニュー項目を追加
                     evt.menu.AppendAction(
-                        "Add Field",
+                        "Add",
                         (action) =>
                         {
-                            var rect = element.worldBound; //action.eventInfo.mousePosition
-                            OpenAddFieldPopup(index+1,rect );
+                            var rect = element.worldBound;
+                            OpenAddSchemaPopup(index,rect );
+                        });
+                    evt.menu.AppendAction(
+                        "Refactor",
+                        (action) =>
+                        {
+                            var rect = element.worldBound;
+                            OpenRefactorSchemaPopup(index,rect );
                         });
 
                     evt.menu.AppendAction(
-                        
-                        "Obsolete Field",
+                        "Obsolete",
                         (action) =>
                         {
-                            var info = _recordPropertyUtil.FieldInfos[index];
+                            var info = _recordPropertyUtil.SchemaInfos[index];
                             info.Obsolete = info.Obsolete ? false : true;
-                            _recordPropertyUtil.FieldInfos[index] = info;
+                            _recordPropertyUtil.SchemaInfos[index] = info;
 
-                            SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.FieldInfos);
+                            SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.SchemaInfos);
                         },
                         (action) =>
                         {
-                            var info = _recordPropertyUtil.FieldInfos[index];
+                            var info = _recordPropertyUtil.SchemaInfos[index];
                             return info.Obsolete ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
                         });
                   
                     evt.menu.AppendAction(
-                        "Remove Field",
+                        "Remove",
                         (action) =>
                         {
-                            var newInfos = _recordPropertyUtil.FieldInfos.ToList();
+                            var newInfos = _recordPropertyUtil.SchemaInfos.ToList();
                             newInfos.RemoveAt(index);
                             SaveDataTable.SaveScript(targetAsset, newInfos);
                         },
                         (action) =>
                         {
-                            var obsolete = _recordPropertyUtil.RowHeaders[index].obsolete;
+                            var obsolete = _recordPropertyUtil.SchemaInfos[index].Obsolete;
                             return obsolete ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
                         });
                     evt.menu.AppendSeparator();
@@ -133,15 +139,15 @@ namespace TinyDataTable.Editor
             return manipulator;
         }
 
-        private ContextualMenuManipulator MakeAddFieldManipulator(VisualElement element)
+        private ContextualMenuManipulator MakeAddSchemaManipulator(VisualElement element)
         {
             var manipulator = new ContextualMenuManipulator((evt) =>
             {
-                evt.menu.AppendAction("Chage Field Order", (action) =>
+                evt.menu.AppendAction("Chage Order", (action) =>
                 {
                     var rect = element.worldBound;
 
-                    var nameList = _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList();
+                    var nameList = _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList();
                     
                     DataSheetFieldOrderPopup.Show(nameList,OrderChange,rect);
                 });
@@ -152,17 +158,16 @@ namespace TinyDataTable.Editor
 
         private void OrderChange(List<string> newOrder)
         {
-            var newList = newOrder.Select(n => _recordPropertyUtil.FieldInfos.FirstOrDefault(f => f.Name == n)).ToList();
+            var newList = newOrder.Select(n => _recordPropertyUtil.SchemaInfos.FirstOrDefault(f => f.Name == n)).ToList();
             SaveDataTable.SaveScript(targetAsset, newList);
         }
 
-        
-        private void OpenAddFieldPopup( int index ,Rect activatorRect)
+        private void OpenAddSchemaPopup( int index ,Rect activatorRect)
         {
-            DataTableAddPropertyPopup.Show(
+            DataTableCreateSchemaPopup.Show(
                 activatorRect,
                 targetAsset.BaseName,
-                _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
+                _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
                 Manager?.Assemblies,
@@ -170,12 +175,34 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = RecordFieldInfo.FieldsFromType(targetAsset.RecordType);                        
-                        fields.Insert(index>=0 ? index : fields.Count ,field);
+                        var fields = SchemaInfo.FieldsFromType(targetAsset.RecordType);                        
+                        fields.Insert(index>=0 ? index + 1 : fields.Count ,field);
                         
                         SaveDataTable.SaveScript(targetAsset, fields);
                     }
                 });
+        }
+        
+        
+        private void OpenRefactorSchemaPopup( int index ,Rect activatorRect)
+        {
+            DataTableCreateSchemaPopup.Show(
+                activatorRect,
+                targetAsset.BaseName,
+                _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList(),
+                _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
+                RecordPropertyUtil.ReservWords,
+                Manager?.Assemblies,
+                (field) =>
+                {
+                    if ( field.IsValid )
+                    {
+                        var fields = SchemaInfo.FieldsFromType(targetAsset.RecordType);                        
+                        fields[index] = field;
+                        SaveDataTable.SaveScript(targetAsset, fields);
+                    }
+                },
+                SchemaInfo.FieldsFromType(targetAsset.RecordType)[index]);
         }
     }
 }

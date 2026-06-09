@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -10,9 +11,9 @@ using UnityEditor.IMGUI.Controls;
 namespace TinyDataTable.Editor
 {
     // ポップアップウィンドウのコンテンツ
-    public class DataTableAddPropertyPopup : PopupWindowContent
+    public class DataTableCreateSchemaPopup : PopupWindowContent
     {
-        private readonly Action<RecordFieldInfo> _onAdd;
+        private readonly Action<SchemaInfo> _onAdd;
         private Vector2 _windowSize = new Vector2(300, 200);
 
         public string PropertyName { set; get; } = "";
@@ -30,8 +31,9 @@ namespace TinyDataTable.Editor
         private IReadOnlyCollection<string> idNames {set; get; }= new List<string>();
         private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
         private VisualElement attributeRoot;
-        
-        public DataTableAddPropertyPopup(string[] assemblys,Action<RecordFieldInfo> onAdd)
+        private SchemaInfo schemaInfo { set; get; }
+
+        public DataTableCreateSchemaPopup(string[] assemblys,Action<SchemaInfo> onAdd)
         {
             _assemblys = assemblys;
             _onAdd = onAdd;
@@ -46,6 +48,13 @@ namespace TinyDataTable.Editor
         public override void OnOpen()
         {
 //            var root = editorWindow.rootVisualElement;
+            if (schemaInfo != null)
+            {
+                PropertyType = schemaInfo.Type;
+                PropertyName = schemaInfo.Name;
+                Description = schemaInfo.Description;
+                IsArray = schemaInfo.Type.IsArray;
+            }
             
             var root = new ScrollView(ScrollViewMode.Vertical);
             root.style.flexGrow = 1; 
@@ -65,28 +74,28 @@ namespace TinyDataTable.Editor
                     size.x = 300;
                     _windowSize = size;
                 });
-            root.Add(new Label("Add Field"));
+            root.Add(new Label(schemaInfo == null ? "Add Schema" :  "Refactor Schema"));
 
             root.Add(new ToolbarSpacer());
             
             // クラス名入力
             var textField = new UnityEngine.UIElements.TextField(PropertyName)
             {
-                label = "Field Name",
+                label = "Name",
                 value = PropertyName,
             };
             textField.RegisterValueChangedCallback(evt => OnClassNameChangeCallback(textField,evt));
-            textField.textEdition.placeholder = "Input field name...";　
+            textField.textEdition.placeholder = "Input name...";
             root.Add( textField );
 
-            _notifyLabel = new HelpBox( "Input field name.", HelpBoxMessageType.Warning);
+            _notifyLabel = new HelpBox( "Input name.", HelpBoxMessageType.Warning);
             var element = UIToolkitEditorUtility.CreateLabeledVisualElement("", _notifyLabel);
             root.Add( element.container );
             // 少し遅延させてフォーカス
-            textField.schedule.Execute(() => 
+            if (schemaInfo == null)
             {
-                textField.Focus();
-            }).StartingIn(50); // 50ms後くらい            
+                textField.schedule.Execute(() => { textField.Focus(); }).StartingIn(50); // 50ms後くらい            
+            }
 
             //型選択ボタン
             var typeSelectButton = MakeTypeSelectorPopup();
@@ -98,25 +107,24 @@ namespace TinyDataTable.Editor
                 value = IsArray,
             };
             boolField.RegisterValueChangedCallback(evt => IsArray = evt.newValue);
+            boolField.value = IsArray;
             root.Add( boolField );
             
             attributeRoot = new VisualElement();
             OnTypeSelectChangeCallback(PropertyType);
             root.Add(attributeRoot);
-            
-            var DescriptionField = new TextField("Description")
-            {
 
-            };
-            DescriptionField.RegisterValueChangedCallback(evt => Description = evt.newValue);
-            DescriptionField.textEdition.placeholder = "Input Description.If you need.";　
-            root.Add( DescriptionField );
+            var descriptionField = new TextField("Description");
+            descriptionField.RegisterValueChangedCallback(evt => Description = evt.newValue);
+            descriptionField.textEdition.placeholder = "Input Description.If you need.";
+            descriptionField.value = Description;
+            root.Add( descriptionField );
             
             var spacer = new VisualElement();
             spacer.style.flexGrow = 1;
             root.Add( spacer );
             
-            _decideButton = new Button(InvokeOnAdd) { text = "Add" };
+            _decideButton = new Button(InvokeOnAdd) { text = schemaInfo == null ? "Add" : "Refactor" };
             root.Add(_decideButton);
 
             CheckClassName();
@@ -135,14 +143,17 @@ namespace TinyDataTable.Editor
             IReadOnlyCollection<string> idNames,
             IReadOnlyCollection<string> reservNames,
             string[] assermblys,
-            Action<RecordFieldInfo> onAdd)
+            Action<SchemaInfo> onAdd ,
+            SchemaInfo schemaInfo = null
+            )
         {
-            var popup = new DataTableAddPropertyPopup(assermblys,onAdd)
+            var popup = new DataTableCreateSchemaPopup(assermblys,onAdd)
             {
                 _baseClassName = baseClassName,
                 propNames = propNames,
                 idNames = idNames,
-                reservNames = reservNames
+                reservNames = reservNames,
+                schemaInfo = schemaInfo
             };
             UnityEditor.PopupWindow.Show(activatorRect, popup);
         }
@@ -154,7 +165,7 @@ namespace TinyDataTable.Editor
             {
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Label("Field type", GUILayout.Width(120));
+                    GUILayout.Label("Type", GUILayout.Width(120));
                     Rect rect = EditorGUILayout.GetControlRect();
                     rect.width -= 32;
                     if (EditorGUI.DropdownButton(rect, new GUIContent(PropertyType.GetCSharpAlias()), FocusType.Keyboard))
@@ -175,7 +186,7 @@ namespace TinyDataTable.Editor
         private VisualElement MakeTypeSelectorPopup_()
         {
             var popup = UIToolkitEditorUtility.CreatePopupButton(PropertyType.Name);
-            var field = UIToolkitEditorUtility.CreateLabeledVisualElement("Field Type",popup.button);
+            var field = UIToolkitEditorUtility.CreateLabeledVisualElement("Type",popup.button);
 
             popup.button.clicked += () =>
             {
@@ -209,6 +220,25 @@ namespace TinyDataTable.Editor
             attributeOptions = AttributeOptionBase.FindAttributeOptions(type);
             foreach (var option in attributeOptions)
             {
+                if (schemaInfo != null)
+                {
+                    var attr = schemaInfo.CustomAttributes
+                        .FirstOrDefault(t => t.Type == option.AttributeValue.type);
+                    if (attr.Type != null)
+                    {
+                        option.IsEnable = true;
+                        option.FromCode( attr.Type, attr.args);
+                    }
+                    else
+                    {
+                        option.IsEnable = false;
+                    }
+                }
+                else
+                {
+                    option.IsEnable = option.DefaultEnable;
+                }
+                
                 var element = option.MakeUI();
                 if (element != null)
                 {
@@ -221,15 +251,23 @@ namespace TinyDataTable.Editor
         {
             string text = string.Empty;
             var messageType = HelpBoxMessageType.Info;
-            
-            if (string.IsNullOrEmpty(PropertyName))
+
+            if (schemaInfo != null && schemaInfo.Name == PropertyName)
             {
-                text = "Input field name.";
+            }
+            else if (schemaInfo != null && schemaInfo.Obsolete is false)
+            {
+                text = "Renaming this will introduce a breaking change. Please mark it as Obsolete and resolve the warnings before making the change.";
+                messageType = HelpBoxMessageType.Warning;
+            }
+            else if (string.IsNullOrEmpty(PropertyName))
+            {
+                text = "Input name.";
                 messageType = HelpBoxMessageType.Info;
             }
             else if (SerializableUtility.CheckCSharpSafeName(PropertyName) is false)
             {
-                text = "Invalid field name.";
+                text = "Invalid name.";
                 messageType = HelpBoxMessageType.Error;
             }
             else if( _baseClassName == PropertyName )
@@ -272,7 +310,7 @@ namespace TinyDataTable.Editor
         
         private void InvokeOnAdd()
         {
-            RecordFieldInfo info = new()
+            SchemaInfo info = new()
             {
                 Type = !IsArray ? PropertyType : PropertyType.MakeArrayType(),
                 Description = Description,

@@ -160,9 +160,9 @@ namespace TinyDataTable.Editor
             listView.columns.Add(recordNameColumn);
             
 
-            for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
+            for (int i = 0; i < _recordPropertyUtil.SchemaInfos.Count; i++)
             {
-                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].Obsolete is false)
+                if ( IsStructureMode || _recordPropertyUtil.SchemaInfos[i].Obsolete is false)
                 {
                     var columProp = MakePropertyColumn(i);
                     listView.columns.Add(columProp);
@@ -286,10 +286,10 @@ namespace TinyDataTable.Editor
         {
             Column colum = new Column()
             {
-                name = _recordPropertyUtil.FieldInfos[iColum].Name,
+                name = _recordPropertyUtil.SchemaInfos[iColum].Name,
                 makeHeader = () =>
                 {
-                    var fieldInfo = _recordPropertyUtil.FieldInfos[iColum];
+                    var fieldInfo = _recordPropertyUtil.SchemaInfos[iColum];
                     var header = MakeColumHeader( fieldInfo.Name, fieldInfo.Obsolete,fieldInfo.Description) as Label;
                     if (IsStructureMode)
                     {
@@ -304,17 +304,17 @@ namespace TinyDataTable.Editor
                 {
                     var iRow = rowIDList[idx].index;                            
                     
-                    var isObsoleteCol = _recordPropertyUtil.FieldInfos[iColum].Obsolete;
+                    var isObsoleteCol = _recordPropertyUtil.SchemaInfos[iColum].Obsolete;
                     var isObsoleteRow = rowIDList[idx].isObsolete;
                     e.style.flexGrow = 1.0f;
                     e.style.backgroundColor = (isObsoleteCol|isObsoleteRow)?_obsoleteColor:new StyleColor();
 
                     e.Clear();
-                    if (_recordPropertyUtil.FieldInfos.Count > iColum)
+                    if (_recordPropertyUtil.SchemaInfos.Count > iColum)
                     {
                         var prop = _recordPropertyUtil.RecordProperty
                             .GetArrayElementAtIndex(iRow)
-                            .FindPropertyRelative(_recordPropertyUtil.FieldInfos[iColum].Name);
+                            .FindPropertyRelative(_recordPropertyUtil.SchemaInfos[iColum].Name);
                         if (prop != null)
                         {
                             if (prop.isArray && prop.propertyType == SerializedPropertyType.Generic)
@@ -364,11 +364,11 @@ namespace TinyDataTable.Editor
                     {
                         if (t.button == 0)
                         {
-                            OpenAddFieldPopup( -1, button.worldBound);
+                            OpenAddSchemaPopup( -1, button.worldBound);
                         }
                     });
                     button.tooltip = "Add Field";
-                    var manipulator = MakeAddFieldManipulator(button);
+                    var manipulator = MakeAddSchemaManipulator(button);
                     button.AddManipulator( manipulator);
                     return button;
                 },
@@ -426,7 +426,7 @@ namespace TinyDataTable.Editor
                     textField.tooltip = "Invalid C# identifier.";
                 }
                 else if (_recordPropertyUtil.RowHeaders.Count( t => t.name == value ) >= 2 ||
-                         _recordPropertyUtil.FieldInfos.Select(f=>f.Name).Contains(  value ) )
+                         _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).Contains(  value ) )
                 {
                     input.style.color = Color.yellow;
                     textField.tooltip = "This name is conflict.";

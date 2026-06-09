@@ -20,7 +20,6 @@ namespace TinyDataTable.Editor
         private const string KeyAssetFilePath = "TinyDataTable_Asset_FilePath";
         private const string KeyBackuoCode = "TinyDataTable_BackupCode";
 
-
         private static (string scriptName, string namespaceName, string assetpath,string fullPath, string address,string assetPath ) MakeInfo(
             DataTableRecordBase dataTableAsset ,
             string newClassName ,
@@ -72,13 +71,13 @@ namespace TinyDataTable.Editor
                 return true;
             }
             
-            List<RecordFieldInfo> fileds = new();
+            List<SchemaInfo> fileds = new();
             if (recordAsset.RecordType != null)
             {
-                fileds = RecordFieldInfo.FieldsFromType(recordAsset.RecordType);
+                fileds = SchemaInfo.FieldsFromType(recordAsset.RecordType);
             }
             
-            var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
+            var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 recordAsset,
                 fileds,
                 info.scriptName,
@@ -126,9 +125,9 @@ namespace TinyDataTable.Editor
         {
 
             var assetName = Path.Combine(assetPath, $"{newClassName}Record.asset");
-            var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
+            var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 null,
-                new List<RecordFieldInfo>(),
+                new List<SchemaInfo>(),
                 newClassName,
                 newNamespace,
                 null,
@@ -158,7 +157,7 @@ namespace TinyDataTable.Editor
             return true;            
         }
         
-        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<RecordFieldInfo> fields = null)
+        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<SchemaInfo> fields = null)
         {
             var script = MonoScript.FromScriptableObject(dataTableAsset);
             var scriptPath = AssetDatabase.GetAssetPath(script);
@@ -172,14 +171,14 @@ namespace TinyDataTable.Editor
             {
                 if (dataTableAsset.RecordType != null)
                 {
-                    fields = RecordFieldInfo.FieldsFromType(dataTableAsset.RecordType);
+                    fields = SchemaInfo.FieldsFromType(dataTableAsset.RecordType);
                 }
                 else
                 {
-                    fields = new List<RecordFieldInfo>();
+                    fields = new List<SchemaInfo>();
                 }
             }
-            var code = TinyDataTable.Editor.ExportDataSheetToCSharp.Export(
+            var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 dataTableAsset,
                 fields,
                 info.scriptName,
