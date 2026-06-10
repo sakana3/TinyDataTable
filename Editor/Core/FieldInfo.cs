@@ -14,7 +14,7 @@ namespace TinyDataTable.Editor
     /// <summary>
     /// レコードフィールド情報
     /// </summary>
-    public class SchemaInfo
+    public class FieldInfo
     {
         public string Name { set; get; }
         public string Description { set; get; }
@@ -25,9 +25,9 @@ namespace TinyDataTable.Editor
         public bool IsArray => Type.IsArray;
         public bool IsValid => Type != null && string.IsNullOrEmpty(Name) is false;
         
-        public string ToBaseAttributeString()
+        public string ToBaseAttributeString( bool isFiled )
         {
-            string str = "";
+            string str = isFiled ? "TINY" : "";
 
             if (Obsolete)
             {
@@ -87,14 +87,14 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static List<SchemaInfo> FieldsFromType(Type type)
+        public static List<FieldInfo> FieldsFromType(Type type)
         {
-            var serializableFields = new List<SchemaInfo>();
+            var serializableFields = new List<FieldInfo>();
 
             // クラス内のすべてのインスタンスフィールド（public / private / protected）を取得
-            FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            System.Reflection.FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            foreach (FieldInfo field in allFields)
+            foreach (System.Reflection.FieldInfo field in allFields)
             {
                 // 1. [NonSerialized] 属性がついている場合は除外
                 if (field.IsDefined(typeof(NonSerializedAttribute), true))
@@ -117,7 +117,7 @@ namespace TinyDataTable.Editor
                 {
                     if (SerializableUtility.IsUnitySerializableType(field.FieldType))
                     {
-                        var info = new SchemaInfo()
+                        var info = new FieldInfo()
                         {
                             Name = field.Name,
                             Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? String.Empty,

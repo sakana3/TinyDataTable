@@ -34,6 +34,28 @@ namespace TinyDataTable.Editor
             }
         }
 
+        public void FormFiledInfo(FieldInfo fieldInfo)
+        {
+            if (fieldInfo != null)
+            {
+                var attr = fieldInfo.CustomAttributes
+                    .FirstOrDefault(t => t.Type == AttributeValue.type);
+                if (attr.Type != null)
+                {
+                    IsEnable = true;
+                    FromCode( attr.Type, attr.args);
+                }
+                else
+                {
+                    IsEnable = false;
+                }
+            }
+            else
+            {
+                IsEnable = DefaultEnable;
+            }
+        }
+        
         public VisualElement MakeUI()
         {
             var root = new VisualElement();
@@ -215,17 +237,28 @@ namespace TinyDataTable.Editor
             }
         }
         
-        public static AttributeOptionBase[] FindAttributeOptions( Type type)
+        public static List<AttributeOptionBase> FindAttributeOptions( Type type , IReadOnlyCollection<Type> baseTypes)
         {
             var types = TypeCache.GetTypesDerivedFrom<AttributeOptionBase>()
                 .Where(t => t.IsClass && !t.IsAbstract && t.IsDefined(typeof(AttributeOptionAttribute), true))
                 .Where(t => t.GetCustomAttribute<AttributeOptionAttribute>().HasType(type) );
+
             
             var options = types
                 .Select( t => Activator.CreateInstance(t))
                 .OfType<AttributeOptionBase>()
                 .OrderBy(t => t.Title)
-                .ToArray();
+                .ToList();
+            
+            if (baseTypes != null)
+            {
+                foreach (var baseType in baseTypes.Reverse())
+                {
+                    options = options
+                        .OrderByDescending(f => f.AttributeValue.type == baseType)
+                        .ToList();                    
+                }                
+            }
             
             return options;
         }

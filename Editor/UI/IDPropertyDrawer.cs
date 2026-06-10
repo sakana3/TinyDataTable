@@ -38,7 +38,7 @@ namespace TinyDataTable.Editor
                     enumName = "Retired";
                     isRetired = true;
                 }
-                FieldInfo field = enumType.GetField(enumName);
+                System.Reflection.FieldInfo field = enumType.GetField(enumName);
                 if (field != null)
                 {
                     isObsolete = field.GetCustomAttribute<ObsoleteAttribute>() is not null;

@@ -39,15 +39,15 @@ namespace TinyDataTable.Editor
                         "Obsolete",
                         (action) =>
                         {
-                            var info = _recordPropertyUtil.SchemaInfos[index];
+                            var info = _recordPropertyUtil.FieldInfos[index];
                             info.Obsolete = info.Obsolete ? false : true;
-                            _recordPropertyUtil.SchemaInfos[index] = info;
+                            _recordPropertyUtil.FieldInfos[index] = info;
 
-                            SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.SchemaInfos);
+                            SaveDataTable.SaveScript(targetAsset, _recordPropertyUtil.FieldInfos);
                         },
                         (action) =>
                         {
-                            var info = _recordPropertyUtil.SchemaInfos[index];
+                            var info = _recordPropertyUtil.FieldInfos[index];
                             return info.Obsolete ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
                         });
                   
@@ -55,13 +55,13 @@ namespace TinyDataTable.Editor
                         "Remove",
                         (action) =>
                         {
-                            var newInfos = _recordPropertyUtil.SchemaInfos.ToList();
+                            var newInfos = _recordPropertyUtil.FieldInfos.ToList();
                             newInfos.RemoveAt(index);
                             SaveDataTable.SaveScript(targetAsset, newInfos);
                         },
                         (action) =>
                         {
-                            var obsolete = _recordPropertyUtil.SchemaInfos[index].Obsolete;
+                            var obsolete = _recordPropertyUtil.FieldInfos[index].Obsolete;
                             return obsolete ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
                         });
                     evt.menu.AppendSeparator();
@@ -147,7 +147,7 @@ namespace TinyDataTable.Editor
                 {
                     var rect = element.worldBound;
 
-                    var nameList = _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList();
+                    var nameList = _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList();
                     
                     DataSheetFieldOrderPopup.Show(nameList,OrderChange,rect);
                 });
@@ -158,16 +158,16 @@ namespace TinyDataTable.Editor
 
         private void OrderChange(List<string> newOrder)
         {
-            var newList = newOrder.Select(n => _recordPropertyUtil.SchemaInfos.FirstOrDefault(f => f.Name == n)).ToList();
+            var newList = newOrder.Select(n => _recordPropertyUtil.FieldInfos.FirstOrDefault(f => f.Name == n)).ToList();
             SaveDataTable.SaveScript(targetAsset, newList);
         }
 
         private void OpenAddSchemaPopup( int index ,Rect activatorRect)
         {
-            DataTableCreateSchemaPopup.Show(
+            DataTableCreateFieldPopup.Show(
                 activatorRect,
                 targetAsset.BaseName,
-                _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList(),
+                _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
                 Manager?.Assemblies,
@@ -175,7 +175,7 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = SchemaInfo.FieldsFromType(targetAsset.RecordType);                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType);                        
                         fields.Insert(index>=0 ? index + 1 : fields.Count ,field);
                         
                         SaveDataTable.SaveScript(targetAsset, fields);
@@ -186,10 +186,10 @@ namespace TinyDataTable.Editor
         
         private void OpenRefactorSchemaPopup( int index ,Rect activatorRect)
         {
-            DataTableCreateSchemaPopup.Show(
+            DataTableCreateFieldPopup.Show(
                 activatorRect,
                 targetAsset.BaseName,
-                _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).ToList(),
+                _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
                 Manager?.Assemblies,
@@ -197,12 +197,12 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = SchemaInfo.FieldsFromType(targetAsset.RecordType);                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType);                        
                         fields[index] = field;
                         SaveDataTable.SaveScript(targetAsset, fields);
                     }
                 },
-                SchemaInfo.FieldsFromType(targetAsset.RecordType)[index]);
+                FieldInfo.FieldsFromType(targetAsset.RecordType)[index]);
         }
     }
 }

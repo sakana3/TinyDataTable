@@ -71,10 +71,10 @@ namespace TinyDataTable.Editor
                 return true;
             }
             
-            List<SchemaInfo> fileds = new();
+            List<FieldInfo> fileds = new();
             if (recordAsset.RecordType != null)
             {
-                fileds = SchemaInfo.FieldsFromType(recordAsset.RecordType);
+                fileds = FieldInfo.FieldsFromType(recordAsset.RecordType);
             }
             
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
@@ -127,7 +127,7 @@ namespace TinyDataTable.Editor
             var assetName = Path.Combine(assetPath, $"{newClassName}Record.asset");
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 null,
-                new List<SchemaInfo>(),
+                new List<FieldInfo>(),
                 newClassName,
                 newNamespace,
                 null,
@@ -157,7 +157,7 @@ namespace TinyDataTable.Editor
             return true;            
         }
         
-        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<SchemaInfo> fields = null)
+        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<FieldInfo> fields = null)
         {
             var script = MonoScript.FromScriptableObject(dataTableAsset);
             var scriptPath = AssetDatabase.GetAssetPath(script);
@@ -171,11 +171,11 @@ namespace TinyDataTable.Editor
             {
                 if (dataTableAsset.RecordType != null)
                 {
-                    fields = SchemaInfo.FieldsFromType(dataTableAsset.RecordType);
+                    fields = FieldInfo.FieldsFromType(dataTableAsset.RecordType);
                 }
                 else
                 {
-                    fields = new List<SchemaInfo>();
+                    fields = new List<FieldInfo>();
                 }
             }
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(

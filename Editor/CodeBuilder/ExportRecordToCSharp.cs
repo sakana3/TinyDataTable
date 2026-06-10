@@ -9,7 +9,7 @@ namespace TinyDataTable.Editor
     {
         public static string Export(
             DataTableRecordBase recordAsset,
-            IList<SchemaInfo> fields,
+            IList<FieldInfo> fields,
             string className,
             string namespaceName,
             string resourcePath,
@@ -61,7 +61,7 @@ namespace TinyDataTable.Editor
                         {
                             foreach (var field in fields)
                             {
-                                cb.AddAttribute(field.ToBaseAttributeString());
+                                cb.AddAttribute(field.ToBaseAttributeString(true));
                                 foreach (var attr in field.ToAttributesString())
                                 {
                                     cb.AddAttribute(attr);
@@ -78,6 +78,7 @@ namespace TinyDataTable.Editor
                     }
                     cb.AppendLine();
                     
+                    // ID Enum
                     if (isObsolete)
                     {
                         cb.AppendLine("[Obsolete]");
@@ -281,7 +282,7 @@ namespace TinyDataTable.Editor
                     cb.AddComment($"filed propieries");
                     foreach (var field in fields)
                     {
-                        cb.AddAttribute(field.ToBaseAttributeString());
+                        cb.AddAttribute(field.ToBaseAttributeString(false));
                         
                         var typename = field.Type.GetCSharpAliasFull();
                         var left = $"public {typename} {field.Name}";

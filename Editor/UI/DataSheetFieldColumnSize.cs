@@ -16,13 +16,13 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// 幅が変更されたらEditorPrefsに保存する
         /// </summary>        
-        private void RegisterColumnResizeCallbacks( VisualElement headerVisualElement , string columnName )
+        private void RegisterColumnResizeCallbacks( Column column,VisualElement headerVisualElement , string columnName )
         {
-            if (headerVisualElement != null)
+            if (headerVisualElement != null && column != null)
             {
                 headerVisualElement.RegisterCallback<GeometryChangedEvent>(evt =>
                 {
-                    EditorPrefs.SetFloat( $"{targetAsset.BaseName}.{columnName}" ,evt.newRect.width);
+                    EditorPrefs.SetFloat( $"{targetAsset.BaseName}.{columnName}" ,column.width.value);
                 });
             }
         }        
@@ -30,7 +30,7 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// EditorPrefsから横幅を読み込んで適用する
         /// </summary>
-        private void LoadColumnWidths(Column column)
+        private void LoadColumnWidths(Column column , float defaultWidth )
         {
             string key = $"{targetAsset.BaseName}.{column.name}";
             
@@ -38,6 +38,10 @@ namespace TinyDataTable.Editor
             if (EditorPrefs.HasKey(key))
             {
                 column.width = EditorPrefs.GetFloat(key);
+            }
+            else
+            {
+                column.width = defaultWidth;
             }
         }        
     }

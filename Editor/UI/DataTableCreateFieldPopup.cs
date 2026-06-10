@@ -11,9 +11,9 @@ using UnityEditor.IMGUI.Controls;
 namespace TinyDataTable.Editor
 {
     // ポップアップウィンドウのコンテンツ
-    public class DataTableCreateSchemaPopup : PopupWindowContent
+    public class DataTableCreateFieldPopup : PopupWindowContent
     {
-        private readonly Action<SchemaInfo> _onAdd;
+        private readonly Action<FieldInfo> _onAdd;
         private Vector2 _windowSize = new Vector2(300, 200);
 
         public string PropertyName { set; get; } = "";
@@ -31,9 +31,10 @@ namespace TinyDataTable.Editor
         private IReadOnlyCollection<string> idNames {set; get; }= new List<string>();
         private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
         private VisualElement attributeRoot;
-        private SchemaInfo schemaInfo { set; get; }
+        private FieldInfo FieldInfo { set; get; }
+        private List<AttributeOptionBase> attributeOptions = new ();
 
-        public DataTableCreateSchemaPopup(string[] assemblys,Action<SchemaInfo> onAdd)
+        public DataTableCreateFieldPopup(string[] assemblys,Action<FieldInfo> onAdd)
         {
             _assemblys = assemblys;
             _onAdd = onAdd;
@@ -48,12 +49,12 @@ namespace TinyDataTable.Editor
         public override void OnOpen()
         {
 //            var root = editorWindow.rootVisualElement;
-            if (schemaInfo != null)
+            if (FieldInfo != null)
             {
-                PropertyType = schemaInfo.Type;
-                PropertyName = schemaInfo.Name;
-                Description = schemaInfo.Description;
-                IsArray = schemaInfo.Type.IsArray;
+                PropertyType = FieldInfo.Type;
+                PropertyName = FieldInfo.Name;
+                Description = FieldInfo.Description;
+                IsArray = FieldInfo.Type.IsArray;
             }
             
             var root = new ScrollView(ScrollViewMode.Vertical);
@@ -74,7 +75,7 @@ namespace TinyDataTable.Editor
                     size.x = 300;
                     _windowSize = size;
                 });
-            root.Add(new Label(schemaInfo == null ? "Add Schema" :  "Refactor Schema"));
+            root.Add(new Label(FieldInfo == null ? "Add Field" :  "Refactor Field"));
 
             root.Add(new ToolbarSpacer());
             
@@ -92,7 +93,7 @@ namespace TinyDataTable.Editor
             var element = UIToolkitEditorUtility.CreateLabeledVisualElement("", _notifyLabel);
             root.Add( element.container );
             // 少し遅延させてフォーカス
-            if (schemaInfo == null)
+            if (FieldInfo == null)
             {
                 textField.schedule.Execute(() => { textField.Focus(); }).StartingIn(50); // 50ms後くらい            
             }
@@ -124,7 +125,7 @@ namespace TinyDataTable.Editor
             spacer.style.flexGrow = 1;
             root.Add( spacer );
             
-            _decideButton = new Button(InvokeOnAdd) { text = schemaInfo == null ? "Add" : "Refactor" };
+            _decideButton = new Button(InvokeOnAdd) { text = FieldInfo == null ? "Add" : "Refactor" };
             root.Add(_decideButton);
 
             CheckClassName();
@@ -143,17 +144,17 @@ namespace TinyDataTable.Editor
             IReadOnlyCollection<string> idNames,
             IReadOnlyCollection<string> reservNames,
             string[] assermblys,
-            Action<SchemaInfo> onAdd ,
-            SchemaInfo schemaInfo = null
+            Action<FieldInfo> onAdd ,
+            FieldInfo fieldInfo = null
             )
         {
-            var popup = new DataTableCreateSchemaPopup(assermblys,onAdd)
+            var popup = new DataTableCreateFieldPopup(assermblys,onAdd)
             {
                 _baseClassName = baseClassName,
                 propNames = propNames,
                 idNames = idNames,
                 reservNames = reservNames,
-                schemaInfo = schemaInfo
+                FieldInfo = fieldInfo
             };
             UnityEditor.PopupWindow.Show(activatorRect, popup);
         }
@@ -212,39 +213,36 @@ namespace TinyDataTable.Editor
             CheckClassName();
         }
 
-        private AttributeOptionBase[] attributeOptions = Array.Empty<AttributeOptionBase>();
         
         private void OnTypeSelectChangeCallback( Type type)
         {
             attributeRoot.Clear();
-            attributeOptions = AttributeOptionBase.FindAttributeOptions(type);
+            attributeOptions = AttributeOptionBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.CustomAttributes.Select( t => t.Type ).ToArray());
             foreach (var option in attributeOptions)
             {
-                if (schemaInfo != null)
-                {
-                    var attr = schemaInfo.CustomAttributes
-                        .FirstOrDefault(t => t.Type == option.AttributeValue.type);
-                    if (attr.Type != null)
-                    {
-                        option.IsEnable = true;
-                        option.FromCode( attr.Type, attr.args);
-                    }
-                    else
-                    {
-                        option.IsEnable = false;
-                    }
-                }
-                else
-                {
-                    option.IsEnable = option.DefaultEnable;
-                }
-                
-                var element = option.MakeUI();
-                if (element != null)
-                {
-                    attributeRoot.Add(element);
-                }
+                option.FormFiledInfo(FieldInfo);
             }
+            
+            ListView listView = new ListView()
+            {
+                name = "Attributes",
+                reorderable = true,
+                reorderMode = ListViewReorderMode.Animated,
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
+            };
+            listView.makeItem = () => new VisualElement();
+            listView.bindItem = (element, i) =>
+            {
+                element.Clear();
+                var option = attributeOptions[i];
+                var optionUI = option.MakeUI();
+                if (optionUI != null)
+                {
+                    element.Add(optionUI);
+                }
+            };
+            listView.itemsSource = attributeOptions;
+            attributeRoot.Add(listView);
         }
 
         private void CheckClassName()
@@ -252,10 +250,10 @@ namespace TinyDataTable.Editor
             string text = string.Empty;
             var messageType = HelpBoxMessageType.Info;
 
-            if (schemaInfo != null && schemaInfo.Name == PropertyName)
+            if (FieldInfo != null && FieldInfo.Name == PropertyName)
             {
             }
-            else if (schemaInfo != null && schemaInfo.Obsolete is false)
+            else if (FieldInfo != null && FieldInfo.Obsolete is false)
             {
                 text = "Renaming this will introduce a breaking change. Please mark it as Obsolete and resolve the warnings before making the change.";
                 messageType = HelpBoxMessageType.Warning;
@@ -310,7 +308,7 @@ namespace TinyDataTable.Editor
         
         private void InvokeOnAdd()
         {
-            SchemaInfo info = new()
+            FieldInfo info = new()
             {
                 Type = !IsArray ? PropertyType : PropertyType.MakeArrayType(),
                 Description = Description,

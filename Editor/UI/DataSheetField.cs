@@ -160,9 +160,9 @@ namespace TinyDataTable.Editor
             listView.columns.Add(recordNameColumn);
             
 
-            for (int i = 0; i < _recordPropertyUtil.SchemaInfos.Count; i++)
+            for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
             {
-                if ( IsStructureMode || _recordPropertyUtil.SchemaInfos[i].Obsolete is false)
+                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].Obsolete is false)
                 {
                     var columProp = MakePropertyColumn(i);
                     listView.columns.Add(columProp);
@@ -175,20 +175,53 @@ namespace TinyDataTable.Editor
                 listView.columns.Add(lastColumn);
             }
         }        
-     
+
+        private Column MakeIndexColumn()
+        {
+            var colum = new Column()
+            {
+                name = "Index",
+                makeCell = () =>
+                {
+                    var e= new VisualElement() { };
+                    e.style.flexGrow = 1.0f;
+                    return e;
+                },
+                bindCell = (e,idx) =>
+                {
+                    var iRow = rowIDList[idx].index;                    
+                    if (iRow > 0)
+                    {
+                        var label = new Label();
+                        label.text =$"{iRow }";
+                        label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                        label.AddManipulator( MakeRowIndexManipulator(label,iRow) );
+                        label.style.flexGrow = 1.0f ;
+                        e.style.backgroundColor = rowIDList[idx].isObsolete?_obsoleteColor:new StyleColor();                        
+                        e.Clear();
+                        e.Add(label);
+                    }
+                    else
+                    {
+                        e.AddManipulator( MakeRowIndexManipulator(e,iRow) );
+                    }
+                    e.parent.style.justifyContent = Justify.Center;
+                },
+                stretchable = false,
+                resizable = false,
+                width = 40    ,
+                maxWidth = 40,
+            };
+            colum.makeHeader = () => MakeColumHeader(null, "Index", false, "Index");
+            return colum;            
+        }
      
         private Column MakeIDNameColumn()
         {
             var colum = new Column()
             {
                 name = "ID",                
-                makeHeader = () =>
-                {
-                    var header = MakeColumHeader( "ID",  false, "ID");
-//                    var manipulator = MakeMenuManipulator(property,header ,-1);
-//                    header.AddManipulator( manipulator);
-                    return header;
-                },
+
                 makeCell = () =>
                 {
                     var e = new VisualElement();
@@ -237,84 +270,38 @@ namespace TinyDataTable.Editor
                 stretchable = false,
                 width = 120,
             };
-            LoadColumnWidths(colum);
+            colum.makeHeader = () =>
+            {
+                var header = MakeColumHeader(colum, "ID", false, "ID");
+//                    var manipulator = MakeMenuManipulator(property,header ,-1);
+//                    header.AddManipulator( manipulator);
+                return header;
+            };            
+            LoadColumnWidths(colum , 120.0f);
             return colum;                        
         }
-      
-        
-        private Column MakeIndexColumn()
-        {
-            var colum = new Column()
-            {
-                name = "Index",
-                makeHeader = () => MakeColumHeader("Index",false,"Index"),
-                makeCell = () =>
-                {
-                    var e= new VisualElement() { };
-                    e.style.flexGrow = 1.0f;
-                    return e;
-                },
-                bindCell = (e,idx) =>
-                {
-                    var iRow = rowIDList[idx].index;                    
-                    if (iRow > 0)
-                    {
-                        var label = new Label();
-                        label.text =$"{iRow }";
-                        label.style.unityTextAlign = TextAnchor.MiddleCenter;
-                        label.AddManipulator( MakeRowIndexManipulator(label,iRow) );
-                        label.style.flexGrow = 1.0f ;
-                        e.style.backgroundColor = rowIDList[idx].isObsolete?_obsoleteColor:new StyleColor();                        
-                        e.Clear();
-                        e.Add(label);
-                    }
-                    else
-                    {
-                        e.AddManipulator( MakeRowIndexManipulator(e,iRow) );
-                    }
-                    e.parent.style.justifyContent = Justify.Center;
-                },
-                stretchable = false,
-                resizable = false,
-                width = 40    ,
-                maxWidth = 40,
-            };
-            return colum;            
-        }
-
+ 
         private Column MakePropertyColumn( int iColum )
         {
             Column colum = new Column()
             {
-                name = _recordPropertyUtil.SchemaInfos[iColum].Name,
-                makeHeader = () =>
-                {
-                    var fieldInfo = _recordPropertyUtil.SchemaInfos[iColum];
-                    var header = MakeColumHeader( fieldInfo.Name, fieldInfo.Obsolete,fieldInfo.Description) as Label;
-                    if (IsStructureMode)
-                    {
-                        var manipulator = MakeColumHeaderManipulator( header, iColum);
-                        header.AddManipulator(manipulator);
-                    }
-                    columnIDList.Add( fieldInfo.Name.GetHashCode());
-                    return header;
-                },
+                name = _recordPropertyUtil.FieldInfos[iColum].Name,
                 makeCell = () => new VisualElement() { },
                 bindCell = (e,idx) =>
                 {
                     var iRow = rowIDList[idx].index;                            
                     
-                    var isObsoleteCol = _recordPropertyUtil.SchemaInfos[iColum].Obsolete;
+                    var isObsoleteCol = _recordPropertyUtil.FieldInfos[iColum].Obsolete;
                     var isObsoleteRow = rowIDList[idx].isObsolete;
                     e.style.flexGrow = 1.0f;
                     e.style.backgroundColor = (isObsoleteCol|isObsoleteRow)?_obsoleteColor:new StyleColor();
 
                     e.Clear();
-                    if (_recordPropertyUtil.SchemaInfos.Count > iColum)
+                    if (_recordPropertyUtil.FieldInfos.Count > iColum)
                     {
                         var prop = _recordPropertyUtil.RecordProperty
                             .GetArrayElementAtIndex(iRow)
-                            .FindPropertyRelative(_recordPropertyUtil.SchemaInfos[iColum].Name);
+                            .FindPropertyRelative(_recordPropertyUtil.FieldInfos[iColum].Name);
                         if (prop != null)
                         {
                             if (prop.isArray && prop.propertyType == SerializedPropertyType.Generic)
@@ -341,7 +328,20 @@ namespace TinyDataTable.Editor
                 resizable = true,
                 width = 80,
             };
-            LoadColumnWidths(colum);
+            colum.makeHeader = () =>
+            {
+                var fieldInfo = _recordPropertyUtil.FieldInfos[iColum];
+                var header = MakeColumHeader(colum, fieldInfo.Name, fieldInfo.Obsolete, fieldInfo.Description) as Label;
+                if (IsStructureMode)
+                {
+                    var manipulator = MakeColumHeaderManipulator(header, iColum);
+                    header.AddManipulator(manipulator);
+                }
+
+                columnIDList.Add(fieldInfo.Name.GetHashCode());
+                return header;
+            };            
+            LoadColumnWidths(colum,120.0f);
             return colum;
         }
 
@@ -379,6 +379,7 @@ namespace TinyDataTable.Editor
         }
 
         private VisualElement MakeColumHeader(
+            Column column,
             string name ,
             bool isObsolete,
             string description)
@@ -389,7 +390,7 @@ namespace TinyDataTable.Editor
             label.style.paddingBottom = 2.0f;
             label.style.backgroundColor = isObsolete?_obsoleteColor:new StyleColor();
             label.tooltip = description;
-            RegisterColumnResizeCallbacks(label,name);
+            RegisterColumnResizeCallbacks(column,label,name);
             return label;
         }
 
@@ -426,7 +427,7 @@ namespace TinyDataTable.Editor
                     textField.tooltip = "Invalid C# identifier.";
                 }
                 else if (_recordPropertyUtil.RowHeaders.Count( t => t.name == value ) >= 2 ||
-                         _recordPropertyUtil.SchemaInfos.Select(f=>f.Name).Contains(  value ) )
+                         _recordPropertyUtil.FieldInfos.Select(f=>f.Name).Contains(  value ) )
                 {
                     input.style.color = Color.yellow;
                     textField.tooltip = "This name is conflict.";
