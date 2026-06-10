@@ -8,21 +8,24 @@ using UnityEditor.UIElements;
 
 namespace TinyDataTable.Editor
 {
+    
     /// <summary>
     /// カラムサイズの変更周りの処理
     /// </summary>
     public partial class DataSheetField
     {
+        private string ColumWidthKey(Column column) => $"TinyDataTable.{targetAsset.BaseName}.{column.name}.Colum.Width";
+
         /// <summary>
         /// 幅が変更されたらEditorPrefsに保存する
         /// </summary>        
-        private void RegisterColumnResizeCallbacks( Column column,VisualElement headerVisualElement , string columnName )
+        private void RegisterColumnResizeCallbacks( Column column,VisualElement headerVisualElement )
         {
             if (headerVisualElement != null && column != null)
             {
                 headerVisualElement.RegisterCallback<GeometryChangedEvent>(evt =>
                 {
-                    EditorPrefs.SetFloat( $"{targetAsset.BaseName}.{columnName}" ,column.width.value);
+                    EditorPrefs.SetFloat( ColumWidthKey(column) ,column.width.value);
                 });
             }
         }        
@@ -32,7 +35,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         private void LoadColumnWidths(Column column , float defaultWidth )
         {
-            string key = $"{targetAsset.BaseName}.{column.name}";
+            string key = ColumWidthKey(column);
             
             // 保存された値があれば取得（なければデフォルト値 100f）
             if (EditorPrefs.HasKey(key))

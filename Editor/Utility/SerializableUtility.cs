@@ -100,15 +100,29 @@ namespace TinyDataTable.Editor
         };
         
         // C#の別名を取得する拡張メソッド
-        public static string GetCSharpAlias(this Type type)
+        internal static string GetCSharpAlias(this Type type)
         {
             // 辞書にあれば別名を返し、なければ通常の本名（Name）を返す
-            return TypeAliases.TryGetValue(type, out var alias) ? alias : type.Name;
+            if (type.IsArray)
+            {
+                return TypeAliases.TryGetValue(type.GetElementType(), out var alias) ? $"{alias}[]" : type.Name;
+            }
+            else
+            {
+                return TypeAliases.TryGetValue(type, out var alias) ? alias : type.Name;
+            }
         }
-        public static string GetCSharpAliasFull(this Type type)
+        internal static string GetCSharpAliasFull(this Type type)
         {
             // 辞書にあれば別名を返し、なければ通常の本名（Name）を返す
-            return TypeAliases.TryGetValue(type, out var alias) ? alias : type.FullName;
+            if (type.IsArray)
+            {
+                return TypeAliases.TryGetValue(type.GetElementType(), out var alias) ? $"{alias}[]" : type.FullName.Replace("+", ".");
+            }
+            else
+            {
+                return TypeAliases.TryGetValue(type, out var alias) ? alias : type.FullName.Replace("+", ".");
+            }
         }
         
     }

@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
         public Mode mode
         {
             private set => EditorPrefs.SetInt("DataTableManagerEditorMode", (int)value);
-            get => (Mode)EditorPrefs.GetInt("DataTableManagerEditorMode");
+            get => (Mode)EditorPrefs.GetInt("DataTableManagerEditorMode", (int)Mode.DesignMode);
         }
 
         public DataTableManagerEditor(DataTableManager manager)
@@ -147,7 +147,6 @@ namespace TinyDataTable.Editor
                         tableOperator = new DataTableManagerTableOperator(manager, asset);
                         tableViewRoot.Add(tableOperator);
                     }
-
                     var tableView = new DataTableManagerTableView(manager, asset, isStructureMode);
                     tableView.style.flexGrow = 1;
                     tableViewRoot.Add(tableView);

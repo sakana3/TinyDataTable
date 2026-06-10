@@ -390,7 +390,7 @@ namespace TinyDataTable.Editor
             label.style.paddingBottom = 2.0f;
             label.style.backgroundColor = isObsolete?_obsoleteColor:new StyleColor();
             label.tooltip = description;
-            RegisterColumnResizeCallbacks(column,label,name);
+            RegisterColumnResizeCallbacks(column,label);
             return label;
         }
 

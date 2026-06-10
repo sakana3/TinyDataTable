@@ -120,7 +120,9 @@ namespace TinyDataTable.Editor
                         labelElement.text = $"{index}";
                         labelElement.style.minWidth = 20; // 最小幅を小さく設定
                         labelElement.style.width = 20;    // 幅を固定（必要に応じて）
-                        // labelElement.style.flexBasis = 30; // Flexレイアウトでの基準幅
+                        labelElement.style.unityTextAutoSize = new StyleTextAutoSize(
+                            new TextAutoSize(TextAutoSizeMode.BestFit, minSize: 4, maxSize: 12)
+                        );
                     }                
                 },
             };
@@ -137,7 +139,7 @@ namespace TinyDataTable.Editor
             listView.style.marginLeft = 0.0f;
             listView.style.marginTop = 0.0f;
             listView.style.marginBottom = 0.0f;
-            
+
             var footer = listView.Q<VisualElement>("unity-list-view__footer");
             footer.style.display = DisplayStyle.None;            
 
@@ -151,7 +153,12 @@ namespace TinyDataTable.Editor
             arraySizeField.Bind( arrayProp.serializedObject);
             arraySizeField.RegisterValueChangedCallback(OnArraySizeFieldChanged);
             arraySizeField.labelElement.style.minWidth = 45;
-            listView.itemsAdded += indices =>Refresh();
+            listView.itemsAdded += indices =>
+            {
+                arrayProp.isExpanded = true;
+                isExpanded = true;
+                Refresh();
+            };
             listView.itemsRemoved += indices =>Refresh();
             listView.RegisterCallback<FocusInEvent>(evt =>
             {
@@ -162,7 +169,16 @@ namespace TinyDataTable.Editor
                 footer.style.display = DisplayStyle.None;
                 listView.ClearSelection();
             });              
-     
+
+            //Scroll Viewをちょっと暗くする
+            var scrollView = listView.Q<ScrollView>();
+            scrollView.RegisterCallback<GeometryChangedEvent>(evt =>
+            {
+                var backgroundColor = scrollView.resolvedStyle.backgroundColor;
+                backgroundColor.a = backgroundColor.a * 0.8f;
+                scrollView.style.backgroundColor = backgroundColor;
+            });
+            
             return listView;
         }
 
