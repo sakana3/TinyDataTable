@@ -6,7 +6,8 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 using System.Text.RegularExpressions;
-using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
 
 namespace TinyDataTable.Editor
 {
@@ -41,6 +42,80 @@ namespace TinyDataTable.Editor
             return false;
         }
         
+        
+        /// <summary>
+        /// 指定された型がUnityでシリアライズ可能かどうかを判定する
+        /// </summary>
+        public static bool CheckUnitySerializable(Type type)
+        {
+            if (type == null) return false;
+
+            //コンパイラが自動生成したものは除外
+            if (type.IsDefined(typeof(CompilerGeneratedAttribute), false))
+            {
+                return false;
+            }
+            
+            // 1. プリミティブ型と文字列
+            if (type.IsPrimitive || type == typeof(string)) return true;
+
+            // 2. Enum
+            if (type.IsEnum) return true;
+
+            // 3. Unity Object (参照として保存可能)
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return true;
+
+            // 4. 配列とリスト
+            if (type.IsArray)
+            {
+                // 多次元配列は不可
+                if (type.GetArrayRank() > 1) return false;
+                return CheckUnitySerializable(type.GetElementType());
+            }
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                return CheckUnitySerializable(type.GetGenericArguments()[0]);
+            }
+
+            // 5. Unityの特定の組み込み構造体 (代表的なもの)
+            if (type == typeof(Vector2) || type == typeof(Vector3) || type == typeof(Vector4) ||
+                type == typeof(Quaternion) || type == typeof(Matrix4x4) ||
+                type == typeof(Color) || type == typeof(Color32) ||
+                type == typeof(Rect) || type == typeof(Bounds) ||
+                type == typeof(LayerMask) || type == typeof(AnimationCurve) || type == typeof(Gradient) ||
+                type == typeof(RectOffset) || type == typeof(GUIStyle) ||
+                type == typeof(Vector2Int) || type == typeof(Vector3Int) || type == typeof(RectInt) || type == typeof(BoundsInt))
+            {
+                return true;
+            }
+
+            // 6. [Serializable] 属性を持つクラス・構造体
+            if (type.IsSerializable) // System.SerializableAttribute が付いているか
+            {
+                // ジェネリック定義そのもの (List<>など) は不可
+                if (type.IsGenericTypeDefinition) return false;
+                
+                // decimal, DateTime, Dictionary など、.NETではSerializableだがUnityでは非対応なものを除外
+                if (type == typeof(decimal) || type == typeof(DateTime) || type == typeof(TimeSpan) || 
+                    type == typeof(Guid) || type == typeof(Uri))
+                {
+                    return false;
+                }
+                
+                // ジェネリック型の場合、型引数もシリアライズ可能である必要がある
+                if (type.IsGenericType)
+                {
+                    foreach (var arg in type.GetGenericArguments())
+                    {
+                        if (!CheckUnitySerializable(arg)) return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        }        
        
         // C#の予約語リスト
         private static readonly HashSet<string> CSharpKeywords = new HashSet<string>
@@ -98,6 +173,11 @@ namespace TinyDataTable.Editor
             { typeof(string), "string" },
             { typeof(void), "void" }
         };
+
+        internal static string DispName(this Type type)
+        {
+            return type.FullName.Split('.').LastOrDefault();
+        }
         
         // C#の別名を取得する拡張メソッド
         internal static string GetCSharpAlias(this Type type)
@@ -105,11 +185,11 @@ namespace TinyDataTable.Editor
             // 辞書にあれば別名を返し、なければ通常の本名（Name）を返す
             if (type.IsArray)
             {
-                return TypeAliases.TryGetValue(type.GetElementType(), out var alias) ? $"{alias}[]" : type.Name;
+                return TypeAliases.TryGetValue(type.GetElementType(), out var alias) ? $"{alias}[]" : type.DispName();
             }
             else
             {
-                return TypeAliases.TryGetValue(type, out var alias) ? alias : type.Name;
+                return TypeAliases.TryGetValue(type, out var alias) ? alias : type.DispName();
             }
         }
         internal static string GetCSharpAliasFull(this Type type)

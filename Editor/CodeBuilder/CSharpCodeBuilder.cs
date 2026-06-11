@@ -12,7 +12,7 @@ namespace TinyDataTable.Editor
         private StringBuilder _sb = new StringBuilder(4096);
         private int _indentLevel = 0;
         private const string IndentString = "    "; // 4スペース
-
+        
         /// <summary>
         /// 現在のインデント文字列を取得
         /// </summary>
@@ -107,6 +107,14 @@ namespace TinyDataTable.Editor
             }
             return this;
         }        
+        
+        public CSharpCodeBuilder AddAttribute( params string[] attributres )
+        {
+            var atr = String.Join(",", attributres.Where(t=>string.IsNullOrEmpty(t) is false));
+            
+            AppendLine($"[{atr}]");
+            return this;
+        }                
         
         /// <summary>
         /// 名前空間を開始

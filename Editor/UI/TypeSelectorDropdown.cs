@@ -182,7 +182,7 @@ namespace TinyDataTable.Editor
                 .SelectMany(a => a.GetTypes())
                 .Where( t => t.IsPublic)
                 .SelectMany( t => GetAllNestedTypesRecursive(t) )
-                .Where(t => UIToolkitEditorUtility.CheckUnitySerializable(t))
+                .Where(t => SerializableUtility.CheckUnitySerializable(t))
                 .ToArray();
             
             var enumTypes = allTypes

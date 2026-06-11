@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace TinyDataTable.Editor
 {
-    public class UIToolkitEditorUtility
+    public static class UIToolkitEditorUtility
     {
         public static (VisualElement container, Label label) CreateLabeledVisualElement(VisualElement element)
         {
@@ -70,82 +70,6 @@ namespace TinyDataTable.Editor
             button.Add(arrow);
 
             return (button, textLabel);
-        }
-
-
-        
-        /// <summary>
-        /// 指定された型がUnityでシリアライズ可能かどうかを判定する
-        /// </summary>
-        public static bool CheckUnitySerializable(Type type)
-        {
-            if (type == null) return false;
-
-            //コンパイラが自動生成したものは除外
-            if (type.IsDefined(typeof(CompilerGeneratedAttribute), false))
-            {
-                return false;
-            }
-            
-            // 1. プリミティブ型と文字列
-            if (type.IsPrimitive || type == typeof(string)) return true;
-
-            // 2. Enum
-            if (type.IsEnum) return true;
-
-            // 3. Unity Object (参照として保存可能)
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return true;
-
-            // 4. 配列とリスト
-            if (type.IsArray)
-            {
-                // 多次元配列は不可
-                if (type.GetArrayRank() > 1) return false;
-                return CheckUnitySerializable(type.GetElementType());
-            }
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            {
-                return CheckUnitySerializable(type.GetGenericArguments()[0]);
-            }
-
-            // 5. Unityの特定の組み込み構造体 (代表的なもの)
-            if (type == typeof(Vector2) || type == typeof(Vector3) || type == typeof(Vector4) ||
-                type == typeof(Quaternion) || type == typeof(Matrix4x4) ||
-                type == typeof(Color) || type == typeof(Color32) ||
-                type == typeof(Rect) || type == typeof(Bounds) ||
-                type == typeof(LayerMask) || type == typeof(AnimationCurve) || type == typeof(Gradient) ||
-                type == typeof(RectOffset) || type == typeof(GUIStyle) ||
-                type == typeof(Vector2Int) || type == typeof(Vector3Int) || type == typeof(RectInt) || type == typeof(BoundsInt))
-            {
-                return true;
-            }
-
-            // 6. [Serializable] 属性を持つクラス・構造体
-            if (type.IsSerializable) // System.SerializableAttribute が付いているか
-            {
-                // ジェネリック定義そのもの (List<>など) は不可
-                if (type.IsGenericTypeDefinition) return false;
-                
-                // decimal, DateTime, Dictionary など、.NETではSerializableだがUnityでは非対応なものを除外
-                if (type == typeof(decimal) || type == typeof(DateTime) || type == typeof(TimeSpan) || 
-                    type == typeof(Guid) || type == typeof(Uri))
-                {
-                    return false;
-                }
-                
-                // ジェネリック型の場合、型引数もシリアライズ可能である必要がある
-                if (type.IsGenericType)
-                {
-                    foreach (var arg in type.GetGenericArguments())
-                    {
-                        if (!CheckUnitySerializable(arg)) return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
         }
     }
 }

@@ -9,13 +9,15 @@ namespace TinyDataTable
     public class RecordAttribute : Attribute
     {
         public Type IdentifierType { private set; get; }
-        public Type RecordType { private set; get; }
+        public Type SchemaType { private set; get; }
+        public Type EnumType { private set; get; }
         public string BaseName { private set; get; }
         
         // コンストラクタ
-        public RecordAttribute( Type recordType , Type identifierType , string baseName )
+        public RecordAttribute( Type schemaType,Type enumType , Type identifierType , string baseName )
         {
-            RecordType = recordType;
+            SchemaType = schemaType;
+            EnumType = enumType;
             IdentifierType = identifierType;
             BaseName = baseName;
         }

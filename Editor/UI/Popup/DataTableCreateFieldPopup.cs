@@ -51,7 +51,7 @@ namespace TinyDataTable.Editor
 //            var root = editorWindow.rootVisualElement;
             if (FieldInfo != null)
             {
-                PropertyType = FieldInfo.Type;
+                PropertyType = FieldInfo.Type.IsArray ? FieldInfo.Type.GetElementType() : FieldInfo.Type;
                 PropertyName = FieldInfo.Name;
                 Description = FieldInfo.Description;
                 IsArray = FieldInfo.Type.IsArray;

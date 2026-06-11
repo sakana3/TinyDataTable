@@ -4,12 +4,11 @@ using System.Diagnostics;
 namespace TinyDataTable.Description
 {
     /// <summary>
-    /// Enumの並び順を指定するためのアトリビュート
-    /// Enumには固有のIDをつけているがEnumは値でソートされるため
-    /// このアトリビュートでオーダーを指定する
+    /// リリース時に外されるDescription
+    /// System.ComponentModel.DescriptionAttributeはIDEがコメントとして認識するがリリースに含まれてしまう為
     /// </summary>
     [Conditional("UNITY_EDITOR")]
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.All , AllowMultiple = false)]
     public class DescriptionAttribute : Attribute
     {
         private readonly string _description;

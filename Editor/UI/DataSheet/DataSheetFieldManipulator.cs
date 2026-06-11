@@ -21,14 +21,14 @@ namespace TinyDataTable.Editor
             {
                 // メニュー項目を追加
                     evt.menu.AppendAction(
-                        "Add",
+                        "Add Field",
                         (action) =>
                         {
                             var rect = element.worldBound;
                             OpenAddSchemaPopup(index,rect );
                         });
                     evt.menu.AppendAction(
-                        "Refactor",
+                        "Refactor Field",
                         (action) =>
                         {
                             var rect = element.worldBound;
@@ -36,7 +36,7 @@ namespace TinyDataTable.Editor
                         });
 
                     evt.menu.AppendAction(
-                        "Obsolete",
+                        "Obsolete Field",
                         (action) =>
                         {
                             var info = _recordPropertyUtil.FieldInfos[index];
@@ -52,7 +52,7 @@ namespace TinyDataTable.Editor
                         });
                   
                     evt.menu.AppendAction(
-                        "Remove",
+                        "Remove Field",
                         (action) =>
                         {
                             var newInfos = _recordPropertyUtil.FieldInfos.ToList();
@@ -68,7 +68,6 @@ namespace TinyDataTable.Editor
             });  
             return manipulator;
         }
-
         
         private ContextualMenuManipulator MakeRowIndexManipulator(
             VisualElement element,
