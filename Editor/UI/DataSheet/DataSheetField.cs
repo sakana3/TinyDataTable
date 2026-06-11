@@ -125,7 +125,7 @@ namespace TinyDataTable.Editor
             {
                 rowIDList = list
                     .Select((i,index) => new Item() { id = i.id ,isObsolete = i.isObsolete, index = index})
-                    .Where( i => i.id != 0 && i.isObsolete is false)
+                    .Where( i => i.id != 0 && i.isObsolete is false && string.IsNullOrEmpty(list[i.index].name) is false )
                     .ToList();
             }
             
@@ -236,6 +236,7 @@ namespace TinyDataTable.Editor
                         inputElement.style.borderLeftWidth = 0;
                         inputElement.style.borderRightWidth = 0;
                     }                    
+                    textField.textEdition.placeholder = "Please input name.";
                     e.Add(textField);
 
                     return e;

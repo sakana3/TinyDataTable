@@ -87,6 +87,7 @@ namespace TinyDataTable.Editor
                         if (recordAsset != null)
                         {
                             var enums = recordAsset.Headers
+                                .Where(h=> string.IsNullOrEmpty(h.name) is false)
                                 .Select((h, i) => (
                                     $"[EnumOrder({i})] {h.name}",
                                     $"0x{h.id:X8}",
@@ -209,7 +210,9 @@ namespace TinyDataTable.Editor
                         cb.AddComment("propieries");
                         if (recordAsset != null)
                         {
-                            foreach (var (header, idx) in recordAsset.Headers.Select((header, idx) => (header, idx)))
+                            foreach (var (header, idx) in recordAsset.Headers
+                                         .Where(t=> string.IsNullOrEmpty(t.name) is false)
+                                         .Select((header, idx) => (header, idx)))
                             {
                                 var name = header.name;
                                 var index = idx;
@@ -274,7 +277,7 @@ namespace TinyDataTable.Editor
                         cb.AddComment("static id table");
                         var valids = recordAsset == null ?
                             Array.Empty<DataTableRecordBase.HeaderData>() :
-                            recordAsset.Headers.Where(h => h.id > 0 && h.obsolete is false).ToArray();
+                            recordAsset.Headers.Where(h => h.id > 0 && h.obsolete is false && string.IsNullOrEmpty(h.name) is false).ToArray();
                         if (valids.Any())
                         {
                             using (cb.BeginBlock($"private static readonly {idName}[] _validIDs = new[]").Footer(";"))
@@ -318,7 +321,9 @@ namespace TinyDataTable.Editor
                         {
                             if (recordAsset != null)
                             {
-                                foreach (var (header, idx) in recordAsset.Headers.Select((header, idx) => (header, idx)))
+                                foreach (var (header, idx) in recordAsset.Headers
+                                             .Where(t=> string.IsNullOrEmpty(t.name) is false)
+                                             .Select((header, idx) => (header, idx)))
                                 {
                                     cb.AppendLine($"{enumName}.{header.name} => {idx},");
                                 }

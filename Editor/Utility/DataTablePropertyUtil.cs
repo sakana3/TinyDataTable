@@ -80,11 +80,7 @@ namespace TinyDataTable.Editor
             dataProp.InsertArrayElementAtIndex(idx);
             headerProp.InsertArrayElementAtIndex(idx);
 
-            var tmpName = $"record_{idx:0000}";
-            while (CheckName(tmpName) == false)
-            {
-                tmpName += "_";
-            }
+            var tmpName = $"";
             
             var newHeaderProp = headerProp.GetArrayElementAtIndex(idx);
             newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
@@ -143,12 +139,8 @@ namespace TinyDataTable.Editor
                     headerProp.InsertArrayElementAtIndex(index);
                     var newHeaderProp = headerProp.GetArrayElementAtIndex(index);
 
-                    var tmpName = $"record_{index - 1:0000}";
+                    var tmpName = $"";
 
-                    while (CheckName(tmpName) == false)
-                    {
-                        tmpName += "_";
-                    }
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = tmpName;
                     newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
