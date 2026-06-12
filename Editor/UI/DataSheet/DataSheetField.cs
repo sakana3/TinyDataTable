@@ -129,8 +129,8 @@ namespace TinyDataTable.Editor
                     .ToList();
             }
             
-            listView.itemsSource = rowIDList;                    
-        }        
+            listView.itemsSource = rowIDList;
+        }
         
         /// <summary>
         /// 列をセットアップする

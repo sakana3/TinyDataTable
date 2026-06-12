@@ -105,7 +105,7 @@ namespace TinyDataTable.Editor
                     
                     // ID
                     cb.AddComment("ID");
-                    cb.AddAttribute(onsolete, "Serializable");                    
+                    cb.AddAttribute(onsolete,$"ID(typeof({recordClassName}))", "Serializable");                    
                     using (cb.BeginStruct(idName, inherit: $"IIdentifier", isPartial: true))
                     {
                         cb.AddComment("...");

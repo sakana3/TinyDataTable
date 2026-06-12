@@ -15,15 +15,18 @@ namespace TinyDataTable
     public abstract class DataTableRecordBase : ScriptableObject
     {
         [SerializeField] private bool _initializeOnLoad;
+        /// <summary> initializeOnLoad </summary>
         public bool InitializeOnLoadEditor => _initializeOnLoadEditor;
         
         [SerializeField] private bool _initializeOnLoadEditor;
+        /// <summary> initializeOnLoadEditor </summary>
         public bool InitializeOnLoad => _initializeOnLoad;
 
         [SerializeField] private bool _isObsolete;
+        /// <summary> isObsolete </summary>
         public bool IsObsolete => _isObsolete;
 
-        /// <summary> レコードデータヘッダ </summary>
+        /// <summary> header struct </summary>
         [Serializable]
         public struct HeaderData
         {
@@ -33,9 +36,13 @@ namespace TinyDataTable
             public bool obsolete;
         }
         
-        [SerializeField]
-        protected HeaderData[] _headers;
+        [SerializeField] protected HeaderData[] _headers;
+        /// <summary> Header data </summary>
         public HeaderData[] Headers => _headers;
+
+        [SerializeField] protected DataTableRecordBase[] _relations;
+        /// <summary> Relations </summary>
+        public DataTableRecordBase[] Relations => _relations;
 
 #if UNITY_EDITOR
         public Type RecordType => this.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
@@ -50,6 +57,7 @@ namespace TinyDataTable
         where TSchema : struct
         where TEnum : Enum
     {
+        /// <summary> Records </summary>        
         [SerializeField] private TSchema[] _records;
         public TSchema[] Records
         {
@@ -57,29 +65,35 @@ namespace TinyDataTable
             get { return _records; }
         }
 
+        /// <summary> Enum To Index </summary>        
         public int ToIndex(TEnum enumValue)
         {
             var index =  Array.FindIndex(Headers, h => h.id == Unsafe.As<TEnum, int>(ref enumValue));
             return  index >= 0 ? index : 0;
         }
 
-        public int ToIndex(string key)
+        /// <summary> Name To Index </summary>        
+        public int ToIndex(string name)
         {
-            var index = Array.FindIndex(Headers, h => h.name == key);
+            var index = Array.FindIndex(Headers, h => h.name == name);
             return  index >= 0 ? index : 0;
         }
 
+        /// <summary> Get Schema form Index </summary>        
         public TSchema this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Records[index]; }
         }
 
-        public TSchema this[string key]  => Records[ToIndex(key)];
+        /// <summary> Get Schema form Name </summary>        
+        public TSchema this[string name]  => Records[ToIndex(name)];
         
+        /// <summary> Get Schema form Enum </summary>        
         public TSchema this[TEnum enumValue] => Records[ToIndex(enumValue)];
         
         protected static DataTableRecordBase<TSchema,TEnum> _instance;
+        /// <summary> Singleton Instance </summary>        
         public static DataTableRecordBase<TSchema,TEnum> Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,6 +107,7 @@ namespace TinyDataTable
                 _instance = this;
             }
         }
+        
         protected virtual void OnDisable()
         {
             if (_instance == this)

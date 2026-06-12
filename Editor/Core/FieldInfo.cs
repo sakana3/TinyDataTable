@@ -89,8 +89,33 @@ namespace TinyDataTable.Editor
         /// </summary>
         public static List<FieldInfo> FieldsFromType(Type type)
         {
-            var serializableFields = new List<FieldInfo>();
-
+            return EnumrateFieldsFromType(type).ToList();
+        }
+        
+        /// <summary>
+        /// フィールドを取得する
+        /// </summary>
+        public static IEnumerable<FieldInfo> FieldsFromType<T>(Type type)
+        {
+            foreach (var fieldInfo in EnumrateFieldsFromType(type))
+            {
+                var firleType = fieldInfo.Type;
+                while (firleType.HasElementType)
+                {
+                    firleType = firleType.GetElementType();
+                }
+                if (typeof(T).IsAssignableFrom(firleType))
+                {
+                    yield return fieldInfo;
+                }                
+            }
+        }        
+        
+        /// <summary>
+        /// フィールドを取得する
+        /// </summary>
+        public static IEnumerable<FieldInfo> EnumrateFieldsFromType(Type type)
+        {
             // クラス内のすべてのインスタンスフィールド（public / private / protected）を取得
             System.Reflection.FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -128,12 +153,10 @@ namespace TinyDataTable.Editor
                                 .Select( f => f.Attribute )
                                 .ToArray()
                         };
-                        serializableFields.Add(info);
+                        yield return info;
                     }
                 }
             }
-
-            return serializableFields;
-        }
+        }        
     }
 }

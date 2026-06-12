@@ -187,7 +187,6 @@ namespace TinyDataTable.Editor
             }
         }
         
-        
         /// <summary> GetCellProperties </summary>
         public IEnumerable<SerializedProperty> GetCellProperties( int iRow = 0 )
         {

@@ -144,6 +144,7 @@ namespace TinyDataTable.Editor
                 {
                     if (isStructureMode)
                     {
+                        DataTableManager.InjectRelation( asset);
                         tableOperator = new DataTableManagerTableOperator(manager, asset);
                         tableViewRoot.Add(tableOperator);
                     }
