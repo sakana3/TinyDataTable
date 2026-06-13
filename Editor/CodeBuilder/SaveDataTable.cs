@@ -12,7 +12,7 @@ using UnityEditor.Compilation;
 namespace TinyDataTable.Editor
 {
     
-    public static class SaveDataTable
+    internal static class SaveDataTable
     {
         private const string KeyIsGenerating = "TinyDataTable_IsGenerating";
         private const string KeyCompilError = "TinyDataTable_CompilError";

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TinyDataTable.Editor
 {
-    public class RecordPropertyUtil
+    internal class RecordPropertyUtil
     {
         public DataTableRecordBase TargeTableAsset { get; private set; }
 

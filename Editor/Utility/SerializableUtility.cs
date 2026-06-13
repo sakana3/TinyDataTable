@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 namespace TinyDataTable.Editor
 {
-    public static class SerializableUtility
+    internal static class SerializableUtility
     {
         public static bool IsUnitySerializableType(Type type)
         {

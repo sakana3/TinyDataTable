@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TinyDataTable.Editor
 {
-    public static class ExportRecordToCSharp
+    internal static class ExportRecordToCSharp
     {
         public static string Export(
             DataTableRecordBase recordAsset,
@@ -105,7 +105,7 @@ namespace TinyDataTable.Editor
                     
                     // ID
                     cb.AddComment("ID");
-                    cb.AddAttribute(onsolete,$"ID(typeof({recordClassName}))", "Serializable");                    
+                    cb.AddAttribute(onsolete,$"ID(typeof({recordClassName}),typeof({recordClassName}.Enum))", "Serializable");                    
                     using (cb.BeginStruct(idName, inherit: $"IIdentifier", isPartial: true))
                     {
                         cb.AddComment("...");
@@ -129,106 +129,8 @@ namespace TinyDataTable.Editor
                 using (cb.BeginRegion("SorceGenerator"))
                 using (cb.BeginClass($"{recordClassName}", isPartial: true))
                 {
-                    using (cb.BeginStruct(idName,
-                               inherit: $"IEquatable<{idFullName}>, IEquatable<{enumName}>",
-                               isPartial: true))
+                    using (cb.BeginStruct(idName, isPartial: true))
                     {                
-                        //プライベートメンバー
-                        cb.AddComment("Private member");
-                        using (cb.BeginBlock($"private static {schemaName}[] _recordArray"))
-                        {
-                            cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
-                            cb.AddCode($"get => {namespaceName}.{recordClassName}.Instance.Records");
-                        }
-
-
-                        //メンバー
-                        cb.AddComment("Member");
-                        cb.AddAttribute("SerializeField");
-                        cb.AddField($"{enumName}", "_value", "private");
-                        cb.AddAttribute("NonSerialized");
-                        cb.AddField("int", "_index", "private");
-                        cb.AppendLine();
-
-                        //コンストラクター
-                        cb.AddComment("Constructor");
-                        using (cb.BeginConstructor(idName, $"{enumName} value, int index", "private"))
-                        {
-                            cb.AddCode("this._value = value");
-                            cb.AddCode("this._index = index");
-                        }
-
-                        cb.AppendLine();
-                        cb.AddComment("Constructor");
-                        using (cb.BeginConstructor(idName, $"{enumName} value",
-                                   "public", "this(value, EnumToIndex(value))"))
-                        {
-                        }
-
-                        cb.AppendLine();
-                        cb.AddComment("Constructor");
-                        using (cb.BeginConstructor(idName, $"{idName} value",
-                                   "public", "this(value._value, value._index)"))
-                        {
-                        }
-
-                        cb.AppendLine();
-
-                        
-                        //Index
-                        cb.AddComment("Index of this ID");
-                        using (cb.BeginBlock("public int Index"))
-                        {
-                            cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
-                            using (cb.BeginBlock("get"))
-                            {
-                                using (cb.BeginIf("_index == 0"))
-                                {
-                                    using (cb.BeginIf($"_value == {enumName}.Invalid"))
-                                    {
-                                        cb.AddCode("return 0");
-                                    }
-
-                                    cb.AddCode("_index = EnumToIndex(_value)");
-                                }
-
-                                cb.AddCode("return _index");
-                            }
-                        }
-
-                        //ValidIDList.Lengthで代用できるのでとりあえずオミット
-    //                    cb.AddComment("Size of record");
-    //                    cb.AddCode($"public static int Size => {data.Header.RowData.Length}");
-                        cb.AddComment("Valid records");
-                        cb.AddCode($"public static IReadOnlyCollection<{idName}> ValidIDList => _validIDs");
-                        cb.AddComment("Valid Enums");
-                        cb.AddCode($"public static IReadOnlyCollection<{enumName}> ValidEnumList => _validEnums");
-                        cb.AddComment("Is this record is valid");
-                        cb.AddCode($"public bool IsValid => _validEnums.Contains( _value )");
-                        cb.AppendLine();
-
-                        cb.AddComment("propieries");
-                        if (recordAsset != null)
-                        {
-                            foreach (var (header, idx) in recordAsset.Headers
-                                         .Where(t=> string.IsNullOrEmpty(t.name) is false)
-                                         .Select((header, idx) => (header, idx)))
-                            {
-                                var name = header.name;
-                                var index = idx;
-                                if (header.obsolete)
-                                {
-                                    cb.AppendLine("[Obsolete]");
-                                }
-                                cb.AddCode($"public static readonly {idName} {name} = new ({enumName}.{name}, {index})");
-                            }
-                        }
-                        else
-                        {
-                            cb.AddCode($"public static readonly {idName} Invalid = new ({enumName}.Invalid, 0)");
-                        }
-                        cb.AppendLine();
-
                         //フィールドプロパティ
                         //関数呼び出しを避けるためにインラインで３項演算子を使う
                         cb.AddComment($"filed propieries");
@@ -250,90 +152,10 @@ namespace TinyDataTable.Editor
     #endif
                         }
                         cb.AppendLine();
+           
+
                         
-                        //operators
-                        cb.AddComment("operators");
-                        cb.AddCode($"public bool Equals({idName} other) => _value == other._value");
-                        cb.AddCode($"public bool Equals({enumName} other) => _value == other");
-                        cb.AddCode($"public override bool Equals(object obj) => obj is {idName} other && Equals(other)");
-                        cb.AddCode($"public override int GetHashCode() => (int)_value");
-                        cb.AddCode($"public override string ToString() => _value.ToString()");
-                        cb.AddCode($"public static bool operator ==({idName} left, {idName} right) => left.Equals(right)");
-                        cb.AddCode($"public static bool operator !=({idName} left, {idName} right) => !left.Equals(right)");
-                        cb.AddCode($"public static bool operator ==({idName} left, {enumName} right) => left.Equals(right)");
-                        cb.AddCode($"public static bool operator !=({idName} left, {enumName} right) => !left.Equals(right)");
-                        
-      //                  cb.AddCode($"public static bool operator ==({className} left, {className} right) => left._value == right._value");
-      //                  cb.AddCode($"public static bool operator !=({className} left, {className} right) => left._value != right._value");
-      //                  cb.AddCode($"public static bool operator ==({className} left, {className}.Enum right) => left._value == right");
-      //                  cb.AddCode($"public static bool operator !=({className} left, {className}.Enum right) => left._value != right");
-      //                  cb.AddCode($"public static bool operator ==({className}.Enum left, {className} right) => left == right._value");
-      //                  cb.AddCode($"public static bool operator !=({className}.Enum left, {className} right) => left != right._value");
-                        cb.AddCode($"public static implicit operator {idName}({enumName} value) => new {idName}(value)");
-                        cb.AddCode($"public static implicit operator {enumName}({idName} value) => value._value");
-                        cb.AppendLine();
-                        
-                        //静的テーブル
-                        cb.AddComment("static id table");
-                        var valids = recordAsset == null ?
-                            Array.Empty<DataTableRecordBase.HeaderData>() :
-                            recordAsset.Headers.Where(h => h.id > 0 && h.obsolete is false && string.IsNullOrEmpty(h.name) is false).ToArray();
-                        if (valids.Any())
-                        {
-                            using (cb.BeginBlock($"private static readonly {idName}[] _validIDs = new[]").Footer(";"))
-                            {
-                                foreach (var header in valids)
-                                {
-                                    if (header.obsolete is false && header.id > 0)
-                                    {
-                                        cb.AppendLine($"{idName}.{header.name},");
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            cb.AddCode(($"private static readonly {idName}[] _validIDs = Array.Empty<{idName}>()"));
-                        }
-                        cb.AppendLine();                    
-                        
-                        cb.AddComment("static enum table");
-                        if ( valids.Any())
-                        {
-                            using (cb.BeginBlock($"private static readonly {enumName}[] _validEnums = new[]").Footer(";"))
-                            {
-                                foreach (var header in valids)
-                                {
-                                    cb.AppendLine($"{enumName}.{header.name},");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            cb.AddCode(($"private static readonly {enumName}[] _validEnums = Array.Empty<{enumName}>()"));
-                        }
-                        cb.AppendLine();
-                        
-                        //EnumをIndexに変換するメソッド（静的にテーブル展開されるので高速）
-                        cb.AddComment("Enum to index");
-                        
-                        using (cb.BeginBlock($"private static int EnumToIndex({enumName} value) => value switch").Footer(";"))
-                        {
-                            if (recordAsset != null)
-                            {
-                                foreach (var (header, idx) in recordAsset.Headers
-                                             .Where(t=> string.IsNullOrEmpty(t.name) is false)
-                                             .Select((header, idx) => (header, idx)))
-                                {
-                                    cb.AppendLine($"{enumName}.{header.name} => {idx},");
-                                }
-                            }
-                            else
-                            {
-                                cb.AppendLine($"{enumName}.Invalid => 0,");
-                            }
-                            cb.AppendLine($"_ => 0");
-                        }
+
     //                    cb.AppendLine();
              
     #if false                        

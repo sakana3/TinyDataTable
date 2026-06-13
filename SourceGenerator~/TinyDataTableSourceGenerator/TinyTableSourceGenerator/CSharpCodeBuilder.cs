@@ -1,11 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Linq;
-using UnityEngine;
-using UnityEngine.UIElements;
 
-namespace TinyDataTable.Editor
+namespace TinyDataTable.SourceGenerator
 {
     internal class CSharpCodeBuilder
     {
@@ -55,17 +51,30 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// ブロックを開始する {
         /// </summary>
-        public CSharpCodeBuilder.BlockScope BeginBlock(string header = "")
+        public CSharpCodeBuilder.BlockScope BeginScope(string header = "" )
         {
             if (!string.IsNullOrEmpty(header))
             {
                 AppendLine(header);
             }
+
             AppendLine("{");
             _indentLevel++;
             return new BlockScope( this);
         }
 
+        public void BeginBlock(string header = "" )
+        {
+            if (!string.IsNullOrEmpty(header))
+            {
+                AppendLine(header);
+            }
+
+            AppendLine("{");
+            _indentLevel++;
+        }
+        
+        
         /// <summary>
         /// ブロックを終了する }
         /// </summary>
@@ -126,7 +135,7 @@ namespace TinyDataTable.Editor
                 return new BlockScope(this, false);
             }
             
-            return BeginBlock($"namespace {namespaceName}");
+            return BeginScope($"namespace {namespaceName}");
         }
 
         /// <summary>
@@ -136,7 +145,7 @@ namespace TinyDataTable.Editor
         {
             var partialStr = isPartial ? "partial " : "";
             var inheritStr = string.IsNullOrEmpty(inherit) ? "" : $" : {inherit}";
-            return BeginBlock($"{accessModifier} {partialStr}class {className}{inheritStr}");
+            return BeginScope($"{accessModifier} {partialStr}class {className}{inheritStr}");
         }
 
         /// <summary>
@@ -146,7 +155,7 @@ namespace TinyDataTable.Editor
         {
             var partialStr = isPartial ? "partial " : "";
             var inheritStr = string.IsNullOrEmpty(inherit) ? "" : $" : {inherit}";
-            return BeginBlock($"{accessModifier} {partialStr}struct {className}{inheritStr}");
+            return BeginScope($"{accessModifier} {partialStr}struct {className}{inheritStr}");
         }
         
         /// <summary>
@@ -154,7 +163,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         public CSharpCodeBuilder.BlockScope BeginEnum(string enumName, string accessModifier = "public")
         {
-            return BeginBlock($"{accessModifier} enum {enumName}");
+            return BeginScope($"{accessModifier} enum {enumName}");
         }        
 
         /// <summary>
@@ -164,11 +173,11 @@ namespace TinyDataTable.Editor
         {
             if (isStatic)
             {
-                return BeginBlock($"{accessModifier} static{returnType} {methodName}({args})");
+                return BeginScope($"{accessModifier} static{returnType} {methodName}({args})");
             }
             else
             {
-                return BeginBlock($"{accessModifier} {returnType} {methodName}({args})");
+                return BeginScope($"{accessModifier} {returnType} {methodName}({args})");
             }
         }
 
@@ -179,7 +188,7 @@ namespace TinyDataTable.Editor
         {
             string _srtfix = string.IsNullOrEmpty(serfix) ? "" : $" : {serfix}";
             
-            return BeginBlock($"{accessModifier} {methodName}({args}){_srtfix}");
+            return BeginScope($"{accessModifier} {methodName}({args}){_srtfix}");
         }
         
         /// <summary>
@@ -187,7 +196,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         public CSharpCodeBuilder.BlockScope BeginIf( string code)
         {
-            return BeginBlock($"if ({code})");
+            return BeginScope($"if ({code})");
         }            
 
         /// <summary>
