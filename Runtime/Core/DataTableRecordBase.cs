@@ -52,10 +52,9 @@ namespace TinyDataTable
     }
 
     /// <summary> Represents the base class for data table records. </summary>
-    public abstract class DataTableRecordBase<TSchema, TEnum> :
+    public abstract class DataTableRecordBase<TSchema> :
         DataTableRecordBase
         where TSchema : struct
-        where TEnum : Enum
     {
         /// <summary> Records </summary>        
         [SerializeField] private TSchema[] _records;
@@ -63,13 +62,6 @@ namespace TinyDataTable
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _records; }
-        }
-
-        /// <summary> Enum To Index </summary>        
-        public int ToIndex(TEnum enumValue)
-        {
-            var index =  Array.FindIndex(Headers, h => h.id == Unsafe.As<TEnum, int>(ref enumValue));
-            return  index >= 0 ? index : 0;
         }
 
         /// <summary> Name To Index </summary>        
@@ -89,12 +81,9 @@ namespace TinyDataTable
         /// <summary> Get Schema form Name </summary>        
         public TSchema this[string name]  => Records[ToIndex(name)];
         
-        /// <summary> Get Schema form Enum </summary>        
-        public TSchema this[TEnum enumValue] => Records[ToIndex(enumValue)];
-        
-        protected static DataTableRecordBase<TSchema,TEnum> _instance;
+        protected static DataTableRecordBase<TSchema> _instance;
         /// <summary> Singleton Instance </summary>        
-        public static DataTableRecordBase<TSchema,TEnum> Instance
+        public static DataTableRecordBase<TSchema> Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _instance;

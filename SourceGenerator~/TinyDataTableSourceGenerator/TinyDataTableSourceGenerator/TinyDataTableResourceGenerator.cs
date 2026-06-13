@@ -53,17 +53,86 @@ namespace TinyTable.SourceGenerator
                 // 外側の親クラス群を順番にネストしていく
                 foreach (var outer in typeDef.OuterTypes)
                 {
+                    cb.AddCommentBlock($"Class {outer.TypeName}");
                     cb.BeginBlock($"public partial {outer.TypeKeyword} {outer.TypeName}");
                 }
                 
-                // ③ ターゲット自身の型定義
+                // 型名定義
                 var idTypeName = typeDef.TypeName;
                 var recordTypeName = typeDef.attributeArgs[0].Value?.ToString() ?? string.Empty;
                 var schemaTypeName = $"{recordTypeName}.Schema";
                 var enumTypeName = typeDef.attributeArgs[1].Value?.ToString() ?? string.Empty;
                 var enumNames = GetEnumNames(typeDef.attributeArgs[1]);
+                var fields = GetFieldInfo(typeDef.attributeArgs[2]);
 
+                // Valid Enum Table
+                cb.AddComment("static valid enum table");
+                {
+                    var validEnum = enumNames.Where(f => f.IsObsolete is false && f.Value != 0);
+                    if (validEnum.Any())
+                    {
+                        using (cb.BeginScope(
+                                       $"public static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = new[]")
+                                   .Footer(";"))
+                        {
+                            foreach (var valid in validEnum)
+                            {
+                                cb.AppendLine($"{enumTypeName}.{valid.Name},");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cb.AddCode(
+                            ($"private static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = Array.Empty<{enumTypeName}>()"));
+                    }
+                }
+                
+                        
+                //静的テーブル
+                cb.AddComment("static valid id table");
+                {
+                    var valids = enumNames.Where(t =>
+                        t.IsObsolete is false && t.Value > 0 && string.IsNullOrEmpty(t.Name) is false);
+                    if (valids.Any())
+                    {
+                        using (cb.BeginScope(
+                                       $"public static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = new[]")
+                                   .Footer(";"))
+                        {
+                            foreach (var valid in valids)
+                            {
+                                cb.AppendLine($"{idTypeName}.{valid.Name},");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cb.AddCode(
+                            ($"private static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = Array.Empty<{idTypeName}>()"));
+                    }
+
+                    cb.AppendLine();
+                }
+
+                //EnumをIndexに変換するメソッド（静的にテーブル展開されるので高速）
+                cb.AddComment("Enum to index");
+                using (cb.BeginScope($"private static int ToIndex({enumTypeName} value) => value switch").Footer(";"))
+                {
+                    foreach (var en in enumNames
+                                 .Where(t=> string.IsNullOrEmpty(t.Name) is false && t.IsObsolete is false))
+                    {
+                        cb.AppendLine($"{enumTypeName}.{en.Name} => {en.ArrayIndex},");
+                    }
+                    cb.AppendLine($"_ => 0");
+                }                                    
+                cb.AppendLine();      
+                cb.AddComment("Enum indexer");
+                cb.AppendLine($"public {schemaTypeName} this[{enumTypeName} enumValue] => Records[ToIndex(enumValue)];");
+                cb.AppendLine();
+                
                 //クラススコープ
+                cb.AddCommentBlock("Record Class");
                 using( cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} :  IEquatable<{idTypeName}>, IEquatable<{enumTypeName}>") )
                 {
                     //メンバー
@@ -73,6 +142,25 @@ namespace TinyTable.SourceGenerator
                     cb.AddAttribute("NonSerialized");
                     cb.AddField("int", "_index", "private");
                     cb.AppendLine();      
+
+                    //フィールドプロパティ
+                    //関数呼び出しを避けるためにインラインで３項演算子を使う
+                    cb.AddComment($"filed propieries");
+                    foreach (var field in fields)
+                    {
+                        var left = $"public {field.FieldType} {field.FieldName}";
+                        var right = $"_recordArray[Index].{field.FieldName}";
+#if true
+                        cb.AddCode($"{left} => {right}");
+#else
+                            using (cb.BeginBlock($"public {typename} {field.name}"))
+                            {
+                                cb.AppendLine("[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");      
+                                cb.AddCode($"get => {right}");
+                            }
+#endif
+                    }
+                    cb.AppendLine();                    
                     
                     //コンストラクター
                     cb.AddComment("Constructor");
@@ -85,7 +173,7 @@ namespace TinyTable.SourceGenerator
                     cb.AppendLine();
                     cb.AddComment("Constructor");
                     using (cb.BeginConstructor(idTypeName, $"{enumTypeName} value",
-                               "public", "this(value, EnumToIndex(value))"))
+                               "public", $"this(value, {recordTypeName}.ToIndex(value))"))
                     {
                     }
                     cb.AppendLine();
@@ -108,13 +196,13 @@ namespace TinyTable.SourceGenerator
                     
                     cb.AddComment("static propieries");
                     foreach (var en in enumNames
-                                 .Where(t => string.IsNullOrEmpty(t.name) is false))
+                                 .Where(t => string.IsNullOrEmpty(t.Name) is false))
                     {
-                        if (en.obsolete)
+                        if (en.IsObsolete)
                         {
                             cb.AppendLine("[Obsolete]");
                         }
-                        cb.AddCode($"public static readonly {idTypeName} {en.name} = new ({enumTypeName}.{en.name}, {en.index})");
+                        cb.AddCode($"public static readonly {idTypeName} {en.Name} = new ({enumTypeName}.{en.Name}, {en.ArrayIndex})");
                     }
                     cb.AppendLine();
 
@@ -132,7 +220,7 @@ namespace TinyTable.SourceGenerator
                                     cb.AddCode("return 0");
                                 }
 
-                                cb.AddCode("_index = EnumToIndex(_value)");
+                                cb.AddCode($"_index = {recordTypeName}.ToIndex(_value)");
                             }
 
                             cb.AddCode("return _index");
@@ -166,80 +254,31 @@ namespace TinyTable.SourceGenerator
                     
                     cb.AppendLine($"public override int GetHashCode() => (int)_value;");
                     cb.AppendLine($"public override string ToString() => _value.ToString();");
+
                     
-                    //EnumをIndexに変換するメソッド（静的にテーブル展開されるので高速）
-                    cb.AddComment("Enum to index");
-                    using (cb.BeginScope($"private static int EnumToIndex({enumTypeName} value) => value switch").Footer(";"))
-                    {
-                        foreach (var en in enumNames
-                                     .Where(t=> string.IsNullOrEmpty(t.name) is false && t.obsolete is false))
-                        {
-                            cb.AppendLine($"{enumTypeName}.{en.name} => {en.index},");
-                        }
-                        cb.AppendLine($"_ => 0");
-                    }                    
-                        
-                    //静的テーブル
-                    cb.AddComment("static id table");
-                    var valids = enumNames.Where( t => t.obsolete is false && t.value > 0 && string.IsNullOrEmpty(t.name) is false );
-                    if (valids.Any())
-                    {
-                        using (cb.BeginScope($"private static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = new[]").Footer(";"))
-                        {
-                            foreach (var valid in valids)
-                            {
-                                cb.AppendLine($"{idTypeName}.{valid.name},");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        cb.AddCode(($"private static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = Array.Empty<{idTypeName}>()"));
-                    }
-                    cb.AppendLine();                             
-                    
-                    cb.AddComment("static valid enum table");
-                    var validEnum = enumNames.Where(f => f.obsolete is false && f.value != 0);
-                    if ( validEnum.Any())
-                    {
-                        using (cb.BeginScope($"private static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = new[]").Footer(";"))
-                        {
-                            foreach (var valid in validEnum)
-                            {
-                                cb.AppendLine($"{enumTypeName}.{valid.name},");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        cb.AddCode(($"private static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = Array.Empty<{enumTypeName}>()"));
-                    }
-                    
-                    // ④ メソッドの実装
+/*
                     cb.BeginBlock($"public void Dump()");
-                    cb.AppendLine($"UnityEngine.Debug.Log(\"[TinyTable] This is {typeDef.TypeName} { string.Join( "," , enumNames.Select(f=>f.name) )} data.\");");
+                    cb.AppendLine($"UnityEngine.Debug.Log(\"[TinyTable] {typeDef.TypeName} { string.Join( "," , enumNames.Select(f=>f.name) )} \");");
+                    cb.AppendLine($"UnityEngine.Debug.Log(\"[TinyTable] {typeDef.TypeName} { string.Join( "," , fields.Select(f=>f.FieldName) )} \");");
                     cb.EndBlock();
+*/                    
                 }
                 
-                // 外側の親クラス群の閉じカッコ
                 foreach (var outer in typeDef.OuterTypes)
                 {
                     cb.EndBlock();
                 }                
                 
-                //名前空間を閉じる
                 if (hasNamespace)
                 {
-                    
                     cb.EndBlock();
                 }
 
-                // ファイル名が衝突しないように、親クラス名も巻き込んだファイル名にする
                 string fileNameHint = typeDef.OuterTypes.Count > 0
                     ? string.Join("_", typeDef.OuterTypes.Select(o => o.TypeName)) + "_" + typeDef.TypeName
                     : typeDef.TypeName;
 
-                spc.AddSource($"{fileNameHint}_TinyTable.g.cs", SourceText.From(cb.ToString(), Encoding.UTF8));
+                spc.AddSource($"{fileNameHint}_TinyDataTable.g.cs", SourceText.From(cb.ToString(), Encoding.UTF8));
             });
         }
 
@@ -263,7 +302,6 @@ namespace TinyTable.SourceGenerator
 
             string typeKeyword = typeDeclaration is StructDeclarationSyntax ? "struct" : "class";
 
-            // 💡【新機能】親の型（外側のクラス）を最上層まで遡ってリストアップする
             var outerTypes = new List<OuterTypeInfo>();
             var currentContainingType = symbol.ContainingType;
             while (currentContainingType != null)
@@ -287,9 +325,9 @@ namespace TinyTable.SourceGenerator
             };
         }
         
-        private static (string name,int value ,int index,bool obsolete)[] GetEnumNames(TypedConstant typedConstant)
+        private static EnumDefinition[] GetEnumNames(TypedConstant typedConstant)
         {
-            var enumMembers = new List<(string all,int value , int index ,bool obsolete)>();
+            var enumMembers = new List<EnumDefinition>();
             if (typedConstant.Value is INamedTypeSymbol enumTypeSymbol && 
                 enumTypeSymbol.TypeKind == TypeKind.Enum)
             {
@@ -299,12 +337,55 @@ namespace TinyTable.SourceGenerator
                     var obsolate = field.GetAttributes().FirstOrDefault(attr => 
                         (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("ObsoleteAttribute") );
 
-                    enumMembers.Add((field.Name, (field.ConstantValue is int) ? (int)field.ConstantValue : 0,index, obsolate != null ) );
+                    var indexAttribute = field.GetAttributes().FirstOrDefault(attr => 
+                        attr.AttributeClass?.ToDisplayString() == "TinyDataTable.EnumIndexAttribute" );
+                    
+                    int arrayIndex = indexAttribute.ConstructorArguments.FirstOrDefault().Value as int? ?? 0;
+                    
+                    var enumDefinition = new EnumDefinition()
+                    {
+                        Name = field.Name,
+                        Value = (field.ConstantValue is int) ? (int)field.ConstantValue : 0,
+                        Index = index,
+                        ArrayIndex = arrayIndex,
+                        IsObsolete = obsolate != null
+                    };
+                    enumMembers.Add(enumDefinition);
                     index++;
                 }
             }
             return enumMembers.ToArray();
         }
+
+        private static FieldDefinition[] GetFieldInfo(TypedConstant typedConstant)
+        {
+            var fieldList = new List<FieldDefinition>();
+            if (typedConstant.Kind == TypedConstantKind.Type)
+            {
+                if (typedConstant.Value is INamedTypeSymbol targetTypeSymbol)
+                {
+                    foreach (var fieldSymbol in targetTypeSymbol.GetMembers().OfType<IFieldSymbol>())
+                    {
+                        if (fieldSymbol.IsImplicitlyDeclared) continue;
+
+                        var tiny = fieldSymbol.GetAttributes().Any(attr => 
+                            (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute") );
+
+                        if (tiny)
+                        {
+                            fieldList.Add(new FieldDefinition
+                            {
+                                FieldName = fieldSymbol.Name,
+                                FieldType = fieldSymbol.Type.ToDisplayString(),
+                                Accessibility = fieldSymbol.DeclaredAccessibility.ToString()
+                            });
+                        }
+                    }
+                }
+            }
+            return fieldList.ToArray();
+        }
+    
     }
     
     internal class TypeDefinition
@@ -314,6 +395,23 @@ namespace TinyTable.SourceGenerator
         public string TypeKeyword { get; set; } = string.Empty;
         public TypedConstant[] attributeArgs { get; set; } = Array.Empty<TypedConstant>();
         public List<OuterTypeInfo> OuterTypes { get; set; } = new List<OuterTypeInfo>();
+    }
+
+    internal class EnumDefinition
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Value { get; set; } = 0;
+        public int Index { get; set; } = 0;
+        public int ArrayIndex { get; set; } = 0;
+        public bool IsObsolete { get; set; } = false;
+    }
+    
+    internal class FieldDefinition
+    {
+        public string FieldName { get; set; } = string.Empty;
+        public string FieldType { get; set; } = string.Empty;
+        public string Accessibility { get; set; } = string.Empty;
+        public bool IsObsolete { get; set; } = false;
     }
 
     internal class OuterTypeInfo

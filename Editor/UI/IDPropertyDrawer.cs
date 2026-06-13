@@ -238,7 +238,7 @@ namespace TinyDataTable.Editor
                     .Select(t => t.Item1.GetField(t.Item2))
                     .Select(t => (
                         obsoletes:t.GetCustomAttributes<ObsoleteAttribute>(),
-                        order:t.GetCustomAttributes<EnumOrderAttribute>()));
+                        order:t.GetCustomAttributes<EnumIndexAttribute>()));
 
                 var _items = values
                     .Select( (t,i) => (index:i,name:UnityEditor.ObjectNames.NicifyVariableName(Enum.GetName(_enumType, t))))

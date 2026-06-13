@@ -10,13 +10,13 @@ namespace TinyDataTable
     /// </summary>
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
-    public class EnumOrderAttribute : Attribute
+    public class EnumIndexAttribute : Attribute
     {
         private readonly int _order;
 
         public int Order => _order;
         
         // コンストラクタ
-        public EnumOrderAttribute( int order ) => this._order = order;
+        public EnumIndexAttribute( int order ) => this._order = order;
     }
 }

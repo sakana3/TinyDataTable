@@ -91,8 +91,15 @@ namespace TinyDataTable.SourceGenerator
         public CSharpCodeBuilder EndBlock(string footer )
         {
             if (_indentLevel > 0) _indentLevel--;
-            
-            AppendLine($"}}{footer}");
+
+            if (string.IsNullOrEmpty(footer))
+            {
+                AppendLine($"}}");
+            }
+            else
+            {
+                AppendLine($"}}{footer}");
+            }
             return this;
         }
 
@@ -277,10 +284,21 @@ namespace TinyDataTable.SourceGenerator
         /// </summary>
         public CSharpCodeBuilder AddComment(string comment)
         {
-            AppendLine($"// {comment}");
+            AppendLine($"/// <summary> {comment} </summary>");
             return this;
         }
 
+        /// <summary>
+        /// コメントを追加
+        /// </summary>
+        public CSharpCodeBuilder AddCommentBlock(string comment)
+        {
+            AppendLine($"/// <summary>");
+            AppendLine($"/// {comment}");
+            AppendLine($"/// </summary>");
+            return this;
+        }
+        
         /// <summary>
         /// XMLドキュメントコメントを追加
         /// </summary>
@@ -315,43 +333,44 @@ namespace TinyDataTable.SourceGenerator
 
         public class BlockScope : IDisposable
         {
-            private CSharpCodeBuilder builder;
-            private bool enableScope;
-            private string footer;
+            private CSharpCodeBuilder _builder;
+            private bool _enableScope;
+            private string _footer;
             public BlockScope(CSharpCodeBuilder builder , bool enableScope = true)
             {
-                this.builder = builder;
-                this.enableScope = enableScope;
+                this._builder = builder;
+                this._enableScope = enableScope;
+                _footer = string.Empty;
             }
 
             public BlockScope Footer( string footer )
             {
-                this.footer = footer;
+                this._footer = footer;
                 return this;
             }
             
             public void Dispose()
             {
-                if (enableScope)
+                if (_enableScope)
                 {
-                    builder.EndBlock(footer);
+                    _builder.EndBlock(_footer);
                 }
             }
         }
         
         public class CompilerScope : IDisposable
         {
-            private CSharpCodeBuilder builder;
-            public string endLine;
+            private CSharpCodeBuilder _builder;
+            public string _endLine;
             public CompilerScope(CSharpCodeBuilder builder , string end  )
             {
-                this.builder = builder;
-                endLine = end;
+                _builder = builder;
+                _endLine = end;
             }
             
             public void Dispose()
             {
-                builder.AppendLineNoIndent(endLine);
+                _builder.AppendLineNoIndent(_endLine);
             }
         }        
     }

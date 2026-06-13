@@ -17,5 +17,8 @@ namespace TinyDataTable.Description
 
         // コンストラクタ
         public DescriptionAttribute(string description) => this._description = description;
+        
+        // コンストラクタ
+        public DescriptionAttribute(string description,bool error) => this._description = description;
     }
 }

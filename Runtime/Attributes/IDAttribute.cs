@@ -12,10 +12,13 @@ namespace TinyDataTable
     {
         public Type RecordType { private set; get; }
         public Type EnumType { private set; get; }
-        public IDAttribute(Type recordType,Type enumType)
+        public Type SchemaType { private set; get; }
+
+        public IDAttribute(Type recordType,Type enumType,Type schemaType )
         {
             RecordType = recordType;
             EnumType = enumType;
+            SchemaType = schemaType;
         }
     }
     
@@ -29,5 +32,5 @@ namespace TinyDataTable
         public IDXAttribute()
         {
         }
-    }    
+    }
 }

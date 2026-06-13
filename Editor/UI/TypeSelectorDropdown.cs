@@ -190,7 +190,8 @@ namespace TinyDataTable.Editor
                 .ToArray();
 
             var allClassTypes= allTypes
-                .Where(t => t.IsClass || t.IsValueType || t.IsPrimitive )
+                .Where(t => !t.IsInterface && !t.IsEnum && !t.IsPrimitive && !t.IsArray && t != typeof(void))
+                .Where(t => t.IsClass || t.IsValueType )
                 .ToArray();
             
             var classTypes = allClassTypes

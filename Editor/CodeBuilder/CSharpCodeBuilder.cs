@@ -82,8 +82,15 @@ namespace TinyDataTable.Editor
         public CSharpCodeBuilder EndBlock(string footer )
         {
             if (_indentLevel > 0) _indentLevel--;
-            
-            AppendLine($"}}{footer}");
+
+            if (string.IsNullOrEmpty(footer))
+            {
+                AppendLine($"}}");
+            }
+            else
+            {
+                AppendLine($"}}{footer}");
+            }
             return this;
         }
 
@@ -308,7 +315,7 @@ namespace TinyDataTable.Editor
         {
             private CSharpCodeBuilder builder;
             private bool enableScope;
-            private string footer;
+            private string _footer;
             public BlockScope(CSharpCodeBuilder builder , bool enableScope = true)
             {
                 this.builder = builder;
@@ -317,7 +324,7 @@ namespace TinyDataTable.Editor
 
             public BlockScope Footer( string footer )
             {
-                this.footer = footer;
+                _footer = footer;
                 return this;
             }
             
@@ -325,7 +332,7 @@ namespace TinyDataTable.Editor
             {
                 if (enableScope)
                 {
-                    builder.EndBlock(footer);
+                    builder.EndBlock(_footer);
                 }
             }
         }

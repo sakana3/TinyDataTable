@@ -1,13 +1,13 @@
 {
   "name": "com.sakana3.tinydatatable",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "displayName": "TinyDataTable",
   "description": "Data Table for Unity.",
-  "unity": "2021.3",
+  "unity": "6000.0",
   "author": {
     "name": "Sakana 3ed",
-    "email": "nosaka_online@hotmail.com",
-    "url": "https://github.com/sakana3/TinyDataTable"
+    "url": "https://github.com/sakana3/TinyDataTable",
+    "email": "nosaka_online@hotmail.com"
   },
   "samples": [
     {

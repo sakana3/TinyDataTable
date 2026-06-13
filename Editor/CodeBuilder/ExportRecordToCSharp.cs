@@ -27,9 +27,9 @@ namespace TinyDataTable.Editor
 
             cb.AppendLine("#pragma warning disable CS0612");
             cb.AddUsing("System");
-            cb.AddUsing("System.Collections.Generic");
-            cb.AddUsing("System.Runtime.CompilerServices");
-            cb.AddUsing("System.Linq");
+//            cb.AddUsing("System.Collections.Generic");
+//            cb.AddUsing("System.Runtime.CompilerServices");
+//            cb.AddUsing("System.Linq");
             cb.AddUsing("UnityEngine");
             cb.AddUsing("TinyDataTable");
             cb.AppendLineNoIndent("#if UNITY_EDITOR");
@@ -39,24 +39,24 @@ namespace TinyDataTable.Editor
             cb.AppendLineNoIndent("#endif");
             cb.AppendLine();
 
-            var recordClassName = $"{className}Record";
-            string enumName = $"{recordClassName}.Enum";
-            string schemaName = $"{recordClassName}.Schema";
-            string idFullName = $"{recordClassName}.ID";
+            string recordTypeName = $"{className}Record";
+            string enumTypeName = $"{recordTypeName}.Enum";
+            string schemaTypeName = $"{recordTypeName}.Schema";
             string idName = "ID";
+            string idFullName = $"{recordTypeName}.{idName}";
             
             //Make ID
             using (cb.BeginNamespace(namespaceName))
             {
                 //Record ScriptableObject
                 cb.AddComment("Record ScriptableObject");
-                cb.AddAttribute(onsolete,$"Record(typeof({schemaName}),typeof({enumName}),typeof({idFullName}),\"{className}\")");
-                using (cb.BeginClass($"{recordClassName}", inherit: $"DataTableRecordBase<{schemaName},{enumName}>", isPartial: true))
+                cb.AddAttribute(onsolete,$"Record(typeof({schemaTypeName}),typeof({enumTypeName}),typeof({idFullName}),\"{className}\")");
+                using (cb.BeginClass($"{recordTypeName}", inherit: $"DataTableRecordBase<{schemaTypeName}>", isPartial: true))
                 {
                     //Record Struct
-                    cb.AddComment("Record");
+                    cb.AddComment("Schema struct");
                     cb.AddAttribute(onsolete, "Serializable");
-                    using (cb.BeginStruct("Schema", isPartial:true))
+                    using (cb.BeginStruct("Schema", isPartial:false))
                     {
                         if (fields.Any())
                         {
@@ -74,7 +74,7 @@ namespace TinyDataTable.Editor
                         else
                         {
                             cb.AppendLine($"[SerializeField,HideInInspector,Obsolete]");
-                            cb.AppendLine($"public bool __dummy; // dummy for avoiding compile error");
+                            cb.AppendLine($"private bool __dummy; // dummy for avoiding compile error");
                         }
                     }
                     cb.AppendLine();
@@ -87,28 +87,29 @@ namespace TinyDataTable.Editor
                         if (recordAsset != null)
                         {
                             var enums = recordAsset.Headers
-                                .Where(h=> string.IsNullOrEmpty(h.name) is false)
-                                .Select((h, i) => (
-                                    $"[EnumOrder({i})] {h.name}",
-                                    $"0x{h.id:X8}",
-                                    h.description,
-                                    h.obsolete ? "Obsolete" : ""))
+                                .Select( (header, idx) => (header,idx) )
+                                .Where(t=> string.IsNullOrEmpty(t.header.name) is false)
+                                .Select( t => (
+                                    $"[EnumIndex({t.idx})] {t.header.name}",
+                                    $"0x{t.header.id:X8}",
+                                    t.header.description,
+                                    t.header.obsolete ? "Obsolete" : ""))
                                 .ToList();
                             cb.AddEnums(enums);
                         }
                         else
                         {
-                            cb.AppendLine("[EnumOrder(0)] Invalid = 0x00000000,");
+                            cb.AppendLine("[EnumIndex(0)] Invalid = 0x00000000,");
                         }
                     }
                     cb.AppendLine();
                     
                     // ID
                     cb.AddComment("ID");
-                    cb.AddAttribute(onsolete,$"ID(typeof({recordClassName}),typeof({recordClassName}.Enum))", "Serializable");                    
+                    cb.AddAttribute(onsolete,$"ID(typeof({recordTypeName}),typeof({enumTypeName}),typeof({schemaTypeName}))", "Serializable");                    
                     using (cb.BeginStruct(idName, inherit: $"IIdentifier", isPartial: true))
                     {
-                        cb.AddComment("...");
+                        cb.AddComment("The implementation is generated by the source generator.");
                     }
 
                     if (string.IsNullOrEmpty(addressName) is false)
@@ -124,58 +125,6 @@ namespace TinyDataTable.Editor
                         cb.AddField("string", $"ResourcePath = \"{resourcePath}\"", "public const");
                     }
                 }
-                cb.AppendLine();
-
-                using (cb.BeginRegion("SorceGenerator"))
-                using (cb.BeginClass($"{recordClassName}", isPartial: true))
-                {
-                    using (cb.BeginStruct(idName, isPartial: true))
-                    {                
-                        //フィールドプロパティ
-                        //関数呼び出しを避けるためにインラインで３項演算子を使う
-                        cb.AddComment($"filed propieries");
-                        foreach (var field in fields)
-                        {
-                            cb.AddAttribute(field.ToBaseAttributeString(false));
-                            
-                            var typename = field.Type.GetCSharpAliasFull();
-                            var left = $"public {typename} {field.Name}";
-                            var right = $"_recordArray[Index].{field.Name}";
-    #if true
-                            cb.AddCode($"{left} => {right}");
-    #else
-                            using (cb.BeginBlock($"public {typename} {field.name}"))
-                            {
-                                cb.AppendLine("[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");      
-                                cb.AddCode($"get => {right}");                            
-                            }
-    #endif
-                        }
-                        cb.AppendLine();
-           
-
-                        
-
-    //                    cb.AppendLine();
-             
-    #if false                        
-                        using (cb.BeginIfdef("UNITY_EDITOR"))
-                        {
-                            if (asset.InitializeOnLoadEditor)
-                            {
-                                cb.AddAttribute("UnityEditor.InitializeOnLoadMethod");
-                                using (cb.BeginBlock("private static void InitializeOnLoadEditor()"))
-                                {
-                                    using (cb.BeginBlock("UnityEditor.EditorApplication.delayCall += () =>").Footer(";"))
-                                    {
-                                        cb.AddCode($"UnityEditor.AssetDatabase.LoadAssetAtPath<DataTableAsset>(\"{assetPath}\");");
-                                    }
-                                }
-                            }
-                        }
-    #endif                                                
-                    }  //End of struct       
-                }   //End of class
             }   //End of namespace
 
             return cb.ToString();
