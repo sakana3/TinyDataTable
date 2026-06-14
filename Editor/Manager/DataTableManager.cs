@@ -7,12 +7,13 @@ using System.Reflection;
 namespace TinyDataTable.Editor
 {
     [Serializable]
-    public class DataTableTree : SerializableTree<DataTableRecordBase>
+    internal class DataTableTree : SerializableTree<DataTableRecordBase>
     {
         
     }
 
-    public class DataTableManager : ScriptableObject
+    [Icon( "Packages/com.sakana3.tinydatatable//Editor/Assets/TinyDataTableIcon.png")]
+    internal class DataTableManager : ScriptableObject
     {
         public enum DataType
         {

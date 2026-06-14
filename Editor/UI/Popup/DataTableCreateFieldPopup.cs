@@ -11,7 +11,7 @@ using UnityEditor.IMGUI.Controls;
 namespace TinyDataTable.Editor
 {
     // ポップアップウィンドウのコンテンツ
-    public class DataTableCreateFieldPopup : PopupWindowContent
+    internal class DataTableCreateFieldPopup : PopupWindowContent
     {
         private readonly Action<FieldInfo> _onAdd;
         private Vector2 _windowSize = new Vector2(300, 200);

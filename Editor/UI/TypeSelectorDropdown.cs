@@ -8,7 +8,7 @@ using UnityEditor.IMGUI.Controls;
 
 namespace TinyDataTable.Editor
 {
-    public class TypeSelectorDropdown : AdvancedDropdown
+    internal class TypeSelectorDropdown : AdvancedDropdown
     {
         private readonly Action<Type> _onTypeSelected;
         private readonly IEnumerable<string> _assemblys;
@@ -229,7 +229,7 @@ namespace TinyDataTable.Editor
         }        
     }
 
-    public class AssemblieSelectorDropdown : AdvancedDropdown
+    internal class AssemblieSelectorDropdown : AdvancedDropdown
     {
         private static Assembly[] allAssembly = System.AppDomain.CurrentDomain.GetAssemblies()
             .ToArray();

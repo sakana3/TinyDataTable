@@ -9,7 +9,7 @@ using UnityEditor.AddressableAssets.Settings;
 
 namespace TinyDataTable.Editor
 {
-    public class AddressableElement : VisualElement
+    internal class AddressableElement : VisualElement
     {
         private UnityEngine.Object _target;
         public AddressableElement(UnityEngine.Object target)

@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 
 namespace TinyDataTable.Editor
 {
-    public class DataSheetFieldOrderPopup : PopupWindowContent
+    internal class DataSheetFieldOrderPopup : PopupWindowContent
     {
         private static readonly Vector2 _windowSize = new Vector2(200, 400);
 

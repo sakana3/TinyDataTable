@@ -8,7 +8,7 @@ using UnityEditor.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public partial class DataSheetField : VisualElement
+    internal partial class DataSheetField : VisualElement
     {
         public struct Item
         {

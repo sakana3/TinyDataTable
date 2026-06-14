@@ -7,20 +7,20 @@ using UnityEngine.UIElements;
     
 namespace TinyDataTable.Editor
 {
-    public class SerializableTreeView<ITEM> : VisualElement where ITEM : class
+    internal class SerializableTreeView<ITEM> : VisualElement where ITEM : class
     {
         public TreeView treeView { private set; get; }
         public UnityEditor.UIElements.ToolbarSearchField serchField { private set; get; } 
         public SerializableTree<ITEM> target;
         public event Action<List<SerializableTree<ITEM>.TreeNode>> hierarchyChanged;
 
-        public Func<int,SerializableTree<ITEM>.Node,bool,bool, VisualElement> makeItem;
+        public Func<int,SerializableTree<ITEM>.Node,bool,bool, VisualElement> onMakeItem;
         public Action<Rect, Action<string,ITEM>> onCreateItem;
         public Func<ITEM,bool> OnSelectItem;
         public Action<IEnumerable<ITEM>> OnRemoveItem;
         private HelpBox infoBox;
         private bool _isStructureMode;
-        private IEnumerable<int> _previousSelectedIndices = Enumerable.Empty<int>();
+        public int HotCreateId = -1;
 
         public SerializableTreeView(SerializableTree<ITEM> target , bool isStructureMode )
         {
@@ -56,24 +56,25 @@ namespace TinyDataTable.Editor
             treeView.style.flexGrow = 1;
             treeView.itemIndexChanged += (_,_) => OnHerarchyChanged();
             treeView.makeItem += () => new VisualElement();
-            treeView.bindItem += (element, i) =>
+            treeView.bindItem += (element, index) =>
             {
+                var id = treeView.GetIdForIndex(index);
                 element.Clear();
-                if (makeItem == null)
+                if (onMakeItem == null)
                 {
                     var label = new Label();
-                    label.text = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(i).node.Name;
+                    label.text = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(id).node.Name;
                     element.Add(label);
                 }
                 else
                 {
-                    var item = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(i);
+                    var item = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(id);
                     if (item != null)
                     {
-                        var node = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(i).node;
-                        bool isExpand = treeView.viewController.IsExpanded(i);
-                        bool hasChildren = treeView.viewController.HasChildren(i);
-                        var ve = makeItem.Invoke(i, node, isExpand, hasChildren);
+                        var node = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(id).node;
+                        bool isExpand = treeView.viewController.IsExpanded(id);
+                        bool hasChildren = treeView.viewController.HasChildren(id);
+                        var ve = onMakeItem.Invoke(id, node, isExpand, hasChildren);
                         element.Add(ve);
                     }
                 }
@@ -82,9 +83,18 @@ namespace TinyDataTable.Editor
                 {
                     var itemContextMenu = new ContextualMenuManipulator((e) =>
                         {
-                            e.menu.AppendAction("Create Folder", (p) => InsertNewTree(i, "New Folder",null,true));
-                            e.menu.AppendAction("Create Table", (p) => CreateItem(p.eventInfo.mousePosition, i));
-                            e.menu.AppendAction("Remove", (p) => RemoveTree(i));
+                            e.menu.AppendAction("Create Folder", (p) =>
+                            {
+                                InsertNewTree(id, "New Folder", null, true);
+                            });
+                            e.menu.AppendAction("Create Table", (p) =>
+                            {
+                                CreateItem(p.eventInfo.mousePosition, id);
+                            });
+                            e.menu.AppendAction("Remove", (p) =>
+                            {
+                                RemoveTree(id);
+                            });
                         }
                     ) { target = element };
                 }
@@ -111,22 +121,28 @@ namespace TinyDataTable.Editor
                     var node = treeView.GetItemDataForIndex<SerializableTree<ITEM>.TreeNode>(index);
                     selected = node.node.Item;
                 }
-                
-                if (OnSelectItem == null || OnSelectItem.Invoke(selected))
-                {
-                    _previousSelectedIndices = indexs.ToList();
-                }
-                else
-                {
-                    //selectedIndicesChanged内でのSetSelectionは現在機能していない
-                    treeView.SetSelectionWithoutNotify(_previousSelectedIndices);
-                }
+                OnSelectItem?.Invoke(selected);
             };
+            treeView.dragAndDropUpdate += args =>
+            {
+                if (args.parentId != -1)
+                {
+                    var node = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(args.parentId);
+                    if (node.node.IsFolder is false)
+                    {
+                        return DragVisualMode.Rejected;
+                    }
+                }
+                
+                return DragVisualMode.Move;
+            };
+//            treeView.setupDragAndDrop += args => Debug.Log("args.selectedIds");            
+            
             treeView.fixedItemHeight = 16;
             treeView.viewDataKey = $"SerializableTreeView<{nameof(ITEM)}>";
             Add(treeView);
             
-            BuildTree(target.ToTree());
+            BuildTree();
         }
 
         public void BuildTree(SerializableTree<ITEM> item)
@@ -138,14 +154,12 @@ namespace TinyDataTable.Editor
             }
             else
             {
-                BuildTree(item.ToTree());
+                BuildTree();
             }
         }
 
         private void RefreshTree(SerializableTree<ITEM> tree)
         {
-            var root = treeView.viewController.GetRootItemIds();
-
             for (int i = 0; i < tree.Nodes.Length; i++)
             {
                 {
@@ -156,14 +170,13 @@ namespace TinyDataTable.Editor
             }
         }
 
-        private void BuildTree(List<SerializableTree<ITEM>.TreeNode> tree)
+        private void BuildTree()
         {
             var root = MakeTree(target.ToTree());
             treeView.SetRootItems(root);
             treeView.Rebuild();
         }
 
-        
         public void CreateItem( Vector2 positon, int rootID )
         {
             var mouseRect = new Rect(positon, Vector2.one);
@@ -194,7 +207,7 @@ namespace TinyDataTable.Editor
                 }
             }
             
-            var newId = treeView.viewController.GetAllItemIds().DefaultIfEmpty(-1).Max() + 1;
+            var newId = System.Guid.NewGuid().GetHashCode();
             SerializableTree<ITEM>.TreeNode node = new()
             {
                 node = new SerializableTree<ITEM>.Node()
@@ -203,18 +216,28 @@ namespace TinyDataTable.Editor
                     Parent = -1,
                     Item = nodeItem,
                     IsFolder =  isFolder,
+                    ID = newId
                 },
                 children = new(),
-                index = newId
             };
             var item = new TreeViewItemData<SerializableTree<ITEM>.TreeNode>(newId,node)
             {
                 
-            };
-            treeView.AddItem(item,rootID,childIndex,true);
-            treeView.SetSelectionById( new []{ newId} );
+            }; 
+            treeView.AddItem(item,rootID,childIndex,false);
+            HotCreateId = newId;
+            treeView.RefreshItems();
+            treeView.Rebuild();
+            HotCreateId = -1;
+            treeView.SetSelectionById( newId );
+            int targetIndex = treeView.viewController.GetIndexForId(newId);
+            if (targetIndex >= 0)
+            {
+                treeView.ScrollToItem(targetIndex);
+            }
             OnHerarchyChanged();
         }
+        
 
         public void RemoveTree(int id)
         {
@@ -222,13 +245,15 @@ namespace TinyDataTable.Editor
             targetIds.AddRange(GetAllDescendantIds(id));
 
             var itemsToRemove = targetIds
-                .Select(targetId => treeView.viewController.GetItemForId(targetId) as SerializableTree<ITEM>.TreeNode)
+                .Select(targetId => treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(targetId))
                 .Where(node => node?.node.Item != null)
                 .Select(node => node.node.Item)
                 .ToList();
-
+            
             if (treeView.TryRemoveItem(id, true))
             {
+                treeView.RefreshItems();
+                treeView.Rebuild();
                 OnHerarchyChanged();
                 
                 OnRemoveItem?.Invoke(itemsToRemove);
@@ -263,11 +288,19 @@ namespace TinyDataTable.Editor
 
         private void OnHerarchyChanged()
         {
-            if (treeView.viewController != null)
+            treeView.RefreshItems();
+//            if (treeView.viewController != null)
             {
-                var treeNode = TraverseTree(treeView.viewController.GetRootItemIds());
+                var treeNode = TraverseTree();
                 hierarchyChanged?.Invoke(treeNode);
             }
+            //何故かIDがずれるのでツリーを再構築する
+            BuildTree();
+        }
+
+        private List<SerializableTree<ITEM>.TreeNode> TraverseTree(int parentIdx = -1)
+        {
+            return TraverseTree(treeView.viewController.GetRootItemIds(),parentIdx);
         }
 
         private List<SerializableTree<ITEM>.TreeNode> TraverseTree(IEnumerable<int> root, int parentIdx = -1)
@@ -283,7 +316,8 @@ namespace TinyDataTable.Editor
                 treeNode.node.Item = data.node.Item;
                 treeNode.node.IsFolder = data.node.IsFolder;
                 treeNode.node.Parent = parentIdx;
-                treeNode.children = TraverseTree(childrenIds, data.index);
+                treeNode.node.ID =  data.node.ID;
+                treeNode.children = TraverseTree(childrenIds, data.node.ID);
                 tree.Add(treeNode);
             }
 
@@ -349,7 +383,8 @@ namespace TinyDataTable.Editor
         private List<TreeViewItemData<SerializableTree<ITEM>.TreeNode>> MakeTree(List<SerializableTree<ITEM>.TreeNode> tree)
         {
             var root = tree
-                .Select(t => new TreeViewItemData<SerializableTree<ITEM>.TreeNode>(t.index, t, MakeTree(t.children)) { })
+                .Select(t => new TreeViewItemData<SerializableTree<ITEM>.TreeNode>(
+                    t.node.ID, t, MakeTree(t.children)) { })
                 .ToList();
             return root;
         }

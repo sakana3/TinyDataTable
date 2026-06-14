@@ -7,7 +7,7 @@ using UnityEditor.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerWindow : EditorWindow
+    internal class DataTableManagerWindow : EditorWindow
     {
         // メニューアイテムを追加 (Window > My Sample Window)
         [MenuItem("Window/TinyDataTable")]
@@ -64,8 +64,6 @@ namespace TinyDataTable.Editor
         {
             this.dataTableManager = manager;
        
-            EditorGUIUtility.SetIconForObject(manager, DataTableManagerTreeView.ItemIcon as Texture2D);
-            
             EditorPrefs.SetInt("DataTableManagerEditorMode", (int)DataTableManagerEditor.Mode.BuildMode);
             
             CreateGUI();

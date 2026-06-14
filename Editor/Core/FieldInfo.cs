@@ -14,7 +14,7 @@ namespace TinyDataTable.Editor
     /// <summary>
     /// レコードフィールド情報
     /// </summary>
-    public class FieldInfo
+    internal class FieldInfo
     {
         public string Name { set; get; }
         public string Description { set; get; }

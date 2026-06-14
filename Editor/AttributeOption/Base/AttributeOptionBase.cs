@@ -34,7 +34,7 @@ namespace TinyDataTable.Editor
             }
         }
 
-        public void FormFiledInfo(FieldInfo fieldInfo)
+        internal void FormFiledInfo(FieldInfo fieldInfo)
         {
             if (fieldInfo != null)
             {

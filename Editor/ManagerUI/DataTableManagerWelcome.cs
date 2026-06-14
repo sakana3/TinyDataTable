@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerWelcome : VisualElement
+    internal class DataTableManagerWelcome : VisualElement
     {
         private DataTableManager manager = null;
 

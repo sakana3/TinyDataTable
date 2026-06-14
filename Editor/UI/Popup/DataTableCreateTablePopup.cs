@@ -9,7 +9,7 @@ using Button = UnityEngine.UIElements.Button;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableCreateTablePopup : PopupWindowContent
+    internal class DataTableCreateTablePopup : PopupWindowContent
     {
         //Set the window size
         public override Vector2 GetWindowSize() => new Vector2(256, 80);
@@ -88,7 +88,7 @@ namespace TinyDataTable.Editor
                 infoBox.style.display = DisplayStyle.Flex;
                 infoBox.messageType = HelpBoxMessageType.Error;
             }
-            else if (SerializableUtility.CheckExistClass( namespaceName,className) )
+            else if (SerializableUtility.CheckExistClass( namespaceName,className+"Record") )
             {
                 infoBox.text = "This name is already used.";
                 confirmButton.SetEnabled( false);              
@@ -110,6 +110,5 @@ namespace TinyDataTable.Editor
                 infoBox.style.display = DisplayStyle.Flex;
             }
         }
-
     }
 }

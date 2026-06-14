@@ -6,7 +6,7 @@ using UnityEditor;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerTableView : VisualElement
+    internal class DataTableManagerTableView : VisualElement
     {
         private DataTableManager Manager = null;
         private DataTableRecordBase asset;

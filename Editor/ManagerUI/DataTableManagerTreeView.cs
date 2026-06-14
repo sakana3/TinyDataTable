@@ -7,15 +7,11 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerTreeView : VisualElement
+    internal class DataTableManagerTreeView : VisualElement
     {
-        private static Texture FolderIcon = EditorGUIUtility.IconContent("d_Folder Icon").image;
-        private static Texture FolderEmptyIcon = EditorGUIUtility.IconContent( "d_FolderEmpty Icon").image;
-        private static Texture FolderOpenIcon = EditorGUIUtility.IconContent("d_FolderOpened Icon").image;
-        public static Texture ItemIcon = EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image;
-        
         private DataTableManager Manager = null;
         private bool IsStructureMode = false;
+        private bool isDirtySelf;
 
         public Func<DataTableRecordBase,bool> OnSelectDataTableAsset;
         
@@ -33,16 +29,25 @@ namespace TinyDataTable.Editor
             var treeView = new SerializableTreeView<DataTableRecordBase>(Manager.Tree,IsStructureMode);
             treeView.hierarchyChanged += tree =>
             {
+                isDirtySelf = true;
                 Undo.RecordObject(Manager, "Update DataTableManager HierarchyChanged");
                 Manager.Tree.FromTree(tree);
                 EditorUtility.SetDirty(Manager);
+                AssetDatabase.SaveAssetIfDirty( Manager );
             };
             treeView.OnSelectItem = asset => OnSelectDataTableAsset.Invoke(asset);
             treeView.OnRemoveItem = RemoveDataTableAsset;
             treeView.style.flexGrow = 1;
             treeView.Bind(so);
-            treeView.TrackSerializedObjectValue(so, a => treeView.BuildTree(Manager.Tree) );
-            treeView.makeItem = (id,node,isFold,hasChildren) =>
+            treeView.TrackSerializedObjectValue(so, a =>
+            {
+                if (!isDirtySelf)
+                {
+                    treeView.BuildTree(Manager.Tree);
+                }
+                isDirtySelf = false;
+            });
+            treeView.onMakeItem = (id,node,isFold,hasChildren) =>
             {
                 var root = new VisualElement();
                 root.style.flexDirection = FlexDirection.Row;
@@ -51,12 +56,17 @@ namespace TinyDataTable.Editor
                 icon.style.width = 16;
                 icon.style.height = 16;
                 root.Add(icon);
-
                 if (node.IsFolder)
                 {
-                    icon.image = isFold ? (hasChildren ? FolderIcon:FolderEmptyIcon) : FolderOpenIcon;
+                    icon.image = EditorResources.FolderIcon(isFold,!hasChildren);
+                    
                     if (IsStructureMode)
                     {
+                        if (treeView.HotCreateId == id)
+                        {
+//                             Debug.Log("HotCreateId");
+                        }
+                        
                         var textField = new TextField();
                         var inputElement = textField.Q("unity-text-input");
                         if (inputElement != null)
@@ -66,7 +76,6 @@ namespace TinyDataTable.Editor
                             inputElement.style.borderLeftWidth = 0;
                             inputElement.style.borderRightWidth = 0;
 
-                            // 背景も透明にしたい場合
                             inputElement.style.backgroundColor = Color.clear;
                         }
 
@@ -105,6 +114,7 @@ namespace TinyDataTable.Editor
                     {
                         var tableAsset = CreateDataTableAsset(className);
                         func(className,tableAsset);
+                        Undo.ClearAll();
                     }
                 };
                 UnityEditor.PopupWindow.Show(Position, popup);                    
@@ -123,7 +133,7 @@ namespace TinyDataTable.Editor
                         clickCreateButton = className =>
                         {
                             var tableAsset = CreateDataTableAsset(className);
-                            treeView.InsertNewTree(-1,className,tableAsset,true);
+                            treeView.InsertNewTree(-1,className,tableAsset,false);
                         }
                     };
                     // 1. ボタンの左上を (0, 0) とした相対座標
@@ -150,6 +160,7 @@ namespace TinyDataTable.Editor
         {
             if (assets == null) return;
 
+            bool isREemoveAsset = false;
             foreach (var asset in assets)
             {
                 string assetPath = AssetDatabase.GetAssetPath(asset);
@@ -159,12 +170,17 @@ namespace TinyDataTable.Editor
                     AssetDatabase.DeleteAsset(assetPath);
                     if (classScript != null)
                     {
+                        isREemoveAsset = true;
                         string scriptPath = AssetDatabase.GetAssetPath(classScript);
                         AssetDatabase.DeleteAsset(scriptPath);
                     }
                 }
             }
             AssetDatabase.SaveAssets();
+            if (isREemoveAsset)
+            {
+                Undo.ClearAll();
+            }
         }
     }
 }

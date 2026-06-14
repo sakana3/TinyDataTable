@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public class TinyReordableListField : VisualElement
+    internal class TinyReordableListField : VisualElement
     {
         private SerializedProperty property;
         

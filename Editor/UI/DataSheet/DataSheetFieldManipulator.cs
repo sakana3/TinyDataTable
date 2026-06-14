@@ -11,7 +11,7 @@ namespace TinyDataTable.Editor
     /// <summary>
     /// コンテキストメニュー周りの処理
     /// </summary>
-    public partial class DataSheetField
+    internal partial class DataSheetField
     {
         private ContextualMenuManipulator MakeColumHeaderManipulator(
             VisualElement element,

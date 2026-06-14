@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace TinyDataTable.Editor
 {
-    public static class UIToolkitEditorUtility
+    internal static class UIToolkitEditorUtility
     {
         public static (VisualElement container, Label label) CreateLabeledVisualElement(VisualElement element)
         {

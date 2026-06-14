@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerPreference : VisualElement
+    internal class DataTableManagerPreference : VisualElement
     {
         private DataTableManager manager = null;
 

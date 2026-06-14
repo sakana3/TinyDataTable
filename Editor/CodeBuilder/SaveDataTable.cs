@@ -136,7 +136,7 @@ namespace TinyDataTable.Editor
             );
 
             var fullPath = Path.Combine(scriptPath, $"{newClassName}Record.cs");
-            SaveScript(fullPath, code);
+            SaveScriptToFile(fullPath, code);
 
             // アセットデータベースを更新してUnityに認識させる
             AssetDatabase.Refresh(ImportAssetOptions.Default);
@@ -193,7 +193,7 @@ namespace TinyDataTable.Editor
                 var original = File.ReadAllText(info.fullPath);
                 SessionState.SetString(KeyBackuoCode, original);
             }
-            SaveScript(info.fullPath, code);
+            SaveScriptToFile(info.fullPath, code);
 
             // アセットデータベースを更新してUnityに認識させる
             AssetDatabase.Refresh(ImportAssetOptions.Default);
@@ -275,8 +275,8 @@ namespace TinyDataTable.Editor
                 }
 
                 AssetDatabase.CreateAsset(dataTableAsset, assetPath);
-                EditorGUIUtility.SetIconForObject(dataTableAsset, DataTableManagerTreeView.ItemIcon as Texture2D);
-                EditorGUIUtility.SetIconForObject(script, DataTableManagerTreeView.ItemIcon as Texture2D);
+//                EditorGUIUtility.SetIconForObject(dataTableAsset, EditorResources.ItemIcon as Texture2D);
+//                EditorGUIUtility.SetIconForObject(script, EditorResources.ItemIcon as Texture2D);
                 AssetDatabase.Refresh();
                 AssetDatabase.SaveAssets();
                 
@@ -343,7 +343,7 @@ namespace TinyDataTable.Editor
 
 
         
-        public static void SaveScript(string fullPath, string content)
+        public static void SaveScriptToFile(string fullPath, string content)
         {
 //            var fileName = Path.GetFileName(fullPath);
             var filePath = Path.GetDirectoryName(fullPath);            

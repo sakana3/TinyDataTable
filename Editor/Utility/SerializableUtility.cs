@@ -13,7 +13,7 @@ namespace TinyDataTable.Editor
 {
     internal static class SerializableUtility
     {
-        public static bool IsUnitySerializableType(Type type)
+        internal static bool IsUnitySerializableType(Type type)
         {
             // プリミティブ型、string、一部の組み込み型（Vector3など）
             if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal)) return true;
@@ -46,7 +46,7 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// 指定された型がUnityでシリアライズ可能かどうかを判定する
         /// </summary>
-        public static bool CheckUnitySerializable(Type type)
+        internal static bool CheckUnitySerializable(Type type)
         {
             if (type == null) return false;
 
@@ -131,7 +131,7 @@ namespace TinyDataTable.Editor
             "virtual", "void", "volatile", "while"
         };        
         
-        public static bool CheckCSharpSafeName(string name)
+        internal static bool CheckCSharpSafeName(string name)
         {
             if (string.IsNullOrEmpty(name)) return false;
         
@@ -147,14 +147,14 @@ namespace TinyDataTable.Editor
             return !CSharpKeywords.Contains(name);
         }      
         
-        public static bool CheckExistClass(string namespaceName, string className)
+        internal static bool CheckExistClass(string namespaceName, string className)
         {
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
                 .Any(t => t.Name == className && t.Namespace == namespaceName);
         }
 
-        public static readonly Dictionary<Type, string> TypeAliases = new()
+        internal static readonly Dictionary<Type, string> TypeAliases = new()
         {
             { typeof(bool), "bool" },
             { typeof(byte), "byte" },

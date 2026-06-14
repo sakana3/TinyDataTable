@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 namespace TinyDataTable
 {
     /// <summary> データテーブルレコードの基底クラス </summary>
+    [Icon("Packages/com.sakana3.tinydatatable//Editor/Assets/TinyDataTableIcon.png")]
     public abstract class DataTableRecordBase : ScriptableObject
     {
         [SerializeField] private bool _initializeOnLoad;

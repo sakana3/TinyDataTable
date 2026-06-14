@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    public class DataTableManagerEditor : VisualElement
+    internal class DataTableManagerEditor : VisualElement
     {
         public static Texture FolderIcon = EditorGUIUtility.IconContent("d_Folder Icon").image;
         public static Texture FolderEmptyIcon = EditorGUIUtility.IconContent( "d_FolderEmpty Icon").image;

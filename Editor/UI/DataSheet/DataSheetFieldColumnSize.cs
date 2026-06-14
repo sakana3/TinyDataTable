@@ -12,7 +12,7 @@ namespace TinyDataTable.Editor
     /// <summary>
     /// カラムサイズの変更周りの処理
     /// </summary>
-    public partial class DataSheetField
+    internal partial class DataSheetField
     {
         private string ColumWidthKey(Column column) => $"TinyDataTable.{targetAsset.BaseName}.{column.name}.Colum.Width";
 
