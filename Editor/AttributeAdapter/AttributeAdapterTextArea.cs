@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [AttributeOption( typeof(TextAreaAttribute),typeof(string) )]
-    public class AttributeOptionTextArea : AttributeOptionBase
+    public class AttributeAdapterTextArea : AttributeAdapterBase
     {
         public int minLines = 1;
         public int maxLines = 3;

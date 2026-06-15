@@ -72,7 +72,7 @@ namespace TinyTable.SourceGenerator
                     if (validEnum.Any())
                     {
                         using (cb.BeginScope(
-                                       $"public static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = new[]")
+                                       $"public static readonly IReadOnlyList<{enumTypeName}> ValidEnumList = new[]")
                                    .Footer(";"))
                         {
                             foreach (var valid in validEnum)
@@ -84,7 +84,7 @@ namespace TinyTable.SourceGenerator
                     else
                     {
                         cb.AddCode(
-                            ($"private static readonly IReadOnlyCollection<{enumTypeName}> ValidEnumList = Array.Empty<{enumTypeName}>()"));
+                            ($"private static readonly IReadOnlyList<{enumTypeName}> ValidEnumList = Array.Empty<{enumTypeName}>()"));
                     }
                 }
                 
@@ -97,7 +97,7 @@ namespace TinyTable.SourceGenerator
                     if (valids.Any())
                     {
                         using (cb.BeginScope(
-                                       $"public static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = new[]")
+                                       $"public static readonly IReadOnlyList<{idTypeName}> ValidIDList = new[]")
                                    .Footer(";"))
                         {
                             foreach (var valid in valids)
@@ -109,7 +109,7 @@ namespace TinyTable.SourceGenerator
                     else
                     {
                         cb.AddCode(
-                            ($"private static readonly IReadOnlyCollection<{idTypeName}> ValidIDList = Array.Empty<{idTypeName}>()"));
+                            ($"private static readonly IReadOnlyList<{idTypeName}> ValidIDList = Array.Empty<{idTypeName}>()"));
                     }
 
                     cb.AppendLine();
@@ -238,8 +238,8 @@ namespace TinyTable.SourceGenerator
                     
                     //演算子オペレーター
                     cb.AddComment("Operators");
-                    cb.AppendLine($"public bool Equals({idTypeName} other) => _value == other._value;");
-                    cb.AppendLine($"public bool Equals({enumTypeName} other) => _value == other;");
+                    cb.AppendLine($"public bool Equals({idTypeName} other) => ReferenceEquals(_value , other._value);");
+                    cb.AppendLine($"public bool Equals({enumTypeName} other) => ReferenceEquals(_value , other);");
                     cb.AppendLine($"public override bool Equals(object obj) => obj is ID other && Equals(other);");
                     
                     cb.AppendLine($"public static bool operator ==({idTypeName} left, {idTypeName} right) => left.Equals(right);");
@@ -282,7 +282,7 @@ namespace TinyTable.SourceGenerator
             });
         }
 
-        private static TypeDefinition GetSemanticTargetForGeneration(GeneratorSyntaxContext ctx , string attributeName )
+        private static TypeDefinition? GetSemanticTargetForGeneration(GeneratorSyntaxContext ctx , string attributeName )
         {
             var typeDeclaration = (TypeDeclarationSyntax)ctx.Node;
             var symbol = ctx.SemanticModel.GetDeclaredSymbol(typeDeclaration) as INamedTypeSymbol;
@@ -339,6 +339,11 @@ namespace TinyTable.SourceGenerator
 
                     var indexAttribute = field.GetAttributes().FirstOrDefault(attr => 
                         attr.AttributeClass?.ToDisplayString() == "TinyDataTable.EnumIndexAttribute" );
+
+                    if (indexAttribute == null)
+                    {
+                        return enumMembers.ToArray();
+                    }
                     
                     int arrayIndex = indexAttribute.ConstructorArguments.FirstOrDefault().Value as int? ?? 0;
                     

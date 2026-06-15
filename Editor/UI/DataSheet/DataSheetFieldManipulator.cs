@@ -84,7 +84,7 @@ namespace TinyDataTable.Editor
                         (action) =>
                         {
                             _recordPropertyUtil.AddRow(index + 1);
-                            SetupRows( _multiColumnListView);
+                            SetupRows();
                             _multiColumnListView.RefreshItems();
                         });
                     if (index > 0)
@@ -117,11 +117,7 @@ namespace TinyDataTable.Editor
                             {
                                 if (_multiColumnListView.selectedIndices.Contains(index))
                                 {
-                                    _recordPropertyUtil.RemoveRows(_multiColumnListView.selectedIndices);
-                                    SetupRows(_multiColumnListView);
-                                    _multiColumnListView.itemsSource = rowIDList;
-                                    _multiColumnListView.ClearSelection();
-                                    _multiColumnListView.Rebuild();                                    
+                                    RemoveRow(_multiColumnListView.selectedIndices.ToArray());
                                 }
                             },
                             (action) =>

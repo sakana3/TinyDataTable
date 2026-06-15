@@ -225,10 +225,7 @@ namespace TinyDataTable.Editor
                 
             }; 
             treeView.AddItem(item,rootID,childIndex,false);
-            HotCreateId = newId;
             treeView.RefreshItems();
-            treeView.Rebuild();
-            HotCreateId = -1;
             treeView.SetSelectionById( newId );
             int targetIndex = treeView.viewController.GetIndexForId(newId);
             if (targetIndex >= 0)
@@ -236,12 +233,17 @@ namespace TinyDataTable.Editor
                 treeView.ScrollToItem(targetIndex);
             }
             OnHerarchyChanged();
+
+            HotCreateId = newId;
+            treeView.Rebuild();
+            HotCreateId = -1;
         }
         
 
         public void RemoveTree(int id)
         {
             var targetIds = new List<int> { id };
+            
             targetIds.AddRange(GetAllDescendantIds(id));
 
             var itemsToRemove = targetIds

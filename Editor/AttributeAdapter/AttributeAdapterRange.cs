@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [AttributeOption(typeof(UnityEngine.RangeAttribute), typeof(int), typeof(float) )]
-    public class AttributeOptionRange : AttributeOptionBase
+    public class AttributeAdapterRange : AttributeAdapterBase
     {
         public float Min { get; set; } = 0;
         public float Max { get; set; } = 100;

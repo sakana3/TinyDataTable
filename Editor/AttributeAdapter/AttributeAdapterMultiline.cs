@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [AttributeOption( typeof(MultilineAttribute),typeof(string) )]
-    public class AttributeOptionMultiline : AttributeOptionBase
+    public class AttributeAdapterMultiline : AttributeAdapterBase
     {
         public int lines = 3;
         

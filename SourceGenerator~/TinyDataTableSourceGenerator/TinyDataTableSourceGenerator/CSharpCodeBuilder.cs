@@ -148,8 +148,9 @@ namespace TinyDataTable.SourceGenerator
         /// <summary>
         /// クラス定義を開始
         /// </summary>
-        public CSharpCodeBuilder.BlockScope BeginClass(string className, string accessModifier = "public", string inherit = null, bool isPartial = false)
+        public CSharpCodeBuilder.BlockScope BeginClass(string className, string accessModifier = "public", string inherit = "", bool isPartial = false)
         {
+            
             var partialStr = isPartial ? "partial " : "";
             var inheritStr = string.IsNullOrEmpty(inherit) ? "" : $" : {inherit}";
             return BeginScope($"{accessModifier} {partialStr}class {className}{inheritStr}");
@@ -158,7 +159,7 @@ namespace TinyDataTable.SourceGenerator
         /// <summary>
         /// クラス定義を開始
         /// </summary>
-        public CSharpCodeBuilder.BlockScope BeginStruct(string className, string accessModifier = "public", string inherit = null, bool isPartial = false)
+        public CSharpCodeBuilder.BlockScope BeginStruct(string className, string accessModifier = "public", string inherit = "", bool isPartial = false)
         {
             var partialStr = isPartial ? "partial " : "";
             var inheritStr = string.IsNullOrEmpty(inherit) ? "" : $" : {inherit}";
@@ -191,7 +192,7 @@ namespace TinyDataTable.SourceGenerator
         /// <summary>
         /// メソッド定義を開始
         /// </summary>
-        public CSharpCodeBuilder.BlockScope BeginConstructor( string methodName, string args = "", string accessModifier = "public" , string serfix = null)
+        public CSharpCodeBuilder.BlockScope BeginConstructor( string methodName, string args = "", string accessModifier = "public" , string serfix = "")
         {
             string _srtfix = string.IsNullOrEmpty(serfix) ? "" : $" : {serfix}";
             
@@ -237,9 +238,9 @@ namespace TinyDataTable.SourceGenerator
         /// <summary>
         /// フィールドを追加
         /// </summary>
-        public CSharpCodeBuilder AddField(string type, string name, string accessModifier = "public", string initialValue = null)
+        public CSharpCodeBuilder AddField(string type, string name, string accessModifier = "public", string initialValue = "")
         {
-            var initStr = initialValue != null ? $" = {initialValue}" : "";
+            var initStr = String.IsNullOrEmpty(initialValue) ? "" : $" = {initialValue}";
             AppendLine($"{accessModifier} {type} {name}{initStr};");
             return this;
         }

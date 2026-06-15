@@ -95,14 +95,14 @@ namespace TinyDataTable.Editor
                 if (_recordPropertyUtil.IsChanged)
                 {
                     SetupColumns(listView);
-                    SetupRows(listView);                    
+                    SetupRows();                    
                     _multiColumnListView.Rebuild();
                 }
             });
             
             SetupColumns(listView);
 
-            SetupRows(listView);
+            SetupRows();
             return listView;
         }
 
@@ -111,7 +111,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         /// <param name="property"></param>
         /// <param name="listView"></param>
-        private void SetupRows(MultiColumnListView listView)
+        private void SetupRows()
         {
             var list = _recordPropertyUtil.MakeRecordHeaderList();
 
@@ -129,7 +129,7 @@ namespace TinyDataTable.Editor
                     .ToList();
             }
             
-            listView.itemsSource = rowIDList;
+            _multiColumnListView.itemsSource = rowIDList;
         }
         
         /// <summary>
@@ -463,7 +463,7 @@ namespace TinyDataTable.Editor
             TableSizeField.RegisterCallback<FocusOutEvent>(evt =>
             {
                 _recordPropertyUtil.ResizeRow( Math.Min((int)TableSizeField.value+1,Manager.RowLimit+1) );
-                SetupRows(_multiColumnListView);
+                SetupRows();
                 _multiColumnListView.ClearSelection();
                 _multiColumnListView.Rebuild();                
             });
@@ -477,7 +477,7 @@ namespace TinyDataTable.Editor
                 if (t.button == 0)
                 {
                     _recordPropertyUtil.AddRow();
-                    SetupRows(_multiColumnListView);
+                    SetupRows();
                     _multiColumnListView.RefreshItems();                               
                 }
             });
@@ -527,7 +527,9 @@ namespace TinyDataTable.Editor
                 //これをやらないと変更が通知されないことがある？
                 _multiColumnListView.itemsSource = rowIDList;
                 _multiColumnListView.ClearSelection();
-//                _multiColumnListView.RefreshItems();
+                SetupRows();
+                _multiColumnListView.RefreshItems();
+                _recordPropertyUtil.ReloadInfo();
                 _multiColumnListView.Rebuild();
             }
             else

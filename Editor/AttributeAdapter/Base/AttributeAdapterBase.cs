@@ -10,7 +10,7 @@ using JetBrains.Annotations;
 
 namespace TinyDataTable.Editor
 {
-    public abstract class AttributeOptionBase
+    public abstract class AttributeAdapterBase
     {
         public abstract string Title { get; }
         public abstract string[] ToCode();
@@ -237,16 +237,16 @@ namespace TinyDataTable.Editor
             }
         }
         
-        public static List<AttributeOptionBase> FindAttributeOptions( Type type , IReadOnlyCollection<Type> baseTypes)
+        public static List<AttributeAdapterBase> FindAttributeOptions( Type type , IReadOnlyCollection<Type> baseTypes)
         {
-            var types = TypeCache.GetTypesDerivedFrom<AttributeOptionBase>()
+            var types = TypeCache.GetTypesDerivedFrom<AttributeAdapterBase>()
                 .Where(t => t.IsClass && !t.IsAbstract && t.IsDefined(typeof(AttributeOptionAttribute), true))
                 .Where(t => t.GetCustomAttribute<AttributeOptionAttribute>().HasType(type) );
 
             
             var options = types
                 .Select( t => Activator.CreateInstance(t))
-                .OfType<AttributeOptionBase>()
+                .OfType<AttributeAdapterBase>()
                 .OrderBy(t => t.Title)
                 .ToList();
             

@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
         private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
         private VisualElement attributeRoot;
         private FieldInfo FieldInfo { set; get; }
-        private List<AttributeOptionBase> attributeOptions = new ();
+        private List<AttributeAdapterBase> attributeOptions = new ();
 
         public DataTableCreateFieldPopup(string[] assemblys,Action<FieldInfo> onAdd)
         {
@@ -217,7 +217,7 @@ namespace TinyDataTable.Editor
         private void OnTypeSelectChangeCallback( Type type)
         {
             attributeRoot.Clear();
-            attributeOptions = AttributeOptionBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.CustomAttributes.Select( t => t.Type ).ToArray());
+            attributeOptions = AttributeAdapterBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.CustomAttributes.Select( t => t.Type ).ToArray());
             foreach (var option in attributeOptions)
             {
                 option.FormFiledInfo(FieldInfo);

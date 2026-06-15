@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [AttributeOption(typeof(UnityEngine.ColorUsageAttribute), typeof(Color) )]
-    public class AttributeOptionColorUsage : AttributeOptionBase
+    public class AttributeAdapterColorUsage : AttributeAdapterBase
     {
         public bool showAlpha { get; set; } = true;
         public bool hdr { get; set; } = true;

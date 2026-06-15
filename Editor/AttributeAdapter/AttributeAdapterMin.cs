@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [AttributeOption(typeof(UnityEngine.MinAttribute), typeof(int), typeof(float) )]
-    public class AttributeOptionMin : AttributeOptionBase
+    public class AttributeAdapterMin : AttributeAdapterBase
     {
         public float Min { get; set; } = 0;
 

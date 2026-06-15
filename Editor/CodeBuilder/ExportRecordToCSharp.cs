@@ -84,7 +84,7 @@ namespace TinyDataTable.Editor
                     // Enum
                     cb.AddComment("Enum");
                     cb.AddAttribute(onsolete, "Serializable");
-                    using (cb.BeginEnum($"Enum : Int32"))
+                    using (cb.BeginEnum($"Enum"))
                     {
                         if (recordAsset != null)
                         {
