@@ -14,7 +14,7 @@ namespace TinyDataTable
         public Type EnumType { private set; get; }
         public Type SchemaType { private set; get; }
 
-        public IDAttribute(Type recordType,Type enumType,Type schemaType )
+        public IDAttribute(Type recordType,Type schemaType,Type enumType )
         {
             RecordType = recordType;
             EnumType = enumType;

@@ -97,8 +97,14 @@ namespace TinyDataTable.Editor
                 }
                 else
                 {
-                   var image = AssetPreview.GetMiniThumbnail(node.Item);
-                    icon.image = image;
+                   Texture image = AssetPreview.GetMiniThumbnail(node.Item);
+
+                   if (image == null)
+                   {
+                       image = EditorResources.RefreshIcon;
+                   }
+
+                   icon.image = image;
                     var label = new Label();
                     label.text = node.Name;
                     root.Add(label);

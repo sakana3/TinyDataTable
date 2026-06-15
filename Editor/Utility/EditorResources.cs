@@ -10,7 +10,8 @@ namespace TinyDataTable.Editor
         public static Texture FolderNormalIcon { private set; get; } = EditorGUIUtility.IconContent("d_Folder Icon").image;
         public static Texture FolderEmptyIcon { private set; get; } = EditorGUIUtility.IconContent( "d_FolderEmpty Icon").image;
         public static Texture FolderOpenIcon {private set; get; } = EditorGUIUtility.IconContent("d_FolderOpened Icon").image;
-
+        public static Texture RefreshIcon {private set; get; } = EditorGUIUtility.IconContent("Refresh").image;
+            
         public static Texture FolderIcon( bool isExpanded , bool isEmpty )
         {
             if (isEmpty)

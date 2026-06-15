@@ -60,11 +60,11 @@ namespace TinyTable.SourceGenerator
                 // 型名定義
                 var idTypeName = typeDef.TypeName;
                 var recordTypeName = typeDef.attributeArgs[0].Value?.ToString() ?? string.Empty;
-                var schemaTypeName = $"{recordTypeName}.Schema";
-                var enumTypeName = typeDef.attributeArgs[1].Value?.ToString() ?? string.Empty;
-                var enumNames = GetEnumNames(typeDef.attributeArgs[1]);
-                var fields = GetFieldInfo(typeDef.attributeArgs[2]);
-
+                var schemaTypeName = typeDef.attributeArgs[1].Value?.ToString() ?? string.Empty;
+                var schemaFields = GetFieldInfo(typeDef.attributeArgs[1]);
+                var enumTypeName = typeDef.attributeArgs[2].Value?.ToString() ?? string.Empty;
+                var enumNames = GetEnumNames(typeDef.attributeArgs[2]);
+                
                 // Valid Enum Table
                 cb.AddComment("static valid enum table");
                 {
@@ -146,7 +146,7 @@ namespace TinyTable.SourceGenerator
                     //フィールドプロパティ
                     //関数呼び出しを避けるためにインラインで３項演算子を使う
                     cb.AddComment($"filed propieries");
-                    foreach (var field in fields)
+                    foreach (var field in schemaFields)
                     {
                         var left = $"public {field.FieldType} {field.FieldName}";
                         var right = $"_recordArray[Index].{field.FieldName}";
