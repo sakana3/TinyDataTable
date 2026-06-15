@@ -61,7 +61,7 @@ namespace TinyDataTable.Editor
                         },
                         (action) =>
                         {
-                            var obsolete = _recordPropertyUtil.FieldInfos[index].Obsolete;
+                            var obsolete = _recordPropertyUtil.FieldInfos[index].Obsolete || string.IsNullOrEmpty(_recordPropertyUtil.FieldInfos[index].Name);
                             return obsolete ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
                         });
                     evt.menu.AppendSeparator();
