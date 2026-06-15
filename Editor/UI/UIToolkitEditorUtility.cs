@@ -25,16 +25,20 @@ namespace TinyDataTable.Editor
         {
             // 1. コンテナ (行)
             var container = new VisualElement();
+            Label label = null;
 
             // Unity標準のフィールドと同じクラスを付与してレイアウトを合わせる
             container.AddToClassList("unity-base-field");
             container.AddToClassList("unity-base-field__aligned"); // ラベル幅を揃える
 
             // 2. ラベル
-            var label = new Label(labelText);
-            label.AddToClassList("unity-base-field__label");
+            if (string.IsNullOrEmpty(labelText) is false)
+            {
+                label = new Label(labelText);
+                label.AddToClassList("unity-base-field__label");
 
-            container.Add(label);
+                container.Add(label);
+            }
 
             element.style.flexGrow = 1; // 右側いっぱいに広げる
             element.style.unityTextAlign = TextAnchor.MiddleLeft; // 左寄せ

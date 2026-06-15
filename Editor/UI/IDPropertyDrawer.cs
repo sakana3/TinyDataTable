@@ -49,33 +49,18 @@ namespace TinyDataTable.Editor
 
                 GUI.backgroundColor = color;
                 GUIContent guiContext = new GUIContent(text);
-                
-                if (string.IsNullOrEmpty(preferredLabel))
-                {
-                    Rect rect = EditorGUILayout.GetControlRect();
-                    if (EditorGUI.DropdownButton(rect,guiContext, FocusType.Keyboard))
-                    {
-                        PopupEnumList(enumType,rect, prop, property.displayName);
-                    }
-                }
-                else
-                {
-                    Rect rect = EditorGUILayout.GetControlRect();
 
-                    int indent = EditorGUI.indentLevel;
-                    EditorGUI.indentLevel = 0;Rect controlRect = EditorGUI.PrefixLabel(rect, new GUIContent(preferredLabel));
-                    
-                    if (EditorGUI.DropdownButton(controlRect,guiContext, FocusType.Keyboard))
-                    {
-                        PopupEnumList(enumType,rect, prop, property.displayName);
-                    }
-
-                    EditorGUI.indentLevel = indent;
+                Rect rect = EditorGUILayout.GetControlRect();
+                if (EditorGUI.DropdownButton(rect,guiContext, FocusType.Keyboard))
+                {
+                    PopupEnumList(enumType,rect, prop, property.displayName);
                 }
+
                 GUI.backgroundColor = originalColor;
             };
-
-            return container;
+            
+                
+            return UIToolkitEditorUtility.CreateLabeledVisualElement(preferredLabel, container).container;
         }
 
         private void PopupEnumList( Type enumType , Rect rect,SerializedProperty propValue , string displayName)
