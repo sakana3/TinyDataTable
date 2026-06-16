@@ -12,7 +12,6 @@ namespace TinyDataTable.Editor
 {
     public abstract class AttributeAdapterBase
     {
-        public abstract string Title { get; }
         public abstract string[] ToCode();
         public abstract void FromCode( Type attributeType,  string[] code );
         protected abstract void CreateUI(VisualElement root);
@@ -20,6 +19,20 @@ namespace TinyDataTable.Editor
         
         public bool IsEnable { set; get; } = false;
         VisualElement optionUI;
+        public virtual string Title
+        {
+            get
+            {
+                var val = AttributeValue;
+                var title = val.type.Name;
+                if (title.EndsWith("Attribute"))
+                {
+                    title = title.Substring(0, title.Length - "Attribute".Length);
+                }
+                
+                return ObjectNames.NicifyVariableName(title);;
+            }
+        }
 
         public (Type type,string[] args) AttributeValue
         {
@@ -33,6 +46,8 @@ namespace TinyDataTable.Editor
                 return (null, null);
             }
         }
+        
+        
 
         internal void FormFiledInfo(FieldInfo fieldInfo)
         {
@@ -75,10 +90,6 @@ namespace TinyDataTable.Editor
             return root;            
         }
 
-        public void FromAttributeOption( AttributeOptionAttribute attribute )
-        {
-            
-        }
         
         public static string[] ToArgStrings(params object[] args)
         {

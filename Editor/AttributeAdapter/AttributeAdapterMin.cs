@@ -11,8 +11,6 @@ namespace TinyDataTable.Editor
     {
         public float Min { get; set; } = 0;
 
-        public override string Title => "Min";
-        
         public override string[] ToCode() => ToArgStrings( Min );
         
         public override void FromCode( Type attributeType,  string[] code )

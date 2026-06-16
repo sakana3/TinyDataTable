@@ -11,15 +11,13 @@ namespace TinyDataTable.Editor
     {
         public bool showAlpha { get; set; } = true;
         public bool hdr { get; set; } = true;
-
-        public override string Title => "ColorUsage";
         
         public override string[] ToCode() => ToArgStrings( showAlpha,hdr );
         
         public override void FromCode( Type attributeType,  string[] code )
         {
             showAlpha = FromArg(code[0]) as bool? ?? showAlpha;
-            hdr = FromArg(code[0]) as bool? ?? hdr;
+            hdr = FromArg(code[1]) as bool? ?? hdr;
         }
         
         protected override void CreateUI(VisualElement root)

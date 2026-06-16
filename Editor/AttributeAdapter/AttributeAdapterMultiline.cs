@@ -10,8 +10,6 @@ namespace TinyDataTable.Editor
     public class AttributeAdapterMultiline : AttributeAdapterBase
     {
         public int lines = 3;
-        
-        public override string Title => "Multi Line";
 
         public override bool DefaultEnable => false;
 

@@ -12,7 +12,7 @@ namespace TinyDataTable.Editor
         public float Min { get; set; } = 0;
         public float Max { get; set; } = 100;
 
-        public override string Title => "Range";
+
         
         public override string[] ToCode() => ToArgStrings( Min , Max );
         

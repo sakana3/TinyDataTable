@@ -11,9 +11,7 @@ namespace TinyDataTable.Editor
     {
         public int minLines = 1;
         public int maxLines = 3;
-        
-        public override string Title => "Text Area";
-        
+
         public override string[] ToCode() => ToArgStrings( minLines,maxLines);
         public override void FromCode( Type attributeType,  string[] code )
         {
