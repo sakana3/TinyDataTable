@@ -1,13 +1,14 @@
 using System;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework.Constraints;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-public class SpliteMultiColumnListView : VisualElement
+public class SplitMultiColumnListView : VisualElement
 {
     private static Texture2D plusIcon = EditorGUIUtility.IconContent("Toolbar Plus").image as Texture2D;
     private static Texture2D minusIcon = EditorGUIUtility.IconContent("Toolbar Minus").image as Texture2D;
@@ -15,6 +16,7 @@ public class SpliteMultiColumnListView : VisualElement
     public MultiColumnListView Left { private set; get; }
     public MultiColumnListView Right { private set; get; }
     public VisualElement LeftContainer { private set; get; }
+    public TwoPaneSplitView SplitView { private set; get; }
     private VisualElement footer;
 
     public Columns LeftColumns => Left.columns;
@@ -105,14 +107,25 @@ public class SpliteMultiColumnListView : VisualElement
             Left.selectionType = value;
         }
         get => Left.selectionType;
-    }            
+    }
+
+    public IEnumerable<int> selectedIndices => Left.selectedIndices;
     
-    public SpliteMultiColumnListView()
-    {
-        var splite = new TwoPaneSplitView();
-        splite.style.backgroundColor = Color.clear;
+    public event Func<int, int,bool> itemIndexChanged;
+    public event Action<float> separatorPositonChanged;
         
-        Add(splite);
+    public float SeparatorPositon
+    {
+        get => SplitView.fixedPane.style.width.value.value;
+        set => SplitView.fixedPane.style.width = value;
+    }
+    
+    public SplitMultiColumnListView( float initialDimension = 250f )
+    {
+        SplitView = new TwoPaneSplitView(0, initialDimension, TwoPaneSplitViewOrientation.Horizontal);
+        SplitView.style.backgroundColor = Color.clear;
+        
+        Add(SplitView);
 
         Left = new MultiColumnListView();
         var scrollView = Left.Q<ScrollView>();
@@ -122,20 +135,21 @@ public class SpliteMultiColumnListView : VisualElement
             scrollView.horizontalScrollerVisibility = ScrollerVisibility.AlwaysVisible;
         }
         LeftContainer = new VisualElement();
-//        LeftContainer.style.marginBottom = 13.3f;
+        LeftContainer.style.width = initialDimension;
+
         LeftContainer.Add(Left);
+        LeftContainer.RegisterCallback<GeometryChangedEvent>(OnPaneSizeChanged);
         
-        splite.Add(LeftContainer);
+        SplitView.Add(LeftContainer);
         
         Right = new MultiColumnListView();
 
-        splite.Add(Right);
+        SplitView.Add(Right);
 
         SyncSelectIndex(Left, Right);
         SyncSelectIndex(Right, Left);
 
         SyncReordable(Left, Right);
-//        SyncReordable(Right, Left);
         
         // スクロールの同期設定
         Left.RegisterCallback<AttachToPanelEvent>(evt => SyncScroll(Left, Right,1));
@@ -146,6 +160,14 @@ public class SpliteMultiColumnListView : VisualElement
         reorderable = true;
 
     }
+    public void Dispose()
+    {
+        if (SplitView != null)
+        {
+            // ⚠️ 破棄するときは必ず解除
+            SplitView.UnregisterCallback<GeometryChangedEvent>(OnPaneSizeChanged);
+        }
+    }
 
     
     public void Rebuild()
@@ -154,12 +176,54 @@ public class SpliteMultiColumnListView : VisualElement
         Left.Rebuild();
     }
 
+    public void ClearColumns()
+    {
+        foreach (var column in Right.columns)
+        {
+            column.bindCell = null;
+            column.makeCell = null;
+        }
+        foreach (var column in Left.columns)
+        {
+            column.bindCell = null;
+            column.makeCell = null;
+        }
+
+        Right.columns.Clear();
+        Left.columns.Clear();        
+    }
+
+    public void ClearSelection()
+    {
+        Right.ClearSelection();
+        Left.ClearSelection();       
+    }
+
+    public void RefreshItems()
+    {
+        Right.RefreshItems();
+        Left.RefreshItems();       
+    }
+    
+    
     private void SyncReordable(MultiColumnListView source, MultiColumnListView target)
     {
         source.itemIndexChanged += (i,j) =>
         {
-            target.itemsSource = source.itemsSource;
-            target.Rebuild();
+            if (itemIndexChanged != null)
+            {
+                if (itemIndexChanged.Invoke(i, j))
+                {
+                    target.itemsSource = source.itemsSource;
+                    target.Rebuild();
+                }
+            }
+            else
+            {
+                target.itemsSource = source.itemsSource;
+                target.Rebuild();
+            }
+
             source.schedule.Execute(() =>
             {
                 target.SetSelection(source.selectedIndices);
@@ -188,26 +252,18 @@ public class SpliteMultiColumnListView : VisualElement
         var targetScrollView = target.Q<ScrollView>();
 
         var srcScrollContaint = sourceScrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container");
-        var targetScrollContaint = targetScrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container");
         
-        source.schedule.Execute(() =>
+        targetScrollView.Q<ScrollView>().horizontalScroller.RegisterCallback<GeometryChangedEvent>(evt =>
         {
-            if (sourceScrollView != null && targetScrollView != null)
+            if (evt.newRect.height != 0)
             {
-            }
-        }).Until(() => source.Q<ScrollView>() != null && target.Q<ScrollView>() != null);   
-        targetScrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container").RegisterCallback<GeometryChangedEvent>(evt =>
-        {
-            var diff = srcScrollContaint.contentRect.height - targetScrollContaint.contentRect.height;
-            if (diff > 0)
-            {
-                srcScrollContaint.style.marginBottom = diff;
+                srcScrollContaint.style.marginBottom = evt.newRect.height;
             }
             else
             {
                 srcScrollContaint.style.marginBottom = 0;
             }
-        });            
+        });
     }
     
     private bool isScrollChanged = false;
@@ -278,7 +334,7 @@ public class SpliteMultiColumnListView : VisualElement
             onRemoveRowClicked?.Invoke();
             Rebuild();
         };
-        // スタイル調整（Unity標準のボタンっぽく見せる）
+
         ApplyFooterButtonStyle(addButton);
         ApplyFooterButtonStyle(removeButton);
 
@@ -288,21 +344,21 @@ public class SpliteMultiColumnListView : VisualElement
 
         return footer;        
     }
-
-    public void RebuildBoth()
+    private void OnPaneSizeChanged(GeometryChangedEvent evt)
     {
-        Right.Rebuild();
-        Left.Rebuild();
+        if (evt.newRect.width != evt.oldRect.width)
+        {
+            separatorPositonChanged?.Invoke(evt.newRect.width);
+        }
     }
 
     // ボタンの見た目を整える補助メソッド
-    void ApplyFooterButtonStyle(Button btn)
+    private void ApplyFooterButtonStyle(Button btn)
     {
         btn.style.width = 25;
         btn.style.height = 20;
         btn.style.marginRight = 2;
         btn.style.marginTop = 1;
         btn.style.marginBottom = 1;
-        // 背景を透明にして枠線を消すと、より標準のフッターに近くなります
     }    
 }
