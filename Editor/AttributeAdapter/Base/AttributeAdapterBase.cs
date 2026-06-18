@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using System.Globalization;
-using JetBrains.Annotations;
 
 namespace TinyDataTable.Editor
 {
@@ -91,151 +90,20 @@ namespace TinyDataTable.Editor
         }
 
         
-        public static string[] ToArgStrings(params object[] args)
+        protected static string[] ToArgStrings(params object[] args)
         {
             return args.Select( a => ToArgString(a)).ToArray();
         }
         
-        public static string ToArgString(object arg)
+        protected static string ToArgString( object args)
         {
-            // null の場合は C# の null リテラル
-            if (arg is null) return "null";
-
-            return arg switch
-            {
-                // 文字列・文字型（エスケープ処理を入れて C# のリテラルにする）
-                string s => $"\"{EscapeString(s)}\"",
-                char c   => $"'{EscapeChar(c)}'",
-
-                // 真偽値
-                bool b   => b ? "true" : "false",
-
-                // 浮動小数点数（C#のサフィックスを付与、かつロケール依存を防ぐため InvariantCulture を指定）
-                float f  => f.ToString(CultureInfo.InvariantCulture) + "f",
-                double d => d.ToString(CultureInfo.InvariantCulture) + "d",
-                decimal m => m.ToString(CultureInfo.InvariantCulture) + "m",
-
-                // 整数系（そのまま文字列化）
-                int i    => i.ToString(),
-                long l   => l.ToString() + "L",
-                uint ui  => ui.ToString() + "U",
-                ulong ul => ul.ToString() + "UL",
-
-                // その他（Enum や独自の型などの暫定対応。必要に応じて拡張してください）
-                Enum e   => $"{e.GetType().Name}.{e}",
-
-                // どの型にも当てはまらない場合は ToString()
-                _        => arg.ToString() ?? "null"
-            };
+            return SerializableUtility.ToArgString(args);
         }
 
-        [CanBeNull]
-        public static object FromArg(string argStr)
+        protected static object FromArg(string argStr)
         {
-            if (string.IsNullOrWhiteSpace(argStr)) return null;
-            
-            // 前後の余計な空白をトリム
-            argStr = argStr.Trim();
-
-            // 1. null リテラルのチェック
-            if (argStr == "null") return null;
-
-            // 2. 真偽値のチェック
-            if (argStr == "true") return true;
-            if (argStr == "false") return false;
-
-            // 3. 文字列リテラルのチェック ("..." で囲まれているか)
-            if (argStr.StartsWith("\"") && argStr.EndsWith("\""))
-            {
-                string inner = argStr.Substring(1, argStr.Length - 2);
-                return UnescapeString(inner);
-            }
-
-            // 4. 文字リテラルのチェック ('...' で囲まれているか)
-            if (argStr.StartsWith("'") && argStr.EndsWith("'"))
-            {
-                string inner = argStr.Substring(1, argStr.Length - 2);
-                string unescaped = UnescapeString(inner);
-                return unescaped.Length > 0 ? unescaped[0] : '\0';
-            }
-
-            // 5. 数値リテラルのチェック（サフィックスの解析）
-            // 末尾の文字を確認して型を特定する
-            char suffix = char.ToUpperInvariant(argStr[^1]);
-            
-            // UL や UL などの2文字サフィックスのケア
-            if (argStr.EndsWith("UL", StringComparison.OrdinalIgnoreCase) || 
-                argStr.EndsWith("LU", StringComparison.OrdinalIgnoreCase))
-            {
-                string numPart = argStr[..^2];
-                if (ulong.TryParse(numPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out ulong ul)) return ul;
-            }
-
-            // 1文字サフィックスの判定
-            string numberPart = suffix is 'F' or 'D' or 'M' or 'L' or 'U' ? argStr[..^1] : argStr;
-
-            switch (suffix)
-            {
-                case 'F': // float
-                    if (float.TryParse(numberPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out float f)) return f;
-                    break;
-                case 'D': // double
-                    if (double.TryParse(numberPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out double d)) return d;
-                    break;
-                case 'M': // decimal
-                    if (decimal.TryParse(numberPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out decimal m)) return m;
-                    break;
-                case 'L': // long
-                    if (long.TryParse(numberPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out long l)) return l;
-                    break;
-                case 'U': // uint
-                    if (uint.TryParse(numberPart,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out uint ui)) return ui;
-                    break;
-                default:
-                    // サフィックスがない場合、整数(int)かデフォルトの小数(double)としてパースを試みる
-                    if (int.TryParse(argStr,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out int i)) return i;
-                    if (double.TryParse(argStr,System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out double dbl)) return dbl;
-                    break;
-            }
-
-            // 6. それでもパースできない場合は、文字列としてそのまま返すか、例外を投げる
-            return argStr;
+            return SerializableUtility.FromArg(argStr);
         }
-
-        // エスケープされた文字列を元に戻す補助メソッド
-        private static string UnescapeString(string s)
-        {
-            return s.Replace("\\\\", "\\")
-                    .Replace("\\\"", "\"")
-                    .Replace("\\'", "'")
-                    .Replace("\\r", "\r")
-                    .Replace("\\n", "\n")
-                    .Replace("\\t", "\t");
-        }        
-            
-        // 文字列内の改行やダブルクォーテーションをエスケープする補助メソッド
-        private static string EscapeString(string s)
-        {
-            return s.Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\r", "\\r")
-                .Replace("\n", "\\n")
-                .Replace("\t", "\\t");
-        }
-
-        private static string EscapeChar(char c)
-        {
-            return c switch
-            {
-                '\'' => "\\'",
-                '\\' => "\\\\",
-                '\r' => "\\r",
-                '\n' => "\\n",
-                '\t' => "\\t",
-                _    => c.ToString()
-            };
-        }        
-        
         
         
         private void OnChangeEnable(bool isEnable)

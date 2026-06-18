@@ -63,7 +63,7 @@ namespace TinyDataTable.Editor
                     else
                     {
                         var args = attr.args;
-                        var codes = attr.args.Select( t => $"\"{t}\"");
+                        var codes = attr.args.Select( t => $"\"{t.Replace("\"","\\\"")}\"");
                         var str = $"{attrCode}({string.Join(",",args)}),AttributeMetaData(typeof({attr.Type}),{string.Join(",",codes)})";
                         yield return str;
                     }
