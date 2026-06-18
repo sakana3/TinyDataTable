@@ -10,43 +10,49 @@ namespace TinyDataTable.Editor
 {
     internal partial class DataSheetField : VisualElement
     {
+
         
         /// <summary>
         /// 列をセットアップする
         /// </summary>
         /// <param name="property"></param>
         /// <param name="listView"></param>
-        private void SetupColumns(SplitMultiColumnListView listView)
+        private void SetupColumns()
         {
             //Make Columns
             columnIDList.Clear();
             //Clearを呼ぶと何故かコールバックが呼ばれるので潰してから呼ぶ。どう考えてもバグ
-            listView.ClearColumns();
+            foreach (var column in _multiColumnListView.columns)
+            {
+                column.bindCell = null;
+                column.makeCell = null;
+            }
+            _multiColumnListView.columns.Clear();       
 
             var indexColumn = MakeIndexColumn();
-            listView.Left.columns.Add(indexColumn);
+            _multiColumnListView.columns.Add(indexColumn);
             
             var recordNameColumn = MakeIDNameColumn();
             recordNameColumn.stretchable = true;
-            listView.Left.columns.Add(recordNameColumn);
-            
+            _multiColumnListView.columns.Add(recordNameColumn);
 
             for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
             {
                 if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].Obsolete is false)
                 {
                     var columProp = MakePropertyColumn(i);
-                    listView.Right.columns.Add(columProp);
+                    _multiColumnListView.columns.Add(columProp);
                 }
             }
 
             if (IsStructureMode)
             {
                 var lastColumn = MakeLastColumn();
-                listView.Right.columns.Add(lastColumn);
+                _multiColumnListView.columns.Add(lastColumn);
             }
         }        
 
+        
         /// <summary>
         /// Make Index Row
         /// </summary>
@@ -64,6 +70,7 @@ namespace TinyDataTable.Editor
                 bindCell = (e,idx) =>
                 {
                     e.Clear();
+ 
                     var iRow = rowIDList[idx].index;                    
                     var label = new Label();
                     label.text =$"{iRow }";
@@ -71,7 +78,7 @@ namespace TinyDataTable.Editor
                     label.AddManipulator( MakeRowIndexManipulator(label,iRow) );
                     label.style.flexGrow = 1.0f ;
                     e.style.backgroundColor = rowIDList[idx].isObsolete?_obsoleteColor:new StyleColor();                        
-                    e.Clear();
+
                     e.Add(label);
                     e.parent.style.justifyContent = Justify.Center;
                 },
@@ -173,6 +180,7 @@ namespace TinyDataTable.Editor
                     e.style.backgroundColor = (isObsoleteCol|isObsoleteRow)?_obsoleteColor:new StyleColor();
 
                     e.Clear();
+                    
                     if (_recordPropertyUtil.FieldInfos.Count > iColum)
                     {
                         var prop = _recordPropertyUtil.RecordProperty
@@ -216,7 +224,7 @@ namespace TinyDataTable.Editor
 
                 columnIDList.Add(fieldInfo.Name.GetHashCode());
                 return header;
-            };            
+            };
             LoadColumnWidths(colum,120.0f);
             return colum;
         }       

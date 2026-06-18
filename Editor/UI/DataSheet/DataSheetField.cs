@@ -18,7 +18,7 @@ namespace TinyDataTable.Editor
         }
 
         public bool IsStructureMode { private set; get; }
-        private SplitMultiColumnListView _multiColumnListView;
+        private MultiColumnListView _multiColumnListView;
         private static Color _obsoleteColor = new Color( Color.darkViolet.r,Color.darkViolet.g,Color.darkViolet.b , 0.25f );
         private List<TextField> idTextFieldList = new List<TextField>();
         private List<Item> rowIDList = new List<Item>();
@@ -50,11 +50,11 @@ namespace TinyDataTable.Editor
             Add(_multiColumnListView);
         }
 
-        public SplitMultiColumnListView CreateListView()
+        public MultiColumnListView CreateListView()
         {
             idTextFieldList.Clear();
 
-            var listView = new SplitMultiColumnListView(LoadSeparatorPosition(180f))
+            var listView = new MultiColumnListView()
             {
                 name = _recordPropertyUtil.TargeTableAsset.name,
                 reorderable = IsStructureMode,
@@ -62,41 +62,40 @@ namespace TinyDataTable.Editor
 
                 showAddRemoveFooter = IsStructureMode,
                 sortingMode = ColumnSortingMode.None,
-//                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
                 showAlternatingRowBackgrounds = AlternatingRowBackground.All,
                 showBoundCollectionSize = false,
 //                showFoldoutHeader = true,
                 selectionType = IsStructureMode ? SelectionType.Multiple : SelectionType.Single
             };
             _multiColumnListView = listView;
-//            listView.columns.reorderable = false;
-//            listView.columns.resizePreview = true;
-//            listView.columns.resizable = true;
+            listView.columns.reorderable = false;
+            listView.columns.resizePreview = true;
+            listView.columns.resizable = true;
             listView.style.overflow = Overflow.Visible; // 通常はHiddenにしてスクロールバーに任せる
 
             listView.itemIndexChanged += (form, to) =>
             {
                 _recordPropertyUtil.MoveRow(form, to);
-                SetupRows();
-                return false;
             };
             //Invalidのドラッグ＆ドロップを禁止する
-            listView.Left.canStartDrag += args => args.id is not 0;
+            listView.canStartDrag += args => args.id is not 0;
             //Invalidの上には移動できないようにする
-            listView.Left.dragAndDropUpdate += (args) =>
+            listView.dragAndDropUpdate += (args) =>
                 (args.insertAtIndex is 0) ? DragVisualMode.Rejected : DragVisualMode.Move;
-            listView.Left.columnSortingChanged += () => { Debug.Log("columnSortingChanged"); };
-            listView.separatorPositonChanged += (pos) =>
+            listView.columnSortingChanged += () => { Debug.Log("columnSortingChanged"); };
+
+            if (IsStructureMode)
             {
-                SaveSeparatorPosition(pos);
-            };
+                listView.makeFooter = () => { return MakeFooter(); };
+            }
 
             this.TrackSerializedObjectValue(_recordPropertyUtil.SerializedObject, (prop) =>
             {
                 if (_recordPropertyUtil.IsChanged)
                 {
                     SetupColumns(listView);
-                    SetupRows();
+                    SetupRows();                    
                     _multiColumnListView.Rebuild();
                 }
             });
@@ -132,10 +131,54 @@ namespace TinyDataTable.Editor
             
             _multiColumnListView.itemsSource = rowIDList;
         }
+        
+        /// <summary>
+        /// 列をセットアップする
+        /// </summary>
+        /// <param name="property"></param>
+        /// <param name="listView"></param>
+        private void SetupColumns(MultiColumnListView listView)
+        {
+            //Make Columns
+            columnIDList.Clear();
+            //Clearを呼ぶと何故かコールバックが呼ばれるので潰してから呼ぶ。どう考えてもバグ
+            foreach (var column in listView.columns)
+            {
+                column.makeHeader = null;
+                column.bindCell = null;
+                column.makeCell = null;
+            }
 
+            //fieldOrderList = DataSheetPropertyUtility.MakeFieldOrderList(property);
+            
+            listView.columns.Clear();
+
+            var indexColumn = MakeIndexColumn();
+            listView.columns.Add(indexColumn);
+            
+            var recordNameColumn = MakeIDNameColumn();
+            listView.columns.Add(recordNameColumn);
+            
+
+            for (int i = 0; i < _recordPropertyUtil.FieldInfos.Count; i++)
+            {
+                if ( IsStructureMode || _recordPropertyUtil.FieldInfos[i].Obsolete is false)
+                {
+                    var columProp = MakePropertyColumn(i);
+                    listView.columns.Add(columProp);
+                }
+            }
+
+            if (IsStructureMode)
+            {
+                var lastColumn = MakeLastColumn();
+                listView.columns.Add(lastColumn);
+            }
+        }        
 
         private static Texture2D plusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image;        
         private static Texture2D minusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Minus").image;        
+
 
         /// <summary>
         /// IDのテキストを更新する
@@ -234,7 +277,7 @@ namespace TinyDataTable.Editor
             {
                 if (t.button == 0)
                 {
-                    var removeIndexList = _multiColumnListView.selectedIndices.Any() && false
+                    var removeIndexList = _multiColumnListView.selectedIndices.Any()
                         ? _multiColumnListView.selectedIndices.ToArray()
                         : new int[] { rowIDList.Count - 1 };
                     RemoveRow(removeIndexList);

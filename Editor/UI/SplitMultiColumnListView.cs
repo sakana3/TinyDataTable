@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework.Constraints;
 using UnityEngine;
 using UnityEditor;
@@ -25,7 +26,8 @@ public class SplitMultiColumnListView : VisualElement
     public UnsignedIntegerField TableSizeField { private set; get; }
     public Action onAddRowClicked;
     public Action onRemoveRowClicked;
-
+    private bool isScrollChanged = false;
+    
     public bool showAddRemoveFooter
     {
         set
@@ -93,8 +95,8 @@ public class SplitMultiColumnListView : VisualElement
     {
         set
         {
-            Right.showBoundCollectionSize = value;            
             Left.showBoundCollectionSize = value;
+            Right.showBoundCollectionSize = value;            
         }
         get => Left.showBoundCollectionSize;
     }        
@@ -103,12 +105,23 @@ public class SplitMultiColumnListView : VisualElement
     {
         set
         {
-            Right.selectionType = value;            
             Left.selectionType = value;
+            Right.selectionType = value;            
         }
         get => Left.selectionType;
     }
 
+    public CollectionVirtualizationMethod virtualizationMethod
+    {
+        set
+        {
+            Left.virtualizationMethod = value;
+            Right.virtualizationMethod = value;
+        }
+        get => Left.virtualizationMethod;
+    }
+    
+    
     public IEnumerable<int> selectedIndices => Left.selectedIndices;
     
     public event Func<int, int,bool> itemIndexChanged;
@@ -168,7 +181,6 @@ public class SplitMultiColumnListView : VisualElement
             SplitView.UnregisterCallback<GeometryChangedEvent>(OnPaneSizeChanged);
         }
     }
-
     
     public void Rebuild()
     {
@@ -266,7 +278,7 @@ public class SplitMultiColumnListView : VisualElement
         });
     }
     
-    private bool isScrollChanged = false;
+
     private void SyncScroll(MultiColumnListView source, MultiColumnListView target , int id)
     {
         var sourceScrollView = source.Q<ScrollView>();
@@ -290,10 +302,6 @@ public class SplitMultiColumnListView : VisualElement
                 };
             }
         }).Until(() => source.Q<ScrollView>() != null && target.Q<ScrollView>() != null);
-        
-        sourceScrollView.horizontalScroller.RegisterCallback<GeometryChangedEvent>(evt =>
-        {
-        });
     }
 
     private VisualElement MakeFooter()

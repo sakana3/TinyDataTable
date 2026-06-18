@@ -11,13 +11,16 @@ namespace TinyDataTable.Editor
 {
     public abstract class AttributeAdapterBase
     {
-        public abstract string[] ToCode();
-        public abstract void FromCode( Type attributeType,  string[] code );
-        protected abstract void CreateUI(VisualElement root);
+        /// <summary> Default Enable </summary>
         public virtual bool DefaultEnable => false;
         
+        /// <summary> Enable </summary>
         public bool IsEnable { set; get; } = false;
-        VisualElement optionUI;
+
+        /// <summary> UI </summary>
+        private VisualElement optionUI;
+
+        /// <summary> Title </summary>
         public virtual string Title
         {
             get
@@ -32,7 +35,25 @@ namespace TinyDataTable.Editor
                 return ObjectNames.NicifyVariableName(title);;
             }
         }
+        
+        /// <summary>
+        /// To Code
+        /// </summary>
+        public abstract string[] ToCode();
+        
+        /// <summary>
+        /// From Code
+        /// </summary>
+        public abstract void FromCode( Type attributeType,  string[] code );
 
+        /// <summary>
+        /// Create UI
+        /// </summary>
+        protected abstract void CreateUI(VisualElement root);
+        
+        /// <summary>
+        /// Attribute Value tupple
+        /// </summary>
         public (Type type,string[] args) AttributeValue
         {
             get
@@ -47,7 +68,9 @@ namespace TinyDataTable.Editor
         }
         
         
-
+        /// <summary>
+        /// Makr root UI
+        /// </summary>
         internal void FormFiledInfo(FieldInfo fieldInfo)
         {
             if (fieldInfo != null)
@@ -70,7 +93,10 @@ namespace TinyDataTable.Editor
             }
         }
         
-        public VisualElement MakeUI()
+        /// <summary>
+        /// Makr root UI
+        /// </summary>
+        internal VisualElement CreateRootUI()
         {
             var root = new VisualElement();
 
@@ -88,24 +114,36 @@ namespace TinyDataTable.Editor
 
             return root;            
         }
-
         
+        /// <summary>
+        /// Args to strings
+        /// </summary>
+        /// <param name="args">args</param>
+        /// <returns></returns>
         protected static string[] ToArgStrings(params object[] args)
         {
             return args.Select( a => ToArgString(a)).ToArray();
         }
         
-        protected static string ToArgString( object args)
+        /// <summary>
+        /// Argv to string
+        /// </summary>
+        protected static string ToArgString( object argv)
         {
-            return SerializableUtility.ToArgString(args);
+            return SerializableUtility.ToArgString(argv);
         }
 
-        protected static object FromArg(string argStr)
+        /// <summary>
+        /// String to argv
+        /// </summary>
+        protected static object FromArg(string argvStr)
         {
-            return SerializableUtility.FromArg(argStr);
+            return SerializableUtility.FromArg(argvStr);
         }
         
-        
+        /// <summary>
+        /// OnChangeEnable
+        /// </summary>
         private void OnChangeEnable(bool isEnable)
         {
             IsEnable = isEnable;
@@ -116,12 +154,14 @@ namespace TinyDataTable.Editor
             }
         }
         
+        /// <summary>
+        /// Find Attribute Options
+        /// </summary>
         public static List<AttributeAdapterBase> FindAttributeOptions( Type type , IReadOnlyCollection<Type> baseTypes)
         {
             var types = TypeCache.GetTypesDerivedFrom<AttributeAdapterBase>()
                 .Where(t => t.IsClass && !t.IsAbstract && t.IsDefined(typeof(AttributeOptionAttribute), true))
                 .Where(t => t.GetCustomAttribute<AttributeOptionAttribute>().HasType(type) );
-
             
             var options = types
                 .Select( t => Activator.CreateInstance(t))

@@ -235,7 +235,7 @@ namespace TinyDataTable.Editor
             {
                 element.Clear();
                 var option = attributeOptions[i];
-                var optionUI = option.MakeUI();
+                var optionUI = option.CreateRootUI();
                 if (optionUI != null)
                 {
                     element.Add(optionUI);
