@@ -11,7 +11,9 @@ namespace TinyDataTable.Editor
         public static Texture FolderEmptyIcon { private set; get; } = EditorGUIUtility.IconContent( "d_FolderEmpty Icon").image;
         public static Texture FolderOpenIcon {private set; get; } = EditorGUIUtility.IconContent("d_FolderOpened Icon").image;
         public static Texture RefreshIcon {private set; get; } = EditorGUIUtility.IconContent("Refresh").image;
-            
+        public static Texture2D FoldOnIcon = EditorGUIUtility.IconContent("d_IN_foldout_on@2x").image as Texture2D;
+        public static Texture2D FoldOffIcon = EditorGUIUtility.IconContent("d_IN_foldout@2x").image as Texture2D;
+
         public static Texture FolderIcon( bool isExpanded , bool isEmpty )
         {
             if (isEmpty)

@@ -9,13 +9,13 @@ namespace TinyDataTable.Editor
     [AttributeOption(typeof(UnityEngine.MinAttribute), typeof(int), typeof(float) )]
     public class AttributeAdapterMin : AttributeAdapterBase
     {
-        public float Min { get; set; } = 0;
+        private float Min { get; set; } = 0;
 
-        public override string[] ToCode() => ToArgStrings( Min );
+        public override string[] ToCode() => ToArgsStrings( Min );
         
         public override void FromCode( Type attributeType,  string[] code )
         {
-            Min = FromArg(code[0]) as float? ?? Min;
+            Min = FromArgv<float>(code[0],Min);
         }
         
         protected override void CreateUI(VisualElement root)

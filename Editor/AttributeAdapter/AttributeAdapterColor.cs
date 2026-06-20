@@ -9,25 +9,25 @@ namespace TinyDataTable.Editor
     [AttributeOption(typeof(UnityEngine.ColorUsageAttribute), typeof(Color) )]
     public class AttributeAdapterColorUsage : AttributeAdapterBase
     {
-        public bool showAlpha { get; set; } = true;
-        public bool hdr { get; set; } = true;
+        private bool ShowAlpha { get; set; } = true;
+        private bool HDR { get; set; } = true;
         
-        public override string[] ToCode() => ToArgStrings( showAlpha,hdr );
+        public override string[] ToCode() => ToArgsStrings( ShowAlpha,HDR );
         
         public override void FromCode( Type attributeType,  string[] code )
         {
-            showAlpha = FromArg(code[0]) as bool? ?? showAlpha;
-            hdr = FromArg(code[1]) as bool? ?? hdr;
+            ShowAlpha = FromArgv<bool>(code[0],ShowAlpha);
+            HDR = FromArgv<bool>(code[1],HDR);
         }
         
         protected override void CreateUI(VisualElement root)
         {
-            var showAlphaField = new Toggle("Show Alpha") { value = showAlpha };
-            showAlphaField.RegisterValueChangedCallback( evt => showAlpha = evt.newValue );
+            var showAlphaField = new Toggle("Show Alpha") { value = ShowAlpha };
+            showAlphaField.RegisterValueChangedCallback( evt => ShowAlpha = evt.newValue );
             root.Add( showAlphaField);
 
-            var hdrField = new Toggle("HDR") { value = hdr };
-            hdrField.RegisterValueChangedCallback( evt => hdr = evt.newValue );
+            var hdrField = new Toggle("HDR") { value = HDR };
+            hdrField.RegisterValueChangedCallback( evt => HDR = evt.newValue );
             root.Add( hdrField);
         }
     }    

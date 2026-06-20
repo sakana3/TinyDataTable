@@ -31,6 +31,7 @@ namespace TinyDataTable.Editor
         private IReadOnlyCollection<string> idNames {set; get; }= new List<string>();
         private IReadOnlyCollection<string> reservNames {set; get; }= new List<string>();
         private VisualElement attributeRoot;
+        private VisualElement attributeArea;
         private FieldInfo FieldInfo { set; get; }
         private List<AttributeAdapterBase> attributeOptions = new ();
 
@@ -112,15 +113,18 @@ namespace TinyDataTable.Editor
             root.Add( boolField );
             
             attributeRoot = new VisualElement();
-            OnTypeSelectChangeCallback(PropertyType);
+            CreateAttributeSelector(PropertyType);
             root.Add(attributeRoot);
 
-            var descriptionField = new TextField("Description");
+            var descriptionlabel = new Label("Description");
+            root.Add(descriptionlabel);
+            
+            var descriptionField = new TextField();
             descriptionField.RegisterValueChangedCallback(evt => Description = evt.newValue);
             descriptionField.textEdition.placeholder = "Input Description.If you need.";
             descriptionField.value = Description;
             root.Add( descriptionField );
-            
+
             var spacer = new VisualElement();
             spacer.style.flexGrow = 1;
             root.Add( spacer );
@@ -213,36 +217,91 @@ namespace TinyDataTable.Editor
             CheckClassName();
         }
 
+        private void OnTypeSelectChangeCallback(Type type)
+        {
+            CreateAttributeSelector(type);
+        }
         
-        private void OnTypeSelectChangeCallback( Type type)
+        private void CreateAttributeSelector( Type type)
         {
             attributeRoot.Clear();
             attributeOptions = AttributeAdapterBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.CustomAttributes.Select( t => t.Type ).ToArray());
-            foreach (var option in attributeOptions)
+
+            if (attributeOptions.Any())
             {
-                option.FormFiledInfo(FieldInfo);
-            }
-            
-            ListView listView = new ListView()
-            {
-                name = "Attributes",
-                reorderable = true,
-                reorderMode = ListViewReorderMode.Animated,
-                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
-            };
-            listView.makeItem = () => new VisualElement();
-            listView.bindItem = (element, i) =>
-            {
-                element.Clear();
-                var option = attributeOptions[i];
-                var optionUI = option.CreateRootUI();
-                if (optionUI != null)
+                foreach (var option in attributeOptions)
                 {
-                    element.Add(optionUI);
+                    option.InitializeFormFiledInfo(FieldInfo);
                 }
-            };
-            listView.itemsSource = attributeOptions;
-            attributeRoot.Add(listView);
+                
+                var label = new Label("Attributes");
+                attributeRoot.Add(label);
+
+
+                var mainAttributes = attributeOptions
+                    .Where(a => a.AttributeType == AttributeType.Drawer);
+                var actyiveAttributes = mainAttributes
+                    .FirstOrDefault(t => t.IsEnable);
+                var index = attributeOptions.IndexOf(actyiveAttributes);
+                var popup = new UnityEngine.UIElements.PopupField<string>()
+                {
+                    choices = new string[]{"None"}.Concat( attributeOptions.Select(t=>t.Title)).ToList(),
+                    index = index + 1,
+                };
+                attributeRoot.Add(popup);
+                
+                attributeArea = new VisualElement();
+                attributeRoot.Add(attributeArea);
+                
+                if (actyiveAttributes != null)
+                {
+                    attributeArea.Add(actyiveAttributes.CreateRootUI(false));
+                }
+                popup.RegisterValueChangedCallback(evt =>
+                {
+                    var active = mainAttributes
+                        .FirstOrDefault(t => t.Title == evt.newValue);
+                    Debug.Log(active);
+                    attributeArea.Clear();
+                    foreach (var attr in mainAttributes)
+                    {
+                        attr.IsEnable = false;
+                    }
+                    if (active != null)
+                    {
+                        active.IsEnable = true;
+                        attributeArea.Add(active.CreateRootUI(false));
+                    }
+                });
+
+                var additonalAttributes = attributeOptions
+                    .Where(a => a.AttributeType == AttributeType.Additional)
+                    .ToList();
+                
+                if (additonalAttributes.Any())
+                {
+                    ListView listView = new ListView()
+                    {
+                        name = "Attributes",
+//                        reorderable = true,
+                        reorderMode = ListViewReorderMode.Animated,
+                        virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
+                    };
+                    listView.makeItem = () => new VisualElement();
+                    listView.bindItem = (element, i) =>
+                    {
+                        element.Clear();
+                        var option = additonalAttributes[i];
+                        var optionUI = option.CreateRootUI(true);
+                        if (optionUI != null)
+                        {
+                            element.Add(optionUI);
+                        }
+                    };
+                    listView.itemsSource = additonalAttributes;
+                    attributeRoot.Add(listView);
+                }
+            }
         }
 
         private void CheckClassName()

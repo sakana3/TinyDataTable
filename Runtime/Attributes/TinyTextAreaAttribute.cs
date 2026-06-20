@@ -8,16 +8,14 @@ namespace TinyDataTable
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public class TinyTextAreaAttribute : PropertyAttribute
     {
-        public int MinLines { get; }
-        public int MaxLines { get; }
         public float FontSize { get; }
+        public bool NoWrap { get; }
 
         // デフォルトで「1行スタート、最大3行まで自動伸縮」にする
-        public TinyTextAreaAttribute(int minLines = 1, int maxLines = 0, float fontSize = 12f)
+        public TinyTextAreaAttribute( float fontSize = 12f , bool noWarp = false)
         {
-            MinLines = minLines;
-            MaxLines = maxLines;
             FontSize = fontSize;
+            NoWrap = noWarp;
         }
     }
 }

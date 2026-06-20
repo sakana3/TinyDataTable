@@ -9,17 +9,15 @@ namespace TinyDataTable.Editor
     [AttributeOption(typeof(UnityEngine.RangeAttribute), typeof(int), typeof(float) )]
     public class AttributeAdapterRange : AttributeAdapterBase
     {
-        public float Min { get; set; } = 0;
-        public float Max { get; set; } = 100;
-
-
+        private float Min { get; set; } = 0;
+        private float Max { get; set; } = 100;
         
-        public override string[] ToCode() => ToArgStrings( Min , Max );
+        public override string[] ToCode() => ToArgsStrings( Min , Max );
         
         public override void FromCode( Type attributeType,  string[] code )
         {
-            Min = FromArg(code[0]) as float? ?? Min;
-            Max = FromArg(code[1]) as float? ?? Max;
+            Min = FromArgv<float>(code[0],Min);
+            Max = FromArgv<float>(code[1],Max);
         }
         
         protected override void CreateUI(VisualElement root)

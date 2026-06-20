@@ -9,14 +9,14 @@ namespace TinyDataTable.Editor
     [AttributeOption( typeof(TextAreaAttribute),typeof(string) )]
     public class AttributeAdapterTextArea : AttributeAdapterBase
     {
-        public int minLines = 1;
-        public int maxLines = 3;
+        private int minLines = 1;
+        private int maxLines = 3;
  
-        public override string[] ToCode() => ToArgStrings( minLines,maxLines);
+        public override string[] ToCode() => ToArgsStrings( minLines,maxLines);
         public override void FromCode( Type attributeType,  string[] code )
         {
-            minLines = FromArg(code[0]) as int? ?? minLines;
-            maxLines = FromArg(code[1]) as int? ?? maxLines;            
+            minLines = FromArgv<int>(code[0],minLines);
+            maxLines = FromArgv<int>(code[1],maxLines);
         }
         protected override void CreateUI(VisualElement root)
         {

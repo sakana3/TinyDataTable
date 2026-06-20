@@ -9,8 +9,18 @@ using System.Globalization;
 
 namespace TinyDataTable.Editor
 {
+    public enum AttributeType
+    {
+        Drawer ,
+        Additional                
+    }
+    
     public abstract class AttributeAdapterBase
     {
+
+        /// <summary> Default Enable </summary>
+        public virtual AttributeType AttributeType => AttributeType.Drawer;
+        
         /// <summary> Default Enable </summary>
         public virtual bool DefaultEnable => false;
         
@@ -71,7 +81,7 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// Makr root UI
         /// </summary>
-        internal void FormFiledInfo(FieldInfo fieldInfo)
+        internal void InitializeFormFiledInfo(FieldInfo fieldInfo)
         {
             if (fieldInfo != null)
             {
@@ -92,21 +102,25 @@ namespace TinyDataTable.Editor
                 IsEnable = DefaultEnable;
             }
         }
-        
+
+
         /// <summary>
         /// Makr root UI
         /// </summary>
-        internal VisualElement CreateRootUI()
+        internal VisualElement CreateRootUI( bool hasEnableHeader )
         {
             var root = new VisualElement();
 
             root.style.backgroundColor = new Color(0.2f,0.2f,0.2f,0.5f);
-            
-            var toggle = new Toggle(Title);
-            toggle.value = IsEnable;
-            toggle.RegisterValueChangedCallback((evt) => OnChangeEnable(evt.newValue));
-    
-            root.Add( toggle );
+
+            if (hasEnableHeader)
+            {
+                var toggle = new Toggle(Title);
+                toggle.value = IsEnable;
+                toggle.RegisterValueChangedCallback((evt) => OnChangeEnable(evt.newValue));
+                root.Add(toggle);
+            }
+
             optionUI = new VisualElement();
             root.Add(optionUI);
             CreateUI(optionUI);
@@ -120,7 +134,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         /// <param name="args">args</param>
         /// <returns></returns>
-        protected static string[] ToArgStrings(params object[] args)
+        protected static string[] ToArgsStrings(params object[] args)
         {
             return args.Select( a => ToArgString(a)).ToArray();
         }
@@ -136,9 +150,19 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// String to argv
         /// </summary>
-        protected static object FromArg(string argvStr)
+        protected static object FromArgv(string argvStr)
         {
-            return SerializableUtility.FromArg(argvStr);
+            return SerializableUtility.StringToObj(argvStr);
+        }
+
+        protected static T FromArgv<T>(string argvStr , T defaultCValue )
+        {
+            var obj = FromArgv(argvStr);
+            if (obj == null || obj is not T)
+            {
+                return defaultCValue;
+            }
+            return (T)obj;
         }
         
         /// <summary>

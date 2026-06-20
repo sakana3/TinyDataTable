@@ -240,7 +240,7 @@ namespace TinyDataTable.Editor
         }        
 
 
-        public static object FromArg(string argStr)
+        public static object StringToObj(string argStr)
         {
             if (string.IsNullOrWhiteSpace(argStr)) return null;
             
