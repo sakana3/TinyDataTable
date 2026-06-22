@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+using UnityEngine.AddressableAssets;
 
 namespace TinyDataTable.Editor
 {
@@ -22,26 +23,43 @@ namespace TinyDataTable.Editor
             typeof(string),
             typeof(long),
             typeof(double),
+            typeof(char),
+            typeof(byte),
+            typeof(short),
+            typeof(ushort),
+            typeof(uint),
+            typeof(ulong),
         };
 
         private static Type[] builtinTypes = new[]
         {
             typeof(Vector2),
+            typeof(Vector2Int),
             typeof(Vector3),
+            typeof(Vector3Int),
             typeof(Vector4),
             typeof(Quaternion),
+            typeof(Matrix4x4),
             typeof(Color),
             typeof(Color32),
+            typeof(Gradient),
             typeof(Rect),
+            typeof(RectInt),
             typeof(Bounds),
+            typeof(BoundsInt),
+            typeof(Plane),
             typeof(LayerMask),
             typeof(AnimationCurve),
-            typeof(Gradient),
+#if USE_ADDRESSABLES
+            typeof(AssetReference),
+#endif
         };
 
         private static Type[] _enumTypes = null;
         private static Type[] _dataTableTypes = null;
         private static Type[] _classTypes = null;
+        private static Type[] _scriptableObjectTypes = null;
+        private static Type[] _monoBeheiborTypes = null;
 
         public TypeSelectorDropdown(AdvancedDropdownState state, IEnumerable<string> assemblys, Action<Type> onTypeSelected) :
             base(state)
@@ -50,9 +68,9 @@ namespace TinyDataTable.Editor
             _assemblys = assemblys;
             _onTypeSelected = onTypeSelected;
 
-            if (_enumTypes == null || _classTypes == null )
+            if (_enumTypes == null || _classTypes == null|| _dataTableTypes == null|| _scriptableObjectTypes == null )
             {
-                (_enumTypes, _classTypes,_dataTableTypes) = CollectTypes();
+                (_enumTypes, _classTypes,_dataTableTypes,_scriptableObjectTypes,_monoBeheiborTypes) = CollectTypes();
             }
             
             // ウィンドウサイズの最小値を設定
@@ -75,6 +93,21 @@ namespace TinyDataTable.Editor
             }
             root.AddChild(typeRoot);
 
+            var soRoot = new AdvancedDropdownItem("Unity Object");
+            foreach (var type in _scriptableObjectTypes)
+            {
+                AddTypeItem(soRoot, type, false);
+            }
+            root.AddChild(soRoot);
+            
+            var monoRoot = new AdvancedDropdownItem("Component");
+            foreach (var type in _monoBeheiborTypes)
+            {
+                AddTypeItem(monoRoot, type, false);
+            }
+            root.AddChild(monoRoot);
+
+            
             if (_dataTableTypes.Any())
             {
                 var dataTableRoot = new AdvancedDropdownItem("DataTable");
@@ -175,12 +208,14 @@ namespace TinyDataTable.Editor
             }
         }
 
-        private (Type[] enumTypes,Type[] classTypes,Type[] dataTableTypes)  CollectTypes()
+        private (Type[] enumTypes,Type[] classTypes,Type[] dataTableTypes,Type[] scriptableObjectTypes,Type[] monoBeheiborTypes)  CollectTypes()
         {
             var allTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(t => _assemblys.Contains(t.GetName().Name))
                 .SelectMany(a => a.GetTypes())
-                .Where( t => t.IsPublic)
+                .Where( t => 
+                    t.IsPublic &&
+                    t.IsDefined(typeof(ObsoleteAttribute), true) is false )
                 .SelectMany( t => GetAllNestedTypesRecursive(t) )
                 .Where(t => SerializableUtility.CheckUnitySerializable(t))
                 .ToArray();
@@ -192,6 +227,7 @@ namespace TinyDataTable.Editor
             var allClassTypes= allTypes
                 .Where(t => !t.IsInterface && !t.IsEnum && !t.IsPrimitive && !t.IsArray && t != typeof(void))
                 .Where(t => t.IsClass || t.IsValueType )
+                .Where( t => typeof(UnityEngine.Object).IsAssignableFrom(t) is false )
                 .ToArray();
             
             var classTypes = allClassTypes
@@ -202,7 +238,17 @@ namespace TinyDataTable.Editor
                 .Where( t => typeof(IIdentifier).IsAssignableFrom(t))
                 .ToArray();
 
-            return (enumTypes,classTypes,dataTableTypes);
+            var scriptableObjectTypes = allTypes
+                .Where( t => typeof(UnityEngine.Object).IsAssignableFrom(t))
+                .Where( t => typeof(UnityEngine.Component).IsAssignableFrom(t) is false)
+                .ToArray();
+
+            var monoBeheiborTypes = allTypes
+                .Where( t => typeof(UnityEngine.Object).IsAssignableFrom(t))
+                .Where( t => typeof(UnityEngine.Component).IsAssignableFrom(t) is true)
+                .ToArray();
+            
+            return (enumTypes,classTypes,dataTableTypes,scriptableObjectTypes,monoBeheiborTypes);
         }
         
         // 再帰的にネストされた型を掘り下げるメソッド

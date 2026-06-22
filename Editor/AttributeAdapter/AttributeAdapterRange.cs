@@ -6,7 +6,10 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption(typeof(UnityEngine.RangeAttribute), typeof(int), typeof(float) )]
+    [AttributeOption(typeof(UnityEngine.RangeAttribute),
+        typeof(int),typeof(float),typeof(long),typeof(double) ,
+        typeof(byte),typeof(short),typeof(ushort), typeof(uint),typeof(ulong)
+    )]
     public class AttributeAdapterRange : AttributeAdapterBase
     {
         private float Min { get; set; } = 0;
