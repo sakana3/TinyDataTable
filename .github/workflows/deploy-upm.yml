@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'com.sakana3.tinydatatable/**' # パッケージフォルダに変更があったときだけ実行
+      - 'com.sakana3.tinydatatable/**' # このフォルダが変わった時だけ自動で動く
+  workflow_dispatch: # 🌟もし自動で動かなくても、Actions画面から手動でいつでも実行できます！
 
 permissions:
   contents: write
@@ -17,17 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # すべての履歴を取得（ブランチ切り替えに必要）
+          fetch-depth: 0
 
       - name: Subtree split to upm branch
         run: |
-          # 1. パッケージフォルダだけを切り出した一時ブランチを作成
           git subtree split --prefix=com.sakana3.tinydatatable --branch upm-deploy
           
-          # 2. 認証情報の設定
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 3. リモートのupmブランチへ強制プッシュ
-          # (upm-deployローカルブランチの中身を、リモートのupmブランチに送り込む)
           git push origin upm-deploy:upm --force
