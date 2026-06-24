@@ -1,0 +1,34 @@
+name: Deploy UPM Branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'com.yourname.package/**' # パッケージフォルダに変更があったときだけ実行
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # すべての履歴を取得（ブランチ切り替えに必要）
+
+      - name: Subtree split to upm branch
+        run: |
+          # 1. パッケージフォルダだけを切り出した一時ブランチを作成
+          # ※ 「com.yourname.package」の部分は実際のフォルダ名に合わせて変更してください
+          git subtree split --prefix=com.sakana3.tinydatatable --branch upm-deploy
+          
+          # 2. 認証情報の設定
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 3. リモートのupmブランチへ強制プッシュ
+          # (upm-deployローカルブランチの中身を、リモートのupmブランチに送り込む)
+          git push origin upm-deploy:upm --force
