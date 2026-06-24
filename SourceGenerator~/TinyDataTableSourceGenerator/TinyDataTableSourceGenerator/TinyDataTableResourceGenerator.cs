@@ -28,7 +28,9 @@ namespace TinyTable.SourceGenerator
                 if (typeDef == null) return;
 
                 var cb = new CSharpCodeBuilder();
-                
+
+                cb.AddComment("This code was create by TinyDataTableSourceGenerator");
+
                 cb.AppendLine("#pragma warning disable CS0612");
                 cb.AddUsing("System");
                 cb.AddUsing("System.Collections.Generic");

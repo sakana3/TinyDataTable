@@ -16,7 +16,7 @@
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
         <PropertyGroup>
-            <UnityPluginDir>$(ProjectDir)..\..\..\Plugins\</UnityPluginDir>
+            <UnityPluginDir>$(ProjectDir)..\..\..\..\com.sakana3.tinydatatable\Plugins\</UnityPluginDir>
         </PropertyGroup>
         <MakeDir Directories="$(UnityPluginDir)" Condition="!Exists('$(UnityPluginDir)')" />
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(UnityPluginDir)" OverwriteReadOnlyFiles="true" SkipUnchangedFiles="false" />
