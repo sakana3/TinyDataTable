@@ -22,7 +22,6 @@ jobs:
       - name: Subtree split to upm branch
         run: |
           # 1. パッケージフォルダだけを切り出した一時ブランチを作成
-          # ※ 「com.yourname.package」の部分は実際のフォルダ名に合わせて変更してください
           git subtree split --prefix=com.sakana3.tinydatatable --branch upm-deploy
           
           # 2. 認証情報の設定
