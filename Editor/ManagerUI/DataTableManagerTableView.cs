@@ -1,0 +1,30 @@
+using System;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using UnityEngine;
+using UnityEditor;
+
+namespace TinyDataTable.Editor
+{
+    internal class DataTableManagerTableView : VisualElement
+    {
+        private DataTableManager Manager = null;
+        private DataTableRecordBase asset;
+        private bool IsStructureMode { set; get; } = false;
+
+        public DataTableManagerTableView(DataTableManager manager,DataTableRecordBase asset,bool isStructureMode)
+        {
+            this.Manager = manager;
+            this.IsStructureMode = isStructureMode;
+            this.asset = asset;
+            viewDataKey = $"DataTableManagerTableView_{asset.name}";
+            CreateGUI();
+        }
+
+        private void CreateGUI()
+        {
+            var sheet = new DataSheetField(Manager,asset, IsStructureMode);
+            Add( sheet);            
+        }
+    }
+}

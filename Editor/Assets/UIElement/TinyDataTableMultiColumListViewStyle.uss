@@ -1,0 +1,94 @@
+/* 選択行の背景色 */
+.unity-collection-view__item--selected {
+    background-color: rgba(44, 93, 100, 128); /* 青色 */
+
+    /* ボーダーの色 */
+/*    border-color: #FFFFFF40;*/ /* 緑色 */
+    
+    /* ボーダーの太さ (上下左右) */
+/*    border-width: 1px; */
+
+    /* 必要なら角丸も */
+    border-radius: 1px;
+}
+
+.unity-list-view {
+
+
+    /* ボーダーの色 */
+    border-color: #00000040; /* 緑色 */
+
+    /* ボーダーの太さ (上下左右) */
+    border-width: 0.5px;
+
+}
+
+
+/* ネストされたListView（もしあれば）の選択行はデフォルトに戻す、または別の色にする */
+.unity-multi-column-view__cell .unity-collection-view__item--selected {
+    background-color: #2C5D87; /* デフォルトっぽい色、または透明 */
+}
+
+/* 区切り線 */
+.unity-multi-column-view__cell{
+    /* ボーダーの色 */
+    border-color: #00000020;
+    border-right-width: 1px;
+/*   border-bottom-width: 1px;*/
+}
+
+.unity-list-view__reorderable-item__container{
+    padding: 0;
+}
+
+.unity-multi-column-header__column__content-container
+{
+    justify-content: center;
+}
+
+/* Toggle全体を中央寄せ */
+.unity-toggle .unity-toggle__input {
+    align-self: center;       /* 親要素に対して中央 */
+    align-items: center;      /* 内部要素（チェックマーク）を中央 */
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 3;
+}
+
+/* ラベルを非表示にする（チェックボックスだけの場合） */
+.unity-toggle .unity-label {
+    display: none;
+}
+
+/* PropertyField全体の枠や背景を消す */
+.no-frame-field {
+    background-color: transparent;
+    border-color: transparent;
+    border-width: 0;
+}
+
+/* 内部の入力フィールドの枠も消す必要がある場合 */
+.no-frame-field .unity-base-field__input {
+    background-color: transparent;
+    border-width: 0;
+}
+
+.right-align-field .unity-base-field__input {
+    -unity-text-align: middle-right;
+    /* 必要に応じて右側に少し余白を作る */
+    padding-right: 4px;
+}
+
+/* 整数(int)フィールドの入力欄を右揃え */
+.unity-integer-field .unity-base-field__input,
+    /* 浮動小数点(float)フィールドの入力欄を右揃え */
+.unity-float-field .unity-base-field__input,
+    /* 倍精度(double)フィールドの入力欄を右揃え */
+.unity-double-field .unity-base-field__input,
+    /* 長整数(long)フィールドの入力欄を右揃え */
+.unity-long-field .unity-base-field__input {
+    -unity-text-align: middle-right;
+    padding-right: 4px;
+}
+
