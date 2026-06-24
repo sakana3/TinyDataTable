@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'com.yourname.package/**' # パッケージフォルダに変更があったときだけ実行
+      - 'com.sakana3.tinydatatable/**' # パッケージフォルダに変更があったときだけ実行
 
 permissions:
   contents: write
