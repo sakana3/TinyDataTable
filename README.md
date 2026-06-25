@@ -9,5 +9,4 @@ https://github.com/sakana3/TinyDataTable.git#upm
 
 # How to Use
 
-Read here
-[Choose Window > Tiny Data Table](https://sakana3.github.io/TinyDataTable/)
+[Read here](https://sakana3.github.io/TinyDataTable/)
