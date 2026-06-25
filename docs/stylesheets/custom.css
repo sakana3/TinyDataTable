@@ -1,0 +1,19 @@
+
+:root [data-md-color-scheme="default"] {
+    --md-default-bg-color:          #e7f0e7;
+    --md-code-bg-color:             #eef5ee;
+}
+
+:root [data-md-color-scheme="slate"] {
+    --md-default-bg-color:          #1a241a;
+    --md-code-bg-color:             #111811;
+}
+
+.md-content {
+    background-color: var(--md-default-bg-color) !important;
+}
+
+/* 📁 左メニュー・右目次の背景色も統一する */
+.md-sidebar {
+    background-color: var(--md-default-bg-color) !important;
+}
