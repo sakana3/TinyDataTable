@@ -1,0 +1,52 @@
+# 1. サイトの基本情報
+site_name: TinyDataTable
+site_description: Unity用の軽量で高速なデータテーブルパッケージ
+site_author: sakana3
+site_url: https://sakana3.github.io/TinyDataTable/
+
+# 2. デザイン・テーマの設定（一番人気のMaterialテーマ）
+theme:
+  name: material
+  language: ja                # 検索機能やUIを日本語化
+  palette:
+    # ライトモード/ダークモードの切り替えボタンを付ける設定
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal           # メインのテーマカラー（お好みで青などにも変更可）
+      accent: teal            # アクセントカラー
+      toggle:
+        icon: material/weather-sunny
+        name: ダークモードへ
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: ライトモードへ
+  features:
+    - navigation.tabs         # メニューを画面上部にタブとして並べる（見やすくなります）
+    - search.suggest          # 検索のサジェスト機能
+    - search.highlight        # 検索ワードのハイライト
+
+# 3. リポジトリへのリンク（画面右上にGitHubアイコンが表示されます）
+repo_name: sakana3/TinyDataTable
+repo_url: https://github.com/sakana3/TinyDataTable
+edit_uri: edit/main/docs/
+
+# 4. メニュー（サイドバー）の構成
+# docs/ フォルダの中に作ったMarkdownファイルをここに紐付けます
+nav:
+  - ホーム: index.md
+  - 導入方法: installation.md
+  - 基本的な使い方: usage.md
+  - 各種機能:
+      - データの読み込み: features/loading.md
+      - 高度な使い方: features/advanced.md
+  - ライセンス: license.md
+
+# 5. 特殊な書き方（拡張機能）の有効化
+markdown_extensions:
+  - admonition                # 警告や注意書きの綺麗なくぼみ（!!! note など）を使えるようにする
+  - pymdownx.details          # 折りたたみ（アコーディオン）を使えるようにする
+  - pymdownx.superfences      # コードブロックの中でさらに高度な表現を可能にする
