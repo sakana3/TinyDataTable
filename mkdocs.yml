@@ -2,8 +2,6 @@ site_name: TinyDataTable
 site_description: Unity用の軽量で高速なデータテーブルパッケージ
 site_author: sakana3
 site_url: https://sakana3.github.io/TinyDataTable/
-extra_css:
-  - stylesheets/custom.css
 theme:
   name: material
   language: ja
@@ -54,3 +52,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true        
+        
+extra_css:
+  - stylesheets/custom.css

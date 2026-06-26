@@ -1,6 +1,8 @@
 # 導入方法 (Installation)
 
-TinyDataTableは、Unity Package Manager (UPM) を使用してインストールできます。
+!!! 対象バージョン
+    Unity6.0以降  
+    お使いのバージョンによっては表示崩れ等が起こる場合があります。
 
 ## 🛠 インストール手順
 
@@ -16,5 +18,5 @@ https://github.com/sakana3/TinyDataTable.git#upm
 
 ## 💡ご利用の前に
 
-TinyDataTableはAddressablesでの利用を推奨しています。
-必須ではありませんが同時に導入する事をお勧めします。
+TinyDataTableはAddressablesでの利用を推奨しています。必須ではありませんが後からの構成の変更は破壊的変更を伴う可能性があるため同時に導入する事をお勧めします。
+

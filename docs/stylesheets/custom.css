@@ -13,7 +13,51 @@
     background-color: var(--md-default-bg-color) !important;
 }
 
-/* 📁 左メニュー・右目次の背景色も統一する */
 .md-sidebar {
     background-color: var(--md-default-bg-color) !important;
 }
+
+/* PCやタブレットなど、すべての画面サイズにおいてベースサイズを90%に縮小 */
+:root, [data-md-color-scheme] {
+    --md-typeset-font-size: 16px !important; /* 標準の20pxから18px（90%）に固定 */
+}
+
+/* 本文の文字サイズと行間をピンポイントで強制変更 */
+.md-typeset {
+    font-size: 0.6rem !important; /* 基準に対して一回り小さく */
+    line-height: 1.4 !important;   /* 文字が小さくなった分、行間も少し詰めて綺麗に */
+}
+
+/* 左メニュー（ナビゲーション）の文字も連動して小さくする */
+.md-nav__link {
+    font-size: 0.65rem !important;
+}
+
+/* 右メニュー（ページ内目次）の文字も連動して小さくする */
+.md-text {
+    font-size: 0.65rem !important;
+}
+
+/* --------------------------------------------------------------------------
+   【強制上書き】上部ヘッダーのコンテンツ表示幅のみを狭くする
+   -------------------------------------------------------------------------- */
+
+@media screen and (min-width: 60em) {
+    /* ヘッダーの中身（ロゴ、タイトル、検索、GitHubリンクなど）の最大幅を制限 */
+    .md-header__inner {
+        max-width: 42rem !important; /* 🌟ヘッダーの横幅（下の本文の幅に合わせて自由に調整してください） */
+        margin-right: auto !important; /* 左右中央寄せ */
+        margin-left: auto !important;
+        padding-left: 0.8rem !important;  /* 端の余白を綺麗に整える */
+        padding-right: 0.8rem !important;
+    }
+
+    /* 下のタブメニュー（ナビゲーションtabs）の表示幅もヘッダーと綺麗に揃える */
+    .md-tabs__list {
+        max-width: 42rem !important; /* 🌟ヘッダーと同じ幅に設定 */
+        margin-right: auto !important;
+        margin-left: auto !important;
+        padding-left: 0.8rem !important;
+    }
+}
+
