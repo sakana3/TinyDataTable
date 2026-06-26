@@ -116,6 +116,14 @@ namespace TinyDataTable.Editor
             if (hasEnableHeader)
             {
                 var toggle = new Toggle(Title);
+                toggle.style.flexDirection = FlexDirection.RowReverse;
+                toggle.style.justifyContent = Justify.FlexEnd; // 左寄せにする
+                var toggleInput = toggle.Q(className: "unity-toggle__input");
+                if (toggleInput != null)
+                {
+                    toggleInput.style.flexGrow = 0;      // 勝手に広がらないように固定
+                    toggleInput.style.marginRight = 6f;  // 文字との間に少し隙間をあける
+                }
                 toggle.value = IsEnable;
                 toggle.RegisterValueChangedCallback((evt) => OnChangeEnable(evt.newValue));
                 root.Add(toggle);

@@ -135,7 +135,7 @@ namespace TinyTable.SourceGenerator
                 
                 //クラススコープ
                 cb.AddCommentBlock("Record Class");
-                using( cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} :  IEquatable<{idTypeName}>, IEquatable<{enumTypeName}>") )
+                using( cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} : IEquatable<{idTypeName}>, IEquatable<{enumTypeName}>") )
                 {
                     //メンバー
                     cb.AddComment("Member");
@@ -256,7 +256,6 @@ namespace TinyTable.SourceGenerator
                     
                     cb.AppendLine($"public override int GetHashCode() => (int)_value;");
                     cb.AppendLine($"public override string ToString() => _value.ToString();");
-
                     
 /*
                     cb.BeginBlock($"public void Dump()");
@@ -265,6 +264,16 @@ namespace TinyTable.SourceGenerator
                     cb.EndBlock();
 */                    
                 }
+
+                cb.AppendLine();
+                cb.AppendLineNoIndent("#if UNITY_EDITOR");       
+                cb.AddComment("Editor Part");
+                using (cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} : ISerializationCallbackReceiver"))
+                {
+                    cb.AppendLine($"public void OnAfterDeserialize() => _index = AAARecord.ToIndex(_value);");
+                    cb.AppendLine("public void OnBeforeSerialize(){}");                    
+                }
+                cb.AppendLineNoIndent("#endif"); 
                 
                 foreach (var outer in typeDef.OuterTypes)
                 {

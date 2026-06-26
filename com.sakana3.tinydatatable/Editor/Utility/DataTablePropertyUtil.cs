@@ -44,8 +44,6 @@ namespace TinyDataTable.Editor
                 } )
                 .ToList();
         }
-
-
         
         /// <summary>
         /// 新規IDを作る

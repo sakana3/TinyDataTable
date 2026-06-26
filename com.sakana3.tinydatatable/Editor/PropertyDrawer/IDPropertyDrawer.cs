@@ -13,8 +13,6 @@ namespace TinyDataTable.Editor
     [UnityEditor.CustomPropertyDrawer(typeof(IIdentifier), true)]
     internal class IDPropertyDrawer : PropertyDrawer
     {
-        private static Texture2D dropdownTexture2D = EditorGUIUtility.IconContent("d_dropdown@2x").image as Texture2D;
-      
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var enumType = fieldInfo.FieldType

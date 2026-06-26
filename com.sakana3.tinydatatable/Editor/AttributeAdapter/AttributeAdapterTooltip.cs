@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-#if false
+#if true
 
 namespace TinyDataTable.Editor
 {
@@ -24,7 +24,7 @@ namespace TinyDataTable.Editor
         
         protected override void CreateUI(VisualElement root)
         {
-            var tooltipField = new TextField("Tool Tip"){value = tooltip};
+            var tooltipField = new TextField(){value = tooltip};
             tooltipField.RegisterValueChangedCallback( evt => tooltip = evt.newValue );
             root.Add( tooltipField);
         }

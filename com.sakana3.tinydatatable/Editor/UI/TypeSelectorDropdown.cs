@@ -5,7 +5,9 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+#if USE_ADDRESSABLES
 using UnityEngine.AddressableAssets;
+#endif
 
 namespace TinyDataTable.Editor
 {

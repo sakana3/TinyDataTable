@@ -9,24 +9,24 @@ using System.Reflection;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 
+
 namespace TinyDataTable
 {
     /// <summary> データテーブルレコードの基底クラス </summary>
     [Icon("Packages/com.sakana3.tinydatatable//Editor/Assets/TinyDataTableIcon.png")]
     public abstract class DataTableRecordBase : ScriptableObject
     {
-        [SerializeField] private bool _initializeOnLoad;
-        /// <summary> initializeOnLoad </summary>
-        public bool InitializeOnLoadEditor => _initializeOnLoadEditor;
-        
-        [SerializeField] private bool _initializeOnLoadEditor;
-        /// <summary> initializeOnLoadEditor </summary>
-        public bool InitializeOnLoad => _initializeOnLoad;
+#if UNITY_EDITOR        
+        [Flags]
+        public enum Flags
+        {
+            Obsolete = 0x0001 ,
+            InitializeOnLoad = 0x0001 << 1,
+            InitializeOnLoadEditor = 0x0001 << 2,
+        }
 
-        [SerializeField] private bool _isObsolete;
-        /// <summary> isObsolete </summary>
-        public bool IsObsolete => _isObsolete;
-
+        [SerializeField] public Flags EditorFlags;
+#endif
         /// <summary> header struct </summary>
         [Serializable]
         public struct HeaderData
@@ -36,7 +36,7 @@ namespace TinyDataTable
             public string description;
             public bool obsolete;
         }
-        
+
         [SerializeField] protected HeaderData[] _headers;
         /// <summary> Header data </summary>
         public HeaderData[] Headers => _headers;
@@ -92,7 +92,7 @@ namespace TinyDataTable
 
         protected virtual void OnEnable()
         {
-            if (_instance == null)
+//            if (_instance == null)
             {
                 _instance = this;
             }
@@ -100,7 +100,7 @@ namespace TinyDataTable
         
         protected virtual void OnDisable()
         {
-            if (_instance == this)
+//            if (_instance == this)
             {
                 _instance = null;
             }
