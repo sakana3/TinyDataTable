@@ -7,6 +7,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.IMGUI.Controls;
+using UnityEngine.TextCore.Text;
 
 namespace TinyDataTable.Editor
 {
@@ -57,73 +58,94 @@ namespace TinyDataTable.Editor
                 Description = FieldInfo.Description;
                 IsArray = FieldInfo.Type.IsArray;
             }
-            
+
             var root = new ScrollView(ScrollViewMode.Vertical);
-            root.style.flexGrow = 1; 
-            root.style.height = Length.Percent(100);            
-            root.style.width = Length.Percent(100);            
-            
+            root.style.flexGrow = 1;
+            root.style.height = Length.Percent(110);
+            root.style.width = Length.Percent(100);
+            root.style.marginBottom = 4;
+            root.style.marginTop = 4;
+            root.style.marginLeft = 4;
+            root.style.marginRight = 4;
+
             var container = root.contentContainer;
             container.style.height = StyleKeyword.Auto;
-            container.style.width = StyleKeyword.Auto;            
+            container.style.width = StyleKeyword.Auto;
 
-            editorWindow.rootVisualElement.Add(root);           
-            
-            root.contentContainer.RegisterCallback<GeometryChangedEvent>( 
-                evt =>
-                {
-                    var size = evt.newRect.size;
-                    size.x = 300;
-                    _windowSize = size;
-                });
-            root.Add(new Label(FieldInfo == null ? "Add Field" :  "Refactor Field"));
+            editorWindow.rootVisualElement.Add(root);
+
+            root.contentContainer.RegisterCallback<GeometryChangedEvent>(evt =>
+            {
+                var size = evt.newRect.size;
+                size.x = 300;
+                size.y += 10;
+                _windowSize = size;
+            });
+            root.Add(new Label(FieldInfo == null ? "Add Field" : "Refactor Field"));
 
             root.Add(new ToolbarSpacer());
-            
-            // クラス名入力
-            var textField = new UnityEngine.UIElements.TextField(PropertyName)
-            {
-                label = "Name",
-                value = PropertyName,
-            };
-            textField.RegisterValueChangedCallback(evt => OnClassNameChangeCallback(textField,evt));
-            textField.textEdition.placeholder = "Input name...";
-            root.Add( textField );
 
-            _notifyLabel = new HelpBox( "Input name.", HelpBoxMessageType.Warning);
-            var element = UIToolkitEditorUtility.CreateLabeledVisualElement("", _notifyLabel);
-            root.Add( element.container );
-            // 少し遅延させてフォーカス
-            if (FieldInfo == null)
+            // クラス名入力
             {
-                textField.schedule.Execute(() => { textField.Focus(); }).StartingIn(50); // 50ms後くらい            
+                var block = MakeBlock(Color.blue,"NAME");
+                root.Add(block.root);
+                var textField = new UnityEngine.UIElements.TextField(PropertyName)
+                {
+                    label = "Name",
+                    value = PropertyName,
+                };
+                textField.RegisterValueChangedCallback(evt => OnClassNameChangeCallback(textField, evt));
+                textField.textEdition.placeholder = "Input name...";
+                block.area.Add(textField);
+
+                _notifyLabel = new HelpBox("Input name.", HelpBoxMessageType.Warning);
+                var element = UIToolkitEditorUtility.CreateLabeledVisualElement("", _notifyLabel);
+                block.area.Add(element.container);
+                // 少し遅延させてフォーカス
+                if (FieldInfo == null)
+                {
+                    textField.schedule.Execute(() => { textField.Focus(); }).StartingIn(50); // 50ms後くらい            
+                }
             }
 
             //型選択ボタン
-            var typeSelectButton = MakeTypeSelectorPopup();
-            root.Add( typeSelectButton );
-    
-            //Is Array
-            var boolField = new UnityEngine.UIElements.Toggle("Is Array")
             {
-                value = IsArray,
-            };
-            boolField.RegisterValueChangedCallback(evt => IsArray = evt.newValue);
-            boolField.value = IsArray;
-            root.Add( boolField );
-            
-            attributeRoot = new VisualElement();
-            CreateAttributeSelector(PropertyType);
-            root.Add(attributeRoot);
+                var block = MakeBlock(Color.teal,"TYPE");
+                root.Add(block.root);
+                {
+                    var typeSelectButton = MakeTypeSelectorPopup();
+                    block.area.Add(typeSelectButton);
 
-            var descriptionlabel = new Label("Description");
-            root.Add(descriptionlabel);
+                    //Is Array
+                    var boolField = new UnityEngine.UIElements.Toggle("Is Array")
+                    {
+                        value = IsArray,
+                    };
+                    boolField.RegisterValueChangedCallback(evt => IsArray = evt.newValue);
+                    boolField.value = IsArray;
+                    block.area.Add(boolField);
+                }
+            }
             
-            var descriptionField = new TextField();
-            descriptionField.RegisterValueChangedCallback(evt => Description = evt.newValue);
-            descriptionField.textEdition.placeholder = "Input Description.If you need.";
-            descriptionField.value = Description;
-            root.Add( descriptionField );
+            {
+                attributeRoot = new VisualElement();
+                CreateAttributeSelector(PropertyType);
+                root.Add(attributeRoot);
+            }
+
+            {
+                var block = MakeBlock(Color.maroon,"Desc");
+
+                root.Add(block.root);
+                var descriptionlabel = new Label("Description");
+                block.area.Add(descriptionlabel);
+
+                var descriptionField = new TextField();
+                descriptionField.RegisterValueChangedCallback(evt => Description = evt.newValue);
+                descriptionField.textEdition.placeholder = "Input Description.If you need.";
+                descriptionField.value = Description;
+                block.area.Add(descriptionField);
+            }
 
             var spacer = new VisualElement();
             spacer.style.flexGrow = 1;
@@ -229,39 +251,46 @@ namespace TinyDataTable.Editor
 
             if (attributeOptions.Any())
             {
+                
+                var mainBlock = MakeBlock(Color.darkGoldenRod,"ATTR");                
+                attributeRoot.Add(mainBlock.root);                
+                
                 foreach (var option in attributeOptions)
                 {
                     option.InitializeFormFiledInfo(FieldInfo);
                 }
                 
                 var label = new Label("Attributes");
-                attributeRoot.Add(label);
+                mainBlock.area.Add(label);
 
 
                 var mainAttributes = attributeOptions
                     .Where(a => a.AttributeType == AttributeType.Drawer);
-                var actyiveAttributes = mainAttributes
+                var activeAttributes = mainAttributes
                     .FirstOrDefault(t => t.IsEnable);
-                var index = attributeOptions.IndexOf(actyiveAttributes);
+                var index = attributeOptions.IndexOf(activeAttributes);
+                
+                var attrBlock = MakeBlock(Color.coral, null, 4);
+                mainBlock.area.Add(attrBlock.root);
                 var popup = new UnityEngine.UIElements.PopupField<string>()
                 {
-                    choices = new string[]{"None"}.Concat( attributeOptions.Select(t=>t.Title)).ToList(),
+                    choices = new string[]{"None"}.Concat( mainAttributes.Select(t=>t.Title)).ToList(),
                     index = index + 1,
                 };
-                attributeRoot.Add(popup);
+                attrBlock.area.Add(popup);
                 
                 attributeArea = new VisualElement();
-                attributeRoot.Add(attributeArea);
+                attrBlock.area.Add(attributeArea);
                 
-                if (actyiveAttributes != null)
+                if (activeAttributes != null)
                 {
-                    attributeArea.Add(actyiveAttributes.CreateRootUI(false));
+                    attributeArea.Add(activeAttributes.CreateRootUI(false));
                 }
                 popup.RegisterValueChangedCallback(evt =>
                 {
                     var active = mainAttributes
                         .FirstOrDefault(t => t.Title == evt.newValue);
-                    Debug.Log(active);
+
                     attributeArea.Clear();
                     foreach (var attr in mainAttributes)
                     {
@@ -291,19 +320,60 @@ namespace TinyDataTable.Editor
                     listView.bindItem = (element, i) =>
                     {
                         element.Clear();
+                        var block = MakeBlock(Color.coral, null, 4);
+                        element.Add(block.root);
                         var option = additonalAttributes[i];
                         var optionUI = option.CreateRootUI(true);
                         if (optionUI != null)
                         {
-                            element.Add(optionUI);
+                            block.area.Add(optionUI);
                         }
                     };
                     listView.itemsSource = additonalAttributes;
-                    attributeRoot.Add(listView);
+                    mainBlock.area.Add(listView);
                 }
             }
         }
 
+        private (VisualElement root ,VisualElement header, VisualElement area) MakeBlock( Color headeColor , string title ,float width = 12)
+        {
+            var root = new VisualElement();
+            root.style.flexDirection = FlexDirection.Row;
+
+            var header = new VisualElement();
+            {
+                header.style.width = width;
+                header.style.marginBottom = 2;
+                header.style.marginTop = 2;
+                header.style.marginLeft = 2;
+                header.style.marginRight = 2;
+                header.style.backgroundColor = headeColor;
+                header.style.justifyContent = Justify.Center; // 主軸方向（デフォルトなら縦）の中央揃え
+                header.style.alignItems = Align.Center;
+                root.Add(header);
+
+                if (string.IsNullOrEmpty(title) is false)
+                {
+                    var label = new Label(title);
+                    label.style.rotate = new Rotate(270);
+                    label.style.fontSize = 9;
+                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    header.Add(label);
+                }
+            }
+            var area = new VisualElement();
+            {
+                area.style.marginBottom = 4;
+                area.style.marginTop = 4;
+                area.style.marginLeft = 2;
+                area.style.marginRight = 2;                
+                area.style.flexGrow = 1;
+                root.Add(area);
+            }
+            return (root,header,area);
+        }        
+        
         private void CheckClassName()
         {
             string text = string.Empty;

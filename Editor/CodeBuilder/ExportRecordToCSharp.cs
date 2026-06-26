@@ -18,7 +18,7 @@ namespace TinyDataTable.Editor
             )
         {
             CSharpCodeBuilder cb = new CSharpCodeBuilder();
-            bool isObsolete = recordAsset != null && recordAsset.IsObsolete;
+            bool isObsolete = recordAsset != null && recordAsset.EditorFlags.HasFlag( DataTableRecordBase.Flags.Obsolete);
             string onsolete = isObsolete ? "Obsolete" : null;
 
             var version = typeof(TinyDataTable.DataTableRecordBase).Assembly.GetName().Version;

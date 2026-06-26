@@ -73,25 +73,6 @@ namespace TinyDataTable.Editor
             root.Bind(so);
             propGroup.Add(root);
 
-            var buttonGroup = new VisualElement();
-            buttonGroup.style.flexDirection = FlexDirection.Row;
-            root.Add(buttonGroup);
-            
-            var initializeOnLoadToggle = new Toggle();
-            initializeOnLoadToggle.text = "InitializeOnLoad";
-            initializeOnLoadToggle.BindProperty(so.FindProperty("_initializeOnLoad"));
-            buttonGroup.Add(initializeOnLoadToggle);
-
-            var initializeOnLoadEditorToggle = new Toggle();
-            initializeOnLoadEditorToggle.text = "InitializeOnLoadEditor";
-            initializeOnLoadEditorToggle.BindProperty(so.FindProperty("_initializeOnLoadEditor"));
-            buttonGroup.Add(initializeOnLoadEditorToggle);
-
-            var obsoleteField = new Toggle();
-            obsoleteField.text = "Obsolete";
-            obsoleteField.BindProperty(so.FindProperty("_isObsolete"));
-            buttonGroup.Add(obsoleteField);
-
             exportButton = new Button()
             {
                 text = "Rebuild",
@@ -99,14 +80,21 @@ namespace TinyDataTable.Editor
             exportButton.iconImage = Background.FromTexture2D(BuildIcon);
             exportButton.clicked += () =>
             {
-//                SaveDataTable.CheckNeedEnsureAddressable(asset,false);
-
                 SaveDataTable.SaveScript(asset);
             };
-
             exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
             
             propGroup.Add(exportButton);
+
+            var flagGroup = new VisualElement();
+            flagGroup.style.flexDirection = FlexDirection.Row;
+            root.Add(flagGroup);
+
+            var prop = so.FindProperty(nameof(DataTableRecordBase.EditorFlags));
+            var editorFlagProp = new EnumFlagsField();
+            editorFlagProp.style.width = 200f;
+            editorFlagProp.BindProperty(prop);
+            flagGroup.Add(editorFlagProp);
         }
 
 
