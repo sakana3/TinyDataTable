@@ -61,8 +61,8 @@ namespace TinyDataTable.Editor
 
             var root = new ScrollView(ScrollViewMode.Vertical);
             root.style.flexGrow = 1;
-            root.style.height = Length.Percent(110);
-            root.style.width = Length.Percent(100);
+            root.style.height = Length.Percent(100);
+            root.style.width = Length.Percent(98);
             root.style.marginBottom = 4;
             root.style.marginTop = 4;
             root.style.marginLeft = 4;

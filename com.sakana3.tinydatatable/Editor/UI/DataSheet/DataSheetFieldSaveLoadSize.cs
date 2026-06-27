@@ -14,8 +14,8 @@ namespace TinyDataTable.Editor
     /// </summary>
     internal partial class DataSheetField
     {
-        private string ColumWidthKey(Column column) => $"TinyDataTable.{targetAsset.BaseName}.{column.name}.Colum.Width";
-        private string SeparatorPositionKey => $"TinyDataTable.{targetAsset.BaseName}.SeparatorPosition";
+        private string ColumWidthKey(Column column) => $"TinyDataTable.{targetAsset.BaseName()}.{column.name}.Colum.Width";
+        private string SeparatorPositionKey => $"TinyDataTable.{targetAsset.BaseName()}.SeparatorPosition";
 
         /// <summary>
         /// 幅が変更されたらEditorPrefsに保存する

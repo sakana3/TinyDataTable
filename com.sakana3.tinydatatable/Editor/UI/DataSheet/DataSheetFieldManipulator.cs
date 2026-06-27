@@ -161,7 +161,7 @@ namespace TinyDataTable.Editor
         {
             DataTableCreateFieldPopup.Show(
                 activatorRect,
-                targetAsset.BaseName,
+                targetAsset.BaseName(),
                 _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
@@ -170,7 +170,7 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType);                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType());                        
                         fields.Insert(index>=0 ? index + 1 : fields.Count ,field);
                         
                         SaveDataTable.SaveScript(targetAsset, fields);
@@ -183,7 +183,7 @@ namespace TinyDataTable.Editor
         {
             DataTableCreateFieldPopup.Show(
                 activatorRect,
-                targetAsset.BaseName,
+                targetAsset.BaseName(),
                 _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
                 RecordPropertyUtil.ReservWords,
@@ -192,12 +192,12 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType);                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType());                        
                         fields[index] = field;
                         SaveDataTable.SaveScript(targetAsset, fields);
                     }
                 },
-                FieldInfo.FieldsFromType(targetAsset.RecordType)[index]);
+                FieldInfo.FieldsFromType(targetAsset.RecordType())[index]);
         }
     }
 }
