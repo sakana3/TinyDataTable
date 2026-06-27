@@ -270,7 +270,7 @@ namespace TinyTable.SourceGenerator
                 cb.AddComment("Editor Part");
                 using (cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} : ISerializationCallbackReceiver"))
                 {
-                    cb.AppendLine($"public void OnAfterDeserialize() => _index = AAARecord.ToIndex(_value);");
+                    cb.AppendLine($"public void OnAfterDeserialize() => _index = {recordTypeName}.ToIndex(_value);");
                     cb.AppendLine("public void OnBeforeSerialize(){}");                    
                 }
                 cb.AppendLineNoIndent("#endif"); 
