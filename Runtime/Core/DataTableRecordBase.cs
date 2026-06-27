@@ -21,8 +21,8 @@ namespace TinyDataTable
         public enum Flags
         {
             Obsolete = 0x0001 ,
-            InitializeOnLoad = 0x0001 << 1,
-            InitializeOnLoadEditor = 0x0001 << 2,
+//            InitializeOnLoad = 0x0001 << 1,
+//            InitializeOnLoadEditor = 0x0001 << 2,
         }
 
         [SerializeField] public Flags EditorFlags;
@@ -33,8 +33,10 @@ namespace TinyDataTable
         {
             public string name;
             public int id;
+#if UNITY_EDITOR
             public string description;
             public bool obsolete;
+#endif
         }
 
         [SerializeField] protected HeaderData[] _headers;
@@ -44,12 +46,6 @@ namespace TinyDataTable
         [SerializeField] protected DataTableRecordBase[] _relations;
         /// <summary> Relations </summary>
         public DataTableRecordBase[] Relations => _relations;
-
-#if UNITY_EDITOR
-        public Type RecordType => this.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
-        public Type IdentifierType => this.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
-        public string BaseName => this.GetType().GetCustomAttribute<RecordAttribute>().BaseName;
-#endif
     }
 
     /// <summary> Represents the base class for data table records. </summary>

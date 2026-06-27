@@ -78,7 +78,7 @@ namespace TinyDataTable.Editor
                 
                 for (int i = 0; i < manager.Tree.Nodes.Length; i++)
                 {
-                    if (manager.Tree.Nodes[i].Name == asset.BaseName)
+                    if (manager.Tree.Nodes[i].Name == asset.BaseName())
                     {
                         manager.Tree.Nodes[i].Item = asset;
                         EditorUtility.SetDirty(manager);
@@ -95,7 +95,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         public static void InjectRelation( DataTableRecordBase target )
         {
-            var types = FieldInfo.FieldsFromType<IIdentifier>(target.RecordType)
+            var types = FieldInfo.FieldsFromType<IIdentifier>(target.RecordType())
                 .Select(t => t.Type.GetCustomAttribute<IDAttribute>()?.RecordType )
                 .Where(t => t != null && t != target.GetType())
                 .ToArray();

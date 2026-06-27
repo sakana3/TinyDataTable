@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-
+using System.Reflection;
 
 namespace TinyDataTable.Editor
 {
@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
 
         public void ReloadInfo()
         {
-            FieldInfos = FieldInfo.FieldsFromType(TargeTableAsset.RecordType);
+            FieldInfos = FieldInfo.FieldsFromType(TargeTableAsset.RecordType());
             
             RowHeaders = GetRowProperties()
                 .Select(p => new DataTableRecordBase.HeaderData()
@@ -260,7 +260,7 @@ namespace TinyDataTable.Editor
         public bool CheckName(string name)
         {
             //クラスと同じ名前は付けられない
-            if (TargeTableAsset.BaseName == name)
+            if (TargeTableAsset.BaseName() == name)
             {
                 return false;
             }
@@ -291,5 +291,12 @@ namespace TinyDataTable.Editor
             "_dataTable","_assetPath","_value","_index","_validEnums","_validIDs",
 //            "Size"
         };
+    }
+    
+    internal static class DataTableRecordExtensions
+    {
+        public static Type RecordType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
+        public static Type IdentifierType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
+        public static string BaseName(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().BaseName;
     }
 }

@@ -64,7 +64,7 @@ namespace TinyDataTable.Editor
             var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
             
             var info = MakeInfo(
-                recordAsset, recordAsset.BaseName, recordAsset.IdentifierType.Namespace, scriptDir);
+                recordAsset, recordAsset.BaseName(), recordAsset.IdentifierType().Namespace, scriptDir);
 
             if (File.Exists(info.fullPath) is false)
             {
@@ -72,9 +72,9 @@ namespace TinyDataTable.Editor
             }
             
             List<FieldInfo> fileds = new();
-            if (recordAsset.RecordType != null)
+            if (recordAsset.RecordType() != null)
             {
-                fileds = FieldInfo.FieldsFromType(recordAsset.RecordType);
+                fileds = FieldInfo.FieldsFromType(recordAsset.RecordType());
             }
             
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
@@ -164,14 +164,14 @@ namespace TinyDataTable.Editor
             var scriptDir = System.IO.Path.GetDirectoryName(scriptPath);
             
             var info = MakeInfo(
-                dataTableAsset, dataTableAsset.BaseName, dataTableAsset.IdentifierType.Namespace, scriptDir);
+                dataTableAsset, dataTableAsset.BaseName(), dataTableAsset.IdentifierType().Namespace, scriptDir);
        
 
             if (fields == null)
             {
-                if (dataTableAsset.RecordType != null)
+                if (dataTableAsset.RecordType() != null)
                 {
-                    fields = FieldInfo.FieldsFromType(dataTableAsset.RecordType);
+                    fields = FieldInfo.FieldsFromType(dataTableAsset.RecordType());
                 }
                 else
                 {
