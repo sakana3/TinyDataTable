@@ -1,6 +1,6 @@
 {
   "name": "com.sakana3.tinydatatable",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "displayName": "TinyDataTable",
   "description": "Data Table for Unity.",
   "unity": "6000.0",
