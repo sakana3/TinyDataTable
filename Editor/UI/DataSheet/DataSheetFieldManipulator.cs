@@ -120,12 +120,8 @@ namespace TinyDataTable.Editor
                                     RemoveRow(_multiColumnListView.selectedIndices.ToArray());
                                 }
                             },
-                            (action) =>
-                            {
-                                return _recordPropertyUtil.RowHeaders[index].obsolete
-                                    ? DropdownMenuAction.Status.Normal
-                                    : DropdownMenuAction.Status.Disabled;
-                            });
+                            (action) =>DropdownMenuAction.Status.Normal
+                        );
                     
                     }
                     evt.menu.AppendSeparator();                
@@ -172,8 +168,8 @@ namespace TinyDataTable.Editor
                     {
                         var fields = FieldInfo.FieldsFromType(targetAsset.RecordType());                        
                         fields.Insert(index>=0 ? index + 1 : fields.Count ,field);
-                        
-                        SaveDataTable.SaveScript(targetAsset, fields);
+                        var enumInfos = EnumInfo.FormEnumType(targetAsset.EnumType());
+                        SaveDataTable.SaveScript(targetAsset, fields,enumInfos);
                     }
                 });
         }

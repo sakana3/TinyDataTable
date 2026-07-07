@@ -297,7 +297,7 @@ namespace TinyDataTable.Editor
         {
             var removes = indexs
                 .Where( i => i > 0 )
-                .Where(i => _recordPropertyUtil.RowHeaders[i].obsolete || string.IsNullOrEmpty(_recordPropertyUtil.RowHeaders[i].name))
+//                .Where(i => _recordPropertyUtil.RowHeaders[i].obsolete || string.IsNullOrEmpty(_recordPropertyUtil.RowHeaders[i].name))
                 .OrderByDescending(i => i)
                 .ToArray();
             if (removes.Length > 0)

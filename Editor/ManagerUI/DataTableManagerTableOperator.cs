@@ -65,36 +65,30 @@ namespace TinyDataTable.Editor
 #endif
             var propGroup = new VisualElement();
             propGroup.style.flexDirection = FlexDirection.Row;
-            MakeMargine(propGroup);            
             Add(propGroup);
-            
-            var root = new VisualElement();
-            root.style.flexGrow = 1;
-            root.Bind(so);
-            propGroup.Add(root);
 
+            //Build Button
             exportButton = new Button()
             {
                 text = "Rebuild",
             };
             exportButton.iconImage = Background.FromTexture2D(BuildIcon);
+            exportButton.style.borderTopLeftRadius = 8f;
+            exportButton.style.borderTopRightRadius = 8f;
+            exportButton.style.borderBottomRightRadius = 8f;
+            exportButton.style.borderBottomLeftRadius = 8f;
             exportButton.clicked += () =>
             {
                 SaveDataTable.SaveScript(asset);
             };
-            exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
+            exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.indianRed) : StyleKeyword.Null;
             
             propGroup.Add(exportButton);
 
-            var flagGroup = new VisualElement();
-            flagGroup.style.flexDirection = FlexDirection.Row;
-            root.Add(flagGroup);
-
+            //Flag
             var prop = so.FindProperty(nameof(DataTableRecordBase.EditorFlags));
-            var editorFlagProp = new EnumFlagsField();
-            editorFlagProp.style.width = 200f;
-            editorFlagProp.BindProperty(prop);
-            flagGroup.Add(editorFlagProp);
+            var editorFlagProp = MakeEditorFlags(prop);
+            propGroup.Add(editorFlagProp);
         }
 
 
@@ -126,6 +120,23 @@ namespace TinyDataTable.Editor
             }
             return true;
         }
+
+        public VisualElement MakeEditorFlags(SerializedProperty prop)
+        {
+            var flagGroup = new VisualElement();
+            flagGroup.style.flexDirection = FlexDirection.Row;
+
+            var editorFlagProp = new EnumFlagsField();
+            editorFlagProp.style.alignSelf = Align.FlexStart;
+//            editorFlagProp.style.fla = EnumFlagsStyle.Button;
+//            editorFlagProp.style.width = 200f;
+            editorFlagProp.BindProperty(prop);
+            flagGroup.Add(editorFlagProp);            
+            
+            return flagGroup;
+        }
+        
+        
         
         public static void MakeMargine(VisualElement ve)
         {

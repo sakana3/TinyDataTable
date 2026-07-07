@@ -43,7 +43,7 @@ namespace TinyDataTable.Editor
                 address = GetAddressFromObject(dataTableAsset);
             }
 
-            var fileName = $"{newClassName}Record.cs";
+            var fileName = $"{newClassName}.cs";
             fullPath = Path.Combine(scriptOutputPath, fileName);
             scriptName = newClassName;
             namespaceName = newNamespace;
@@ -72,14 +72,17 @@ namespace TinyDataTable.Editor
             }
             
             List<FieldInfo> fileds = new();
+            List<EnumInfo> enums = new();
             if (recordAsset.RecordType() != null)
             {
                 fileds = FieldInfo.FieldsFromType(recordAsset.RecordType());
+                enums = EnumInfo.FormEnumType(recordAsset.EnumType());
             }
             
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 recordAsset,
                 fileds,
+                enums,
                 info.scriptName,
                 info.namespaceName,
                 info.assetpath,
@@ -124,10 +127,11 @@ namespace TinyDataTable.Editor
             string assetPath)
         {
 
-            var assetName = Path.Combine(assetPath, $"{newClassName}Record.asset");
+            var assetName = Path.Combine(assetPath, $"{newClassName}Table.asset");
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 null,
                 new List<FieldInfo>(),
+                new List<EnumInfo>(),
                 newClassName,
                 newNamespace,
                 null,
@@ -135,7 +139,7 @@ namespace TinyDataTable.Editor
                 assetName
             );
 
-            var fullPath = Path.Combine(scriptPath, $"{newClassName}Record.cs");
+            var fullPath = Path.Combine(scriptPath, $"{newClassName}.cs");
             SaveScriptToFile(fullPath, code);
 
             // アセットデータベースを更新してUnityに認識させる
@@ -157,7 +161,7 @@ namespace TinyDataTable.Editor
             return true;            
         }
         
-        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<FieldInfo> fields = null)
+        public static bool SaveScript(DataTableRecordBase dataTableAsset , IList<FieldInfo> fields = null, IList<EnumInfo> enums = null)
         {
             var script = MonoScript.FromScriptableObject(dataTableAsset);
             var scriptPath = AssetDatabase.GetAssetPath(script);
@@ -166,21 +170,24 @@ namespace TinyDataTable.Editor
             var info = MakeInfo(
                 dataTableAsset, dataTableAsset.BaseName(), dataTableAsset.IdentifierType().Namespace, scriptDir);
        
-
             if (fields == null)
             {
-                if (dataTableAsset.RecordType() != null)
-                {
-                    fields = FieldInfo.FieldsFromType(dataTableAsset.RecordType());
-                }
-                else
-                {
-                    fields = new List<FieldInfo>();
-                }
+                fields = (dataTableAsset.RecordType() != null) ? 
+                    FieldInfo.FieldsFromType(dataTableAsset.RecordType()) :
+                    new List<FieldInfo>();
             }
+
+            if (enums == null)
+            {
+                enums = (dataTableAsset.RecordType() != null) ?
+                    EnumInfo.FormEnumType(dataTableAsset.EnumType()):
+                    new List<EnumInfo>();
+            }
+
             var code = TinyDataTable.Editor.ExportRecordToCSharp.Export(
                 dataTableAsset,
                 fields,
+                enums,
                 info.scriptName,
                 info.namespaceName,
                 info.assetpath,

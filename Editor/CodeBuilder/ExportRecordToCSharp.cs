@@ -9,7 +9,8 @@ namespace TinyDataTable.Editor
     {
         public static string Export(
             DataTableRecordBase recordAsset,
-            IList<FieldInfo> fields,
+            IList<FieldInfo> fieldInfos,
+            IList<EnumInfo> enumInfos,
             string className,
             string namespaceName,
             string resourcePath,
@@ -41,7 +42,7 @@ namespace TinyDataTable.Editor
             cb.AppendLineNoIndent("#endif");
             cb.AppendLine();
 
-            string recordTypeName = $"{className}Record";
+            string recordTypeName = $"{className}";
             string enumTypeName = $"{recordTypeName}.Enum";
             string schemaTypeName = $"{recordTypeName}.Schema";
             string idName = "ID";
@@ -60,9 +61,9 @@ namespace TinyDataTable.Editor
                     cb.AddAttribute(onsolete, "Serializable");
                     using (cb.BeginStruct("Schema", isPartial:false))
                     {
-                        if (fields.Any())
+                        if (fieldInfos.Any())
                         {
-                            foreach (var field in fields)
+                            foreach (var field in fieldInfos)
                             {
                                 cb.AddAttribute(field.ToBaseAttributeString(true));
                                 foreach (var attr in field.ToAttributesString())
@@ -98,6 +99,27 @@ namespace TinyDataTable.Editor
                                     t.header.obsolete ? "Obsolete" : ""))
                                 .ToList();
                             cb.AddEnums(enums);
+                            
+                            // Obsoletes
+                            if (enums.Any() )
+                            {
+                                var losts = enumInfos
+                                    .Where(b => recordAsset.Headers.All(a => a.name != b.Name));
+                                if (losts.Any())
+                                {
+                                    cb.AddComment("Obsoletes");
+                                    var lostEnums = losts
+                                        .Select(t => (t, recordAsset.Headers.FirstOrDefault(f => f.id == t.Value).name))
+                                        .Select(t => (
+                                            $"[EnumIndex()] {t.t.Name}",
+                                            t.name ?? $"Invalid",
+                                            string.Empty,
+                                            string.IsNullOrEmpty(t.name) || t.name == "Invalid"
+                                                ? $"Obsolete(\"Please change to a different.\")"
+                                                : $"Obsolete(\"Use {t.name} instead.\")"));
+                                    cb.AddEnums(lostEnums);
+                                }
+                            }
                         }
                         else
                         {

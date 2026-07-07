@@ -266,42 +266,48 @@ namespace TinyDataTable.Editor
 
                 var mainAttributes = attributeOptions
                     .Where(a => a.AttributeType == AttributeType.Drawer);
-                var activeAttributes = mainAttributes
-                    .FirstOrDefault(t => t.IsEnable);
-                var index = attributeOptions.IndexOf(activeAttributes);
-                
-                var attrBlock = MakeBlock(Color.coral, null, 4);
-                mainBlock.area.Add(attrBlock.root);
-                var popup = new UnityEngine.UIElements.PopupField<string>()
-                {
-                    choices = new string[]{"None"}.Concat( mainAttributes.Select(t=>t.Title)).ToList(),
-                    index = index + 1,
-                };
-                attrBlock.area.Add(popup);
-                
-                attributeArea = new VisualElement();
-                attrBlock.area.Add(attributeArea);
-                
-                if (activeAttributes != null)
-                {
-                    attributeArea.Add(activeAttributes.CreateRootUI(false));
-                }
-                popup.RegisterValueChangedCallback(evt =>
-                {
-                    var active = mainAttributes
-                        .FirstOrDefault(t => t.Title == evt.newValue);
 
-                    attributeArea.Clear();
-                    foreach (var attr in mainAttributes)
+                if (mainAttributes.Any(a => a.AttributeType == AttributeType.Drawer))
+                {
+                    var activeAttributes = mainAttributes
+                        .FirstOrDefault(t => t.IsEnable);
+                    var index = attributeOptions.IndexOf(activeAttributes);
+
+                    var attrBlock = MakeBlock(Color.coral, null, 4);
+                    mainBlock.area.Add(attrBlock.root);
+                    var popup = new UnityEngine.UIElements.PopupField<string>()
                     {
-                        attr.IsEnable = false;
-                    }
-                    if (active != null)
+                        choices = new string[] { "None" }.Concat(mainAttributes.Select(t => t.Title)).ToList(),
+                        index = index + 1,
+                    };
+                    attrBlock.area.Add(popup);
+
+                    attributeArea = new VisualElement();
+                    attrBlock.area.Add(attributeArea);
+
+                    if (activeAttributes != null)
                     {
-                        active.IsEnable = true;
-                        attributeArea.Add(active.CreateRootUI(false));
+                        attributeArea.Add(activeAttributes.CreateRootUI(false));
                     }
-                });
+
+                    popup.RegisterValueChangedCallback(evt =>
+                    {
+                        var active = mainAttributes
+                            .FirstOrDefault(t => t.Title == evt.newValue);
+
+                        attributeArea.Clear();
+                        foreach (var attr in mainAttributes)
+                        {
+                            attr.IsEnable = false;
+                        }
+
+                        if (active != null)
+                        {
+                            active.IsEnable = true;
+                            attributeArea.Add(active.CreateRootUI(false));
+                        }
+                    });
+                }
 
                 var additonalAttributes = attributeOptions
                     .Where(a => a.AttributeType == AttributeType.Additional)
