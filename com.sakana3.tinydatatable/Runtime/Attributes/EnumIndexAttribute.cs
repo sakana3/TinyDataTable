@@ -18,5 +18,6 @@ namespace TinyDataTable
         
         // コンストラクタ
         public EnumIndexAttribute( int order ) => this._order = order;
+        public EnumIndexAttribute() => this._order = -1;
     }
 }

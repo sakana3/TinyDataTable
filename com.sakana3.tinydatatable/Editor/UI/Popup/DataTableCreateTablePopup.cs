@@ -88,7 +88,7 @@ namespace TinyDataTable.Editor
                 infoBox.style.display = DisplayStyle.Flex;
                 infoBox.messageType = HelpBoxMessageType.Error;
             }
-            else if (SerializableUtility.CheckExistClass( namespaceName,className+"Record") )
+            else if (SerializableUtility.CheckExistClass( namespaceName,className) )
             {
                 infoBox.text = "This name is already used.";
                 confirmButton.SetEnabled( false);              

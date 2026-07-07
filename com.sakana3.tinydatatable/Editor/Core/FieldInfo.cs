@@ -21,7 +21,7 @@ namespace TinyDataTable.Editor
         public bool Obsolete { set; get; }
         public Type Type { set; get; }
         public (Type Type , string[] args)[] CustomAttributes { set; get; }
-
+        
         public bool IsArray => Type.IsArray;
         public bool IsValid => Type != null && string.IsNullOrEmpty(Name) is false;
         

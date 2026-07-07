@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-#if true
+#if false
 
 namespace TinyDataTable.Editor
 {

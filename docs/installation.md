@@ -8,7 +8,7 @@
 
 1. Unityエディタを開き、メニューの **Window > Package Manager** を選択します。
 2. 左上の **「+」ボタン** をクリックし、**「Add package from git URL...」** を選択します。
-3. 以下のURLを入力し、**Add** ボタンを押します。
+3. 以下のURLを入力し、**Instal** ボタンを押します。
 
 ```text
 
