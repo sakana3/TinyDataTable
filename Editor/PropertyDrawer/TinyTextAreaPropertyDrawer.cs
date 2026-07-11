@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 namespace TinyDataTable.Editor
 {
     [CustomPropertyDrawer(typeof(TinyTextAreaAttribute))]
-    public class TinyTextAreaDrawer : PropertyDrawer
+    internal class TinyTextAreaDrawer : PropertyDrawer
     {
         private SerializedProperty property;
         private VisualElement root;

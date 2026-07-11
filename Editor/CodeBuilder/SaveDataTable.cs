@@ -208,7 +208,7 @@ namespace TinyDataTable.Editor
             SessionState.SetBool(KeyIsGenerating, true);
             SessionState.SetString(KeyScriptFullPath, info.fullPath);
             SessionState.SetString(KeyAssetFilePath, AssetDatabase.GetAssetPath(dataTableAsset));
-            
+
             //コンパイラーが走ってないなら直接呼び出す
             if (EditorApplication.isCompiling is false)
             {
@@ -227,6 +227,11 @@ namespace TinyDataTable.Editor
             // エラーメッセージが含まれているかチェック
             bool hasErrors = messages.Any(m => m.type == CompilerMessageType.Error);
 
+            foreach (var compilerMessage in messages)
+            {
+                Debug.Log(compilerMessage);
+            }
+            
             SessionState.SetBool(KeyCompilError, hasErrors);
             CompilationPipeline.assemblyCompilationFinished -= OnCompilationFinished;
             if (hasErrors)
