@@ -21,7 +21,7 @@ namespace TinyTable.SourceGenerator
                                             t.AttributeLists.Count > 0,
                     transform: (ctx, _) => GetSemanticTargetForGeneration(ctx,"TinyDataTable.IDAttribute"))
                 .Where(target => target != null);
-            
+
             // ソースコード生成（StringBuilderで入れ子構造を構築）
             context.RegisterSourceOutput(typeDeclarations, (spc, typeDef) =>
             {
@@ -240,10 +240,10 @@ namespace TinyTable.SourceGenerator
                     
                     //演算子オペレーター
                     cb.AddComment("Operators");
-                    cb.AppendLine($"public bool Equals({idTypeName} other) => ReferenceEquals(_value , other._value);");
-                    cb.AppendLine($"public bool Equals({enumTypeName} other) => ReferenceEquals(_value , other);");
-                    cb.AppendLine($"public override bool Equals(object obj) => obj is ID other && Equals(other);");
-                    
+                    cb.AppendLine($"public bool Equals({idTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other._value);");
+                    cb.AppendLine($"public bool Equals({enumTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other);");
+                    cb.AppendLine($"public override bool Equals(object other) => (other is ID id) ? Equals(id) : (other is Enum en) ? Equals(en) : false;");
+
                     cb.AppendLine($"public static bool operator ==({idTypeName} left, {idTypeName} right) => left.Equals(right);");
                     cb.AppendLine($"public static bool operator !=({idTypeName} left, {idTypeName} right) => !left.Equals(right);");
                     cb.AppendLine($"public static bool operator ==({idTypeName} left, {enumTypeName} right) => left.Equals(right);");
@@ -267,12 +267,22 @@ namespace TinyTable.SourceGenerator
 
                 cb.AppendLine();
                 cb.AppendLineNoIndent("#if UNITY_EDITOR");       
-                cb.AddComment("Editor Part");
+                cb.AddComment($"{idTypeName} Editor Part");
                 using (cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} : ISerializationCallbackReceiver"))
                 {
-                    cb.AppendLine($"public void OnAfterDeserialize() => _index = {recordTypeName}.ToIndex(_value);");
-                    cb.AppendLine("public void OnBeforeSerialize(){}");                    
+                    cb.AppendLine($"void ISerializationCallbackReceiver.OnAfterDeserialize() => _index = {recordTypeName}.ToIndex(_value);");
+                    cb.AppendLine("void ISerializationCallbackReceiver.OnBeforeSerialize(){}");
+
                 }
+
+                cb.AddComment("Editor Infos");
+                using (cb.BeginScope($"private static class __editorInfo"))
+                {
+                    var codeText = typeDef.CodeText.Replace(@"""", @"""""");
+                    cb.AppendLine($"private static readonly string CodeText = @\"{codeText}\";");
+                    cb.AppendLine($"private static readonly string[] UsingNamespaces = new string[] {{ { string.Join(",",typeDef.UsingNamespaces) } }};");
+                }
+                
                 cb.AppendLineNoIndent("#endif"); 
                 
                 foreach (var outer in typeDef.OuterTypes)
@@ -325,14 +335,21 @@ namespace TinyTable.SourceGenerator
                 currentContainingType = currentContainingType.ContainingType;
             }
             outerTypes.Reverse(); // 外側から順に並ぶように反転
-
+            
+            var compilationUnit = typeDeclaration.SyntaxTree.GetRoot() as CompilationUnitSyntax;
             return new TypeDefinition
             {
                 NamespaceName = namespaceName,
                 TypeName = symbol.Name,
                 TypeKeyword = typeKeyword,
                 attributeArgs = attributeArgs,
-                OuterTypes = outerTypes
+                OuterTypes = outerTypes ,
+                CodeText = string.Concat(typeDeclaration.Members.Select(member => member.ToFullString())),
+                UsingNamespaces = compilationUnit?.Usings
+                    .Where(u => u.Name.ToString().EndsWith("DescriptionAttribute") is false)
+                    .Select(u => u.ToString())
+                    .Select( s => $"\"{s.Replace(@"""", @"""""")}\"" )
+                    .ToArray() ?? Array.Empty<string>()
             };
         }
         
@@ -411,6 +428,8 @@ namespace TinyTable.SourceGenerator
         public string TypeKeyword { get; set; } = string.Empty;
         public TypedConstant[] attributeArgs { get; set; } = Array.Empty<TypedConstant>();
         public List<OuterTypeInfo> OuterTypes { get; set; } = new List<OuterTypeInfo>();
+        public string CodeText { get; set; } = string.Empty;
+        public string[] UsingNamespaces { get; set; } = Array.Empty<string>();
     }
 
     internal class EnumDefinition

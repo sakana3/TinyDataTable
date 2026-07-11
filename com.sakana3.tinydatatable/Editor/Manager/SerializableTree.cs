@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TinyDataTable
 {
     [Serializable]
-    public class SerializableTree<ITEM> where ITEM : class
+    internal class SerializableTree<ITEM> where ITEM : class
     {
         [Serializable]
         public struct Node : IComparable<Node>
