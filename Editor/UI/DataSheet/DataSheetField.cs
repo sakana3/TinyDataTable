@@ -36,13 +36,9 @@ namespace TinyDataTable.Editor
             _recordPropertyUtil = new(asset);
             this.IsStructureMode = IsStructureMode;
             
-            // 拡張子 (.uss) を含めて指定します
-            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(DataSheetField).Assembly);
-            string ussPath = $"{packageInfo.assetPath}/Editor/Assets/UIElement/TinyDataTableMultiColumListViewStyle.uss";
-            StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
-            if (stylesheet != null)
+            if (EditorResources.DataTableStyleSheet != null)
             {
-                this.styleSheets.Add(stylesheet);
+                this.styleSheets.Add(EditorResources.DataTableStyleSheet);
             }
 
             _multiColumnListView = CreateListView();
@@ -77,6 +73,8 @@ namespace TinyDataTable.Editor
             listView.itemIndexChanged += (form, to) =>
             {
                 _recordPropertyUtil.MoveRow(form, to);
+                SetupRows();
+                _multiColumnListView.Rebuild();
             };
             //Invalidのドラッグ＆ドロップを禁止する
             listView.canStartDrag += args => args.id is not 0;
