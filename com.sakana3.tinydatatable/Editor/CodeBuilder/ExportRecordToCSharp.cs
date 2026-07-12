@@ -123,7 +123,7 @@ namespace TinyDataTable.Editor
                                     var lostEnums = losts
                                         .Select(t => (t, recordAsset.Headers.FirstOrDefault(f => f.id == t.Value).name))
                                         .Select(t => (
-                                            $"[EnumIndex()] {t.t.Name}",
+                                            $"[Missing] {t.t.Name}",
                                             t.name ?? $"Invalid",
                                             string.Empty,
                                             string.IsNullOrEmpty(t.name) || t.name == "Invalid"

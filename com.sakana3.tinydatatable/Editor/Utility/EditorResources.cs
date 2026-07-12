@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
@@ -37,5 +38,23 @@ namespace TinyDataTable.Editor
         public static string AssetPath { private set; get; } = GetAssetPath();
 
         public static Texture ItemIcon { private set; get; } = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetPath+"TinyDataTableIcon.png");
+
+        private static StyleSheet _dataTableStyleSheet = null;
+        public static StyleSheet DataTableStyleSheet
+        {
+            get
+            {
+                if (_dataTableStyleSheet == null)
+                {
+                    var packageInfo =
+                        UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(DataSheetField).Assembly);
+                    string ussPath =
+                        $"{packageInfo.assetPath}/Editor/Assets/UIElement/TinyDataTableMultiColumListViewStyle.uss";
+                    _dataTableStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
+                }
+
+                return _dataTableStyleSheet;
+            }
+        }
     }
 }
