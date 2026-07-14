@@ -174,10 +174,6 @@ namespace TinyDataTable.Editor
             }
         }        
 
-        private static Texture2D plusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image;        
-        private static Texture2D minusTex = (Texture2D)EditorGUIUtility.IconContent("Toolbar Minus").image;        
-
-
         /// <summary>
         /// IDのテキストを更新する
         /// </summary>
@@ -253,7 +249,7 @@ namespace TinyDataTable.Editor
 
             //追加ボタン
             var addButton = new VisualElement();
-            addButton.style.backgroundImage = plusTex;
+            addButton.style.backgroundImage = EditorResources.PlusIcon;
             addButton.AddToClassList("unity-button");
             addButton.RegisterCallback<MouseDownEvent>((t) =>
             {
@@ -268,7 +264,7 @@ namespace TinyDataTable.Editor
             
             //削除ボタン
             var removeButton = new VisualElement();
-            removeButton.style.backgroundImage = minusTex;
+            removeButton.style.backgroundImage = EditorResources.MinusIcon;
             removeButton.SetEnabled( _recordPropertyUtil.RowHeaders.Count > 1 );
             removeButton.AddToClassList("unity-button");
             removeButton.RegisterCallback<MouseDownEvent>((t) =>

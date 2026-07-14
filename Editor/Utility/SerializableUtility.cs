@@ -345,5 +345,51 @@ namespace TinyDataTable.Editor
                 _    => c.ToString()
             };
         }
+        
+            
+        /// <summary>
+        /// SerializedPropertyからそのプロパティの実際の型を取得します。
+        /// </summary>
+        /// <param name="property">型を取得したいSerializedProperty</param>
+        /// <returns>プロパティのSystem.Type</returns>
+        public static Type GetPropertyType(this SerializedProperty property)
+        {
+            var path = property.propertyPath.Replace(".Array.data[", "[");
+            var pathParts = path.Split('.');
+            
+            Type currentType = property.serializedObject.targetObject.GetType();
+
+            foreach (var part in pathParts)
+            {
+                if (part.EndsWith("]"))
+                {
+                    var fieldName = part.Substring(0, part.IndexOf("["));
+                    var field = currentType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    currentType = field.FieldType;
+
+                    if (currentType.IsArray)
+                    {
+                        currentType = currentType.GetElementType();
+                    }
+                    else if (currentType.IsGenericType && currentType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>))
+                    {
+                        currentType = currentType.GetGenericArguments()[0];
+                    }
+                }
+                else
+                {
+                    var field = currentType.GetField(part, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    if (field == null)
+                    {
+                        // Could be a base class field
+                        currentType = currentType.BaseType;
+                        field = currentType.GetField(part, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    }
+                    if (field == null) return null; // Field not found
+                    currentType = field.FieldType;
+                }
+            }
+            return currentType;
+        }        
     }
 }

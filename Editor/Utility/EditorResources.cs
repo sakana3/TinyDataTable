@@ -15,6 +15,13 @@ namespace TinyDataTable.Editor
         public static Texture2D FoldOnIcon = EditorGUIUtility.IconContent("d_IN_foldout_on@2x").image as Texture2D;
         public static Texture2D FoldOffIcon = EditorGUIUtility.IconContent("d_IN_foldout@2x").image as Texture2D;
 
+        public static readonly Texture2D PlusIcon = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image;        
+        public static readonly Texture2D MinusIcon = (Texture2D)EditorGUIUtility.IconContent("Toolbar Minus").image;        
+        public static readonly Texture2D DeleteIcon = (Texture2D)EditorGUIUtility.IconContent("P4_DeletedLocal").image;        
+//        public static readonly Texture2D CloseIcon = (Texture2D)EditorGUIUtility.IconContent("d_winbtn_win_close_h").image;        
+            
+                
+        
         public static Texture FolderIcon( bool isExpanded , bool isEmpty )
         {
             if (isEmpty)
