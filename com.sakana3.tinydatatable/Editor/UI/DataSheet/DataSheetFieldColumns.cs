@@ -242,7 +242,7 @@ namespace TinyDataTable.Editor
                 makeHeader = () =>
                 {
                     var button = new Image();
-                    button.image = plusTex;
+                    button.image = EditorResources.PlusIcon;
                     button.RegisterCallback<MouseDownEvent>((t) =>
                     {
                         if (t.button == 0)

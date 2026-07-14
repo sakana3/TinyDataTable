@@ -87,7 +87,9 @@ namespace TinyDataTable.Editor
 
             //Flag
             var prop = so.FindProperty(nameof(DataTableRecordBase.EditorFlags));
-            var editorFlagProp = MakeEditorFlags(prop);
+            var editorFlagProp = new EnumFlagLabel(prop);
+            editorFlagProp.style.height =　EditorGUIUtility.singleLineHeight;
+            editorFlagProp.style.flexGrow = 1;
             propGroup.Add(editorFlagProp);
         }
 
@@ -119,21 +121,6 @@ namespace TinyDataTable.Editor
 */                            
             }
             return true;
-        }
-
-        public VisualElement MakeEditorFlags(SerializedProperty prop)
-        {
-            var flagGroup = new VisualElement();
-            flagGroup.style.flexDirection = FlexDirection.Row;
-
-            var editorFlagProp = new EnumFlagsField();
-            editorFlagProp.style.alignSelf = Align.FlexStart;
-//            editorFlagProp.style.fla = EnumFlagsStyle.Button;
-//            editorFlagProp.style.width = 200f;
-            editorFlagProp.BindProperty(prop);
-            flagGroup.Add(editorFlagProp);            
-            
-            return flagGroup;
         }
         
         

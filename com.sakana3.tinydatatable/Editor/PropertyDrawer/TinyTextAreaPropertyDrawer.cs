@@ -1,10 +1,7 @@
 using UnityEngine;
 using System;
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine.UIElements;
-#endif
-
 
 namespace TinyDataTable.Editor
 {
