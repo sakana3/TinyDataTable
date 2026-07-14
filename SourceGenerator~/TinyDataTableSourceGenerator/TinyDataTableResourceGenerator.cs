@@ -147,7 +147,7 @@ namespace TinyTable.SourceGenerator
 
                     //フィールドプロパティ
                     //関数呼び出しを避けるためにインラインで３項演算子を使う
-                    cb.AddComment($"filed propieries");
+                    cb.AddComment($"filed properties");
                     foreach (var field in schemaFields)
                     {
                         var left = $"public {field.FieldType} {field.FieldName}";
@@ -232,9 +232,9 @@ namespace TinyTable.SourceGenerator
                     //ValidIDList.Lengthで代用できるのでとりあえずオミット
                     //                    cb.AddComment("Size of record");
                     //                    cb.AddCode($"public static int Size => {data.Header.RowData.Length}");
-                    cb.AddComment("Is this record is valid");
+                    cb.AddComment("If this record is valid");
                     cb.AddCode($"public bool IsValid => Index != 0");
-                    cb.AddComment("Is this record is invalid");
+                    cb.AddComment("If this record is invalid");
                     cb.AddCode($"public bool IsInvalid => Index == 0");
                     cb.AppendLine();                    
                     

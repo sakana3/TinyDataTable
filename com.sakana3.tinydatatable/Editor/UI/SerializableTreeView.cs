@@ -16,7 +16,7 @@ namespace TinyDataTable.Editor
 
         public Func<int,SerializableTree<ITEM>.Node,bool,bool, VisualElement> onMakeItem;
         public Action<Rect, Action<string,ITEM>> onCreateItem;
-        public Func<ITEM,bool> OnSelectItem;
+        public Func<string,ITEM,bool,bool> OnSelectItem;
         public Action<IEnumerable<ITEM>> OnRemoveItem;
         private HelpBox infoBox;
         private bool _isStructureMode;
@@ -114,14 +114,16 @@ namespace TinyDataTable.Editor
             };
             treeView.selectedIndicesChanged += indexs =>
             {
-                ITEM selected = null;
                 if (indexs.Any())
                 {
                     var index = indexs.FirstOrDefault();
                     var node = treeView.GetItemDataForIndex<SerializableTree<ITEM>.TreeNode>(index);
-                    selected = node.node.Item;
+                    OnSelectItem?.Invoke(node.node.Name,node.node.Item,node.node.IsFolder);
                 }
-                OnSelectItem?.Invoke(selected);
+                else
+                {
+                    OnSelectItem?.Invoke(null,null,false);
+                }
             };
             treeView.dragAndDropUpdate += args =>
             {

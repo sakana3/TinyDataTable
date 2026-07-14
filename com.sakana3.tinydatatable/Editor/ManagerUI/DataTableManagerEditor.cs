@@ -69,7 +69,7 @@ namespace TinyDataTable.Editor
                 {
                     modeMenu.text = action.name;
                     mode = Mode.DesignMode;
-                    CreateTreeView();
+                    MakeTreeView();
                 },
                 a => mode == Mode.DesignMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );            
@@ -78,7 +78,7 @@ namespace TinyDataTable.Editor
                 {
                     modeMenu.text = action.name;
                     mode = Mode.BuildMode;
-                    CreateTreeView();
+                    MakeTreeView();
                 },
                 a => mode == Mode.BuildMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
@@ -88,7 +88,7 @@ namespace TinyDataTable.Editor
                 {
                     modeMenu.text = action.name;
                     mode = Mode.Preference;
-                    CreateTreeView();
+                    MakeTreeView();
                 },
                 a => mode == Mode.Preference ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
@@ -100,11 +100,11 @@ namespace TinyDataTable.Editor
             Root.style.flexGrow = 1;
             Add(Root);
             
-            CreateTreeView();
+            MakeTreeView();
         }
 
         
-        private void CreateTreeView()
+        private void MakeTreeView()
         {
             Root.Clear();
             if (mode == Mode.Preference)
@@ -134,9 +134,10 @@ namespace TinyDataTable.Editor
                 treeViewRoot.Add(treeView);
             }
         }
-        
-        private bool OnSelectDataTableAsset(DataTableRecordBase asset)
+
+        private bool OnSelectDataTableAsset( string treeName, DataTableRecordBase asset , bool isFolder)
         {
+            
             if ( tableOperator == null || tableOperator.OnChange(asset))
             {
                 tableViewRoot.Clear();
@@ -152,9 +153,18 @@ namespace TinyDataTable.Editor
                     tableView.style.flexGrow = 1;
                     tableViewRoot.Add(tableView);
                 }
-                else
+                else if( isFolder )
                 {
                     tableOperator = null;
+                }
+                else
+                {
+                    if (isStructureMode)
+                    {
+                        var constructTableView = new DataTableConstructTableView(manager,treeName);
+                        constructTableView.style.flexGrow = 1;
+                        tableViewRoot.Add(constructTableView);
+                    }
                 }
                 return true;
             }

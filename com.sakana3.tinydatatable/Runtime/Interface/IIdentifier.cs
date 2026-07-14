@@ -2,6 +2,7 @@ namespace TinyDataTable
 {
     public interface IIdentifier
     {
-        public bool IsValid { get; }
+        bool IsValid { get; }
+        bool IsInvalid { get; }
     }
 }
