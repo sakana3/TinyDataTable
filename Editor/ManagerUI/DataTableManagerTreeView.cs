@@ -13,7 +13,7 @@ namespace TinyDataTable.Editor
         private bool IsStructureMode = false;
         private bool isDirtySelf;
 
-        public Func<DataTableRecordBase,bool> OnSelectDataTableAsset;
+        public Func<string,DataTableRecordBase,bool,bool> OnSelectDataTableAsset;
         
         public DataTableManagerTreeView(DataTableManager manager,bool isStructureMode)
         {
@@ -35,7 +35,7 @@ namespace TinyDataTable.Editor
                 EditorUtility.SetDirty(Manager);
                 AssetDatabase.SaveAssetIfDirty( Manager );
             };
-            treeView.OnSelectItem = asset => OnSelectDataTableAsset.Invoke(asset);
+            treeView.OnSelectItem = (str,asset,isFolder) => OnSelectDataTableAsset.Invoke(str,asset,isFolder);
             treeView.OnRemoveItem = RemoveDataTableAsset;
             treeView.style.flexGrow = 1;
             treeView.Bind(so);
@@ -118,9 +118,7 @@ namespace TinyDataTable.Editor
                 {
                     clickCreateButton = className =>
                     {
-                        var tableAsset = CreateDataTableAsset(className);
-                        func(className,tableAsset);
-                        Undo.ClearAll();
+                        func(className,null);
                     }
                 };
                 UnityEditor.PopupWindow.Show(Position, popup);                    
@@ -138,8 +136,7 @@ namespace TinyDataTable.Editor
                     {
                         clickCreateButton = className =>
                         {
-                            var tableAsset = CreateDataTableAsset(className);
-                            treeView.InsertNewTree(-1,className,tableAsset,false);
+                            treeView.InsertNewTree(-1,className,null,false);
                         }
                     };
                     // 1. ボタンの左上を (0, 0) とした相対座標
@@ -150,17 +147,6 @@ namespace TinyDataTable.Editor
             }
         }
 
-        DataTableRecordBase CreateDataTableAsset(string name)
-        {
-
-            SaveDataTable.CreateNewScript(
-                name,
-                Manager.DefaultNamespace,
-                Manager.ScriptsPath,
-                Manager.TablesPath);
-            
-            return null;
-        }
 
         void RemoveDataTableAsset( IEnumerable<DataTableRecordBase> assets)
         {

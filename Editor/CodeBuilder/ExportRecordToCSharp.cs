@@ -35,6 +35,7 @@ namespace TinyDataTable.Editor
             {
                 cb.AddUsing("System");
                 cb.AddUsing("TinyDataTable");
+                cb.AddUsing("UnityEngine");
 //            cb.AddUsing("System.Collections.Generic");
 //            cb.AddUsing("System.Runtime.CompilerServices");
 //            cb.AddUsing("System.Linq");
