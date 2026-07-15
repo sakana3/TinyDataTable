@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 #if USE_ADDRESSABLES
@@ -36,9 +37,7 @@ namespace TinyDataTable.Editor
                 return;
             }
 
-            string guid;
-            long localId;
-            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(_target, out guid, out localId))
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(_target, out var guid, out var localId))
             {
                 return;
             }
@@ -100,66 +99,112 @@ namespace TinyDataTable.Editor
                 });
                 root.Add(groupField);
 
-                // Label Selection
-                var labelHeader = new Label("Labels");
-                labelHeader.style.marginTop = 5;
-                labelHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-//                root.Add(labelHeader);
-
-                var labelContainer = new IMGUIContainer(() =>
-                {
-                    var settings = AddressableAssetSettingsDefaultObject.Settings;
-                    if (settings == null || _target == null) return;
-
-                    string guid;
-                    long localId;
-                    if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(_target, out guid, out localId)) return;
-
-                    var entry = settings.FindAssetEntry(guid);
-                    if (entry == null) return;
-
-                    // Draw labels in a pill-shaped button that opens a popup
-                    var labelCount = entry.labels.Count;
-                    var rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                    var labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth, rect.height);
-                    var contentRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y,
-                        rect.width - EditorGUIUtility.labelWidth, rect.height);
-
-                    string labelString = labelCount == 0 ? "None" : string.Join(", ", entry.labels);
-                    if (GUI.Button(contentRect, new GUIContent(labelString), EditorStyles.popup))
-                    {
-                        var entries = new List<AddressableAssetEntry> { entry };
-                        var allLabels = settings.GetLabels();
-                        var labelNameToFreq = new Dictionary<string, int>();
-                        foreach (var l in allLabels)
-                        {
-                            if (entry.labels.Contains(l)) labelNameToFreq[l] = 1;
-                        }
-
-                        // Use Reflection to call LabelMaskPopupContent if it's internal
-                        var type = typeof(AddressableAssetSettings).Assembly.GetType(
-                            "UnityEditor.AddressableAssets.GUI.LabelMaskPopupContent");
-                        if (type != null)
-                        {
-                            var constructor = type.GetConstructor(
-                                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
-                                System.Reflection.BindingFlags.Instance, null,
-                                new[]
-                                {
-                                    typeof(Rect), typeof(AddressableAssetSettings), typeof(List<AddressableAssetEntry>),
-                                    typeof(Dictionary<string, int>)
-                                }, null);
-                            if (constructor != null)
-                            {
-                                var windowContent = constructor.Invoke(new object[]
-                                    { contentRect, settings, entries, labelNameToFreq }) as PopupWindowContent;
-                                UnityEditor.PopupWindow.Show(contentRect, windowContent);
-                            }
-                        }
-                    }
-                });
-                root.Add(labelContainer);
+                var flagLabel = new AddressableGroupLabel(_target);
+                root.Add(flagLabel);
             }
+        }
+
+        private class AddressableGroupLabel : FlagLabel
+        {
+            private Object _target;
+            
+            public AddressableGroupLabel(Object target)
+            {
+                _target = target;
+                Initialize();
+
+                var so = new SerializedObject(target);
+                this.TrackSerializedObjectValue(so , (p) =>
+                {
+                    Debug.Log(111);
+                    ResetLables();
+                });
+                
+                RegisterCallback<AttachToPanelEvent>((evt) =>
+                {
+                    AddressableAssetSettings.OnModificationGlobal += OnAddressablesModified;
+                });
+                RegisterCallback<DetachFromPanelEvent>((evt) =>
+                {
+                    AddressableAssetSettings.OnModificationGlobal -= OnAddressablesModified;
+                });
+                    
+                var settings = AddressableAssetSettingsDefaultObject.Settings;                
+                AddButton.clicked += () =>
+                {
+                    AddressableElement.PopupAddressableGroup(target,AddButton.worldBound);
+                };
+            }
+            
+            private void OnAddressablesModified(AddressableAssetSettings settings, AddressableAssetSettings.ModificationEvent modificationEvent, object data)
+            {
+                ResetLables();
+            }   
+            
+            protected override IEnumerable<string> EnumrateLables()
+            {
+                var settings = AddressableAssetSettingsDefaultObject.Settings;
+                if (settings == null || _target == null)
+                {
+                    yield break;
+                }
+
+                if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(_target, out var guid, out var localId))
+                {
+                    yield break;
+                }
+
+                var entry = settings.FindAssetEntry(guid);
+                if (entry == null)
+                {
+                    yield break;
+                }
+
+                foreach (var label in entry.labels)
+                {
+                    yield return label;
+                }
+            }
+        }
+        
+        protected static void PopupAddressableGroup( Object target , Rect contentRect )
+        {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null || target == null) return;
+
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(target, out var guid, out var localId)) return;
+
+            var entry = settings.FindAssetEntry(guid);
+            if (entry == null) return;
+            
+            var entries = new List<AddressableAssetEntry> { entry };
+            var allLabels = settings.GetLabels();
+            var labelNameToFreq = new Dictionary<string, int>();
+            foreach (var l in allLabels)
+            {
+                if (entry.labels.Contains(l)) labelNameToFreq[l] = 1;
+            }
+
+            // Use Reflection to call LabelMaskPopupContent if it's internal
+            var type = typeof(AddressableAssetSettings).Assembly.GetType(
+                "UnityEditor.AddressableAssets.GUI.LabelMaskPopupContent");
+            if (type != null)
+            {
+                var constructor = type.GetConstructor(
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance, null,
+                    new[]
+                    {
+                        typeof(Rect), typeof(AddressableAssetSettings), typeof(List<AddressableAssetEntry>),
+                        typeof(Dictionary<string, int>)
+                    }, null);
+                if (constructor != null)
+                {
+                    var windowContent = constructor.Invoke(new object[]
+                        { contentRect, settings, entries, labelNameToFreq }) as PopupWindowContent;
+                    UnityEditor.PopupWindow.Show(contentRect, windowContent);
+                }
+            }            
         }
     }
 }

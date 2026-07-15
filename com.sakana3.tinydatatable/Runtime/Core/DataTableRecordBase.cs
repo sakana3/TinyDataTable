@@ -24,6 +24,7 @@ namespace TinyDataTable
             InitializeOnLoad = 0x0001 << 1,
             InitializeOnLoadEditor = 0x0001 << 2,
             EditorOnly = 0x0001 << 3,
+            Embedded = 0x0001 << 4,
         }
         
 

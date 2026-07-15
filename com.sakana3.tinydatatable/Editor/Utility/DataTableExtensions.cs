@@ -1,9 +1,13 @@
 using System;
 using System.Reflection;
+using System.Linq;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 
 namespace TinyDataTable.Editor
 {
-    internal static class DataTableExtensions
+    public static class DataTableExtensions
     {
         private static object GetEditorFieldValue(DataTableRecordBase recordBase , string fileName )
         {
@@ -30,15 +34,72 @@ namespace TinyDataTable.Editor
         }
         
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
-        public static string GetIDImplement(this DataTableRecordBase recordBase)
+        internal static string GetIDImplement(this DataTableRecordBase recordBase)
         {
             return GetEditorFieldValue(recordBase,"CodeText") as string;
         }
 
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
-        public static string[] GetUsingImplement(this DataTableRecordBase recordBase)
+        internal static string[] GetUsingImplement(this DataTableRecordBase recordBase)
         {
             return GetEditorFieldValue(recordBase,"UsingNamespaces") as string[];
+        }
+        
+
+        /// <summary>
+        /// Schema内のリレーション先を検索しRelationに登録する
+        /// </summary>
+        public static void InjectRelation( this DataTableRecordBase target )
+        {
+            var types = FieldInfo.FieldsFromType<IIdentifier>(target.RecordType())
+                .Select(t => t.Type.GetCustomAttribute<IDAttribute>()?.RecordType )
+                .Where(t => t != null && t != target.GetType())
+                .ToArray();
+            
+            if ( target.Relations == null || target.Relations.Select(r=>r.GetType()).SequenceEqual(types) is false)
+            {
+                var newItems = types
+                    .SelectMany(t=> AssetDatabase.FindAssets($"t:{t}"))
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<DataTableRecordBase>(AssetDatabase.GUIDToAssetPath(guid)))
+                    .ToArray();
+
+                var so = new SerializedObject(target);
+                var relations = so.FindProperty("_relations");
+                relations.arraySize = newItems.Length;
+                for (int i = 0; i < relations.arraySize; i++)
+                {
+                    var relation = relations.GetArrayElementAtIndex(i);
+                    relation.objectReferenceValue = newItems[i];                    
+                }
+                so.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssetIfDirty(target);
+            }
+        }
+
+        public static bool CheckNameSafe( this DataTableRecordBase target )
+        {
+            var hashSet = new HashSet<string>();
+            foreach (var item in target.Headers)
+            {
+                if (SerializableUtility.CheckCSharpSafeName(item.name) is false)
+                {
+                    return false;
+                }
+                if (!hashSet.Add(item.name))
+                {
+                    return false;
+                }
+            }
+
+            foreach (var member in target.RecordType().GetMembers())
+            {
+                if (!hashSet.Add(member.Name))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
