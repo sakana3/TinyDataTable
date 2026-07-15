@@ -90,34 +90,5 @@ namespace TinyDataTable.Editor
             }
         }
 
-        /// <summary>
-        /// Schema内のリレーション先を検索しRelationに登録する
-        /// </summary>
-        public static void InjectRelation( DataTableRecordBase target )
-        {
-            var types = FieldInfo.FieldsFromType<IIdentifier>(target.RecordType())
-                .Select(t => t.Type.GetCustomAttribute<IDAttribute>()?.RecordType )
-                .Where(t => t != null && t != target.GetType())
-                .ToArray();
-            
-            if ( target.Relations == null || target.Relations.Select(r=>r.GetType()).SequenceEqual(types) is false)
-            {
-                var newItems = types
-                    .SelectMany(t=> AssetDatabase.FindAssets($"t:{t}"))
-                    .Select(guid => AssetDatabase.LoadAssetAtPath<DataTableRecordBase>(AssetDatabase.GUIDToAssetPath(guid)))
-                    .ToArray();
-
-                var so = new SerializedObject(target);
-                var relations = so.FindProperty("_relations");
-                relations.arraySize = newItems.Length;
-                for (int i = 0; i < relations.arraySize; i++)
-                {
-                    var relation = relations.GetArrayElementAtIndex(i);
-                    relation.objectReferenceValue = newItems[i];                    
-                }
-                so.ApplyModifiedPropertiesWithoutUndo();
-                AssetDatabase.SaveAssetIfDirty(target);
-            }
-        }
     }
 }

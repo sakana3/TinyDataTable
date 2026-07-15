@@ -23,16 +23,26 @@ namespace TinyDataTable.Editor
             this.manager = manager;
             this.asset = asset;
             
-            isDirty = manager.CheckDirty(asset);            
-            
             var so = new SerializedObject(asset);
             CreateGUI(so);
+            CheckDirty();
+            this.TrackPropertyValue(so.FindProperty( nameof(DataTableRecordBase.EditorFlags) ), (s) => CheckDirty());
+            this.TrackPropertyValue(so.FindProperty( "_headers" ), (s) => CheckDirty());
+        }
 
-            this.TrackSerializedObjectValue(so, (s) =>
+        private void CheckDirty()
+        {
+            if (asset.CheckNameSafe() is false)
+            {
+                exportButton.style.backgroundColor = new StyleColor(Color.softRed);
+                exportButton.enabledSelf = false;
+            }
+            else
             {
                 isDirty = manager.CheckDirty(asset);
                 exportButton.style.backgroundColor =isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
-            });
+                exportButton.enabledSelf = true;
+            }
         }
 
         private void CreateGUI(SerializedObject so)
@@ -81,7 +91,7 @@ namespace TinyDataTable.Editor
             {
                 SaveDataTable.SaveScript(asset);
             };
-            exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.indianRed) : StyleKeyword.Null;
+            exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
             
             propGroup.Add(exportButton);
 

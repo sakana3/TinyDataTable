@@ -160,7 +160,7 @@ namespace TinyDataTable.Editor
                 targetAsset.BaseName(),
                 _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
-                RecordPropertyUtil.ReservWords,
+                RecordPropertyUtil.ReserveWords,
                 Manager?.Assemblies,
                 (field) =>
                 {
@@ -182,7 +182,7 @@ namespace TinyDataTable.Editor
                 targetAsset.BaseName(),
                 _recordPropertyUtil.FieldInfos.Select(f=>f.Name).ToList(),
                 _recordPropertyUtil.RowHeaders.Select(s=>s.name).ToList(), 
-                RecordPropertyUtil.ReservWords,
+                RecordPropertyUtil.ReserveWords,
                 Manager?.Assemblies,
                 (field) =>
                 {

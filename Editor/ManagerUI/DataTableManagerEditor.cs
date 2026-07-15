@@ -137,7 +137,6 @@ namespace TinyDataTable.Editor
 
         private bool OnSelectDataTableAsset( string treeName, DataTableRecordBase asset , bool isFolder)
         {
-            
             if ( tableOperator == null || tableOperator.OnChange(asset))
             {
                 tableViewRoot.Clear();
@@ -145,7 +144,7 @@ namespace TinyDataTable.Editor
                 {
                     if (isStructureMode)
                     {
-                        DataTableManager.InjectRelation( asset);
+                        asset.InjectRelation();
                         tableOperator = new DataTableManagerTableOperator(manager, asset);
                         tableViewRoot.Add(tableOperator);
                     }
@@ -157,7 +156,7 @@ namespace TinyDataTable.Editor
                 {
                     tableOperator = null;
                 }
-                else
+                else if( asset == null )
                 {
                     if (isStructureMode)
                     {

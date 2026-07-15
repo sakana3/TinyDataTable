@@ -275,7 +275,7 @@ namespace TinyDataTable.Editor
                 return false;
             }
 
-            if (ReservWords.Contains(name))
+            if (ReserveWords.Contains(name))
             {
                 return false;
             }
@@ -283,12 +283,10 @@ namespace TinyDataTable.Editor
             return true;
         }
 
-        public static List<string> ReservWords = new List<string>()
+        public static List<string> ReserveWords { private set; get; } = new List<string>()
         {
-            "ToString", "GetHashCode", "GetType","Equals",
-            "Invalid","IsValid","Terminate","EnumToIndex","Index",
-            "ValidEnumList","ValidIDList",
-            "_dataTable","_assetPath","_value","_index","_validEnums","_validIDs",
+            "ToString", "GetHashCode", "GetType", "Equals",
+            "Invalid", "IsValid", "IsInvalid"
 //            "Size"
         };
     }
