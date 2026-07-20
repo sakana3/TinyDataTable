@@ -20,7 +20,7 @@ namespace TinyDataTable.Editor
         public string Description { set; get; }
         public bool Obsolete { set; get; }
         public Type Type { set; get; }
-        public (Type Type , string[] args)[] CustomAttributes { set; get; }
+        public (Type Type ,Attribute,string codeText)[] Attributes { set; get; }
         
         public bool IsArray => Type.IsArray;
         public bool IsValid => Type != null && string.IsNullOrEmpty(Name) is false;
@@ -50,23 +50,11 @@ namespace TinyDataTable.Editor
 
         public IEnumerable<string> ToAttributesString()
         {
-            if (CustomAttributes != null && CustomAttributes.Length > 0)
+            if (Attributes != null && Attributes.Length > 0)
             {
-                foreach (var attr in CustomAttributes)
+                foreach (var attr in Attributes)
                 {
-                    var attrCode = ToAttributeCodeString(attr.Type);
-                    if (attr.args == null || attr.args.Length <= 0)
-                    {
-                        var str = $"{attrCode},AttributeMetaData(typeof({attr.Type}))";
-                        yield return str;
-                    }
-                    else
-                    {
-                        var args = attr.args;
-                        var codes = attr.args.Select( t => $"\"{t.Replace("\"","\\\"")}\"");
-                        var str = $"{attrCode}({string.Join(",",args)}),AttributeMetaData(typeof({attr.Type}),{string.Join(",",codes)})";
-                        yield return str;
-                    }
+                    yield return attr.codeText;
                 }
             }
         }
@@ -83,21 +71,29 @@ namespace TinyDataTable.Editor
             }
             return input;       
         }       
-        
+
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static List<FieldInfo> FieldsFromType(Type type)
+        public static List<FieldInfo> FieldsFromType(DataTableRecordBase recordAsset)
         {
-            return EnumrateFieldsFromType(type).ToList();
+            return EnumrateFieldsFromType(recordAsset.GetType(),recordAsset.SchemaType()).ToList();
         }
         
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static IEnumerable<FieldInfo> FieldsFromType<T>(Type type)
+        public static List<FieldInfo> FieldsFromType(Type recordType, Type schemaType)
         {
-            foreach (var fieldInfo in EnumrateFieldsFromType(type))
+            return EnumrateFieldsFromType(recordType,schemaType).ToList();
+        }
+        
+        /// <summary>
+        /// フィールドを取得する
+        /// </summary>
+        public static IEnumerable<FieldInfo> FieldsFromType<T>( Type recordType, Type schemaType)
+        {
+            foreach (var fieldInfo in EnumrateFieldsFromType(recordType,schemaType))
             {
                 var firleType = fieldInfo.Type;
                 while (firleType.HasElementType)
@@ -107,18 +103,33 @@ namespace TinyDataTable.Editor
                 if (typeof(T).IsAssignableFrom(firleType))
                 {
                     yield return fieldInfo;
-                }                
+                }
             }
         }        
         
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static IEnumerable<FieldInfo> EnumrateFieldsFromType(Type type)
+        private static IEnumerable<FieldInfo> EnumrateFieldsFromType(Type recordType, Type schemaType)
         {
             // クラス内のすべてのインスタンスフィールド（public / private / protected）を取得
-            System.Reflection.FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            System.Reflection.FieldInfo[] allFields = schemaType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
+            Dictionary<string, (Type, string)[]> attributeDict = new Dictionary<string, (Type, string)[]>();
+            
+            Type innerType = recordType.GetNestedType("__editorInfo", BindingFlags.NonPublic);
+            if (innerType != null)
+            {
+                System.Reflection.FieldInfo fieldInfo = innerType.GetField("FieldAttributesCode", 
+                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                if (fieldInfo != null)
+                {
+                    object value = fieldInfo.GetValue(null);
+                    attributeDict = value as Dictionary<string, (Type,string)[]>;
+                }
+            }            
+            
+            
             foreach (System.Reflection.FieldInfo field in allFields)
             {
                 // 1. [NonSerialized] 属性がついている場合は除外
@@ -142,16 +153,16 @@ namespace TinyDataTable.Editor
                 {
                     if (SerializableUtility.IsUnitySerializableType(field.FieldType))
                     {
+                        (Type,Attribute,string)[] attributes = attributeDict.GetValueOrDefault(field.Name, Array.Empty<(Type, string)>())
+                            .Select(attr => (attr.Item1, field.GetCustomAttribute(attr.Item1), attr.Item2))
+                            .ToArray();
                         var info = new FieldInfo()
                         {
                             Name = field.Name,
                             Description = field.GetCustomAttribute<DescriptionAttribute>()?.Description ?? String.Empty,
                             Obsolete = field.IsDefined(typeof(ObsoleteAttribute), true),
                             Type =  field.FieldType,
-                            CustomAttributes = field
-                                .GetCustomAttributes<AttributeMetaDataAttribute>()
-                                .Select( f => f.Attribute )
-                                .ToArray()
+                            Attributes = attributes
                         };
                         yield return info;
                     }

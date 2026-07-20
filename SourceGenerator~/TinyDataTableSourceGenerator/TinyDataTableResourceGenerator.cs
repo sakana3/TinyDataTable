@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using TinyDataTable.SourceGenerator;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace TinyTable.SourceGenerator
 {
@@ -266,7 +267,8 @@ namespace TinyTable.SourceGenerator
                 }
 
                 cb.AppendLine();
-                cb.AppendLineNoIndent("#if UNITY_EDITOR");       
+                cb.AppendLineNoIndent("#if UNITY_EDITOR");
+
                 cb.AddComment($"{idTypeName} Editor Part");
                 using (cb.BeginScope($"public partial {typeDef.TypeKeyword} {idTypeName} : ISerializationCallbackReceiver"))
                 {
@@ -275,12 +277,32 @@ namespace TinyTable.SourceGenerator
 
                 }
 
+                //Editor Infos
                 cb.AddComment("Editor Infos");
                 using (cb.BeginScope($"private static class __editorInfo"))
                 {
-                    var codeText = typeDef.CodeText.Replace(@"""", @"""""");
-                    cb.AppendLine($"private static readonly string CodeText = @\"{codeText}\";");
+                    cb.AddComment("ID Code");
+                    cb.AppendLine($"private const string CodeText = {typeDef.CodeText.ToLiteral()};");
+                    cb.AddComment("Using Namespaces");
                     cb.AppendLine($"private static readonly string[] UsingNamespaces = new string[] {{ { string.Join(",",typeDef.UsingNamespaces) } }};");
+                    //Attribute MetaData
+                    cb.AddComment("Field Attribute MetaData");
+                    cb.AppendLine("private static readonly Dictionary<string,(Type,string)[]> FieldAttributesCode = new () {");
+                    cb.IncIndent();
+                    foreach (var field in schemaFields)
+                    {
+                        var attr = $"{string.Join( ",", field.Attributes.Select(a=> $"(typeof({a.TypeName}),{a.Code})"))}";
+                        if (attr.Length > 0)
+                        {
+                            cb.AppendLine($"{{{field.FieldName.ToLiteral()}, new[] {{{attr}}} }},");
+                        }
+                        else
+                        {
+                            cb.AppendLine($"{{{field.FieldName.ToLiteral()},Array.Empty<(Type,string)>()}},");
+                        }                        
+                    }
+                    cb.DecIndent();
+                    cb.AppendLine("};");
                 }
                 
                 cb.AppendLineNoIndent("#endif"); 
@@ -299,10 +321,11 @@ namespace TinyTable.SourceGenerator
                     ? string.Join("_", typeDef.OuterTypes.Select(o => o.TypeName)) + "_" + typeDef.TypeName
                     : typeDef.TypeName;
 
-                spc.AddSource($"{fileNameHint}_TinyDataTable.g.cs", SourceText.From(cb.ToString(), Encoding.UTF8));
+                spc.AddSource($"{fileNameHint}_TinyDataTable.g.cs", SourceText.From(cb.ToString() , Encoding.UTF8));
             });
         }
 
+        
         private static TypeDefinition? GetSemanticTargetForGeneration(GeneratorSyntaxContext ctx , string attributeName )
         {
             var typeDeclaration = (TypeDeclarationSyntax)ctx.Node;
@@ -347,8 +370,7 @@ namespace TinyTable.SourceGenerator
                 CodeText = string.Concat(typeDeclaration.Members.Select(member => member.ToFullString())),
                 UsingNamespaces = compilationUnit?.Usings
                     .Where(u => u.Name.ToString().EndsWith("DescriptionAttribute") is false)
-                    .Select(u => u.ToString())
-                    .Select( s => $"\"{s.Replace(@"""", @"""""")}\"" )
+                    .Select(u => u.ToString().ToLiteral())
                     .ToArray() ?? Array.Empty<string>()
             };
         }
@@ -400,7 +422,7 @@ namespace TinyTable.SourceGenerator
                     foreach (var fieldSymbol in targetTypeSymbol.GetMembers().OfType<IFieldSymbol>())
                     {
                         if (fieldSymbol.IsImplicitlyDeclared) continue;
-
+                        
                         var tiny = fieldSymbol.GetAttributes().Any(attr => 
                             (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute") );
 
@@ -410,7 +432,13 @@ namespace TinyTable.SourceGenerator
                             {
                                 FieldName = fieldSymbol.Name,
                                 FieldType = fieldSymbol.Type.ToDisplayString(),
-                                Accessibility = fieldSymbol.DeclaredAccessibility.ToString()
+                                Accessibility = fieldSymbol.DeclaredAccessibility.ToString(),
+                                Attributes = fieldSymbol.GetAttributes()
+                                    .Where( attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute") is false )
+                                    .Where( attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("ObsoleteAttribute") is false )
+                                    .Where( attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("DescriptionAttribute") is false )
+                                    .Select( attr =>  AttributeDefinition.Form(attr) )
+                                    .ToArray()
                             });
                         }
                     }
@@ -418,7 +446,7 @@ namespace TinyTable.SourceGenerator
             }
             return fieldList.ToArray();
         }
-    
+   
     }
     
     internal class TypeDefinition
@@ -447,11 +475,67 @@ namespace TinyTable.SourceGenerator
         public string FieldType { get; set; } = string.Empty;
         public string Accessibility { get; set; } = string.Empty;
         public bool IsObsolete { get; set; } = false;
+        public AttributeDefinition[] Attributes { get; set; } = Array.Empty<AttributeDefinition>();
+    }
+
+    internal class AttributeDefinition
+    {
+        public string TypeName { get; set; } = string.Empty;
+        public string[] Args { get; set; } = Array.Empty<string>();
+        public string Code { get; set; } = string.Empty;
+
+        public override string ToString()
+        {
+            if (Args.Length == 0)
+            {
+                return $"(typeof({TypeName}),  Array.Empty<string>())";
+            }
+            else
+            {
+                var args = string.Join(",", Args.Select(a => a.ToLiteral()));
+                return $"(typeof({TypeName}), new [] {{{args}}})";
+            }
+        }
+        
+        public static AttributeDefinition Form(AttributeData attr)
+        {
+            return new AttributeDefinition()
+            {
+                TypeName = attr.AttributeClass?.ToDisplayString() ?? "",
+                Args = attr.ConstructorArguments.Select(a => a.Value?.ToString() ?? "").ToArray(),
+                Code = GetRawAttributeText(attr).ToLiteral(),
+            };
+        }
+        
+        private static string GetRawAttributeText(AttributeData attributeData)
+        {
+            SyntaxReference? syntaxRef = attributeData.ApplicationSyntaxReference;
+            if (syntaxRef == null)
+            {
+                return null;
+            }
+            SyntaxNode syntaxNode = syntaxRef.GetSyntax();
+            return syntaxNode.ToString();
+        }
     }
 
     internal class OuterTypeInfo
     {
         public string TypeName { get; set; } = string.Empty;
         public string TypeKeyword { get; set; } = string.Empty;
+    }
+}
+
+
+public static class StringExtensions
+{
+    /// <summary>
+    /// 文字列を C# のコードに埋め込めるリテラル表現（"..."）に変換します。
+    /// </summary>
+    public static string ToLiteral(this string? input)
+    {
+        if ( input == null) return "null";
+        
+        return SymbolDisplay.FormatLiteral(input, quote: true);
     }
 }

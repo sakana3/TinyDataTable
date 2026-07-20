@@ -5,21 +5,33 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
-using System.Globalization;
 
 namespace TinyDataTable.Editor
 {
-    public enum AttributeType
+    public enum AttributeUsage
     {
         Drawer ,
         Additional                
     }
-    
+
+    public abstract class AttributeAdapterBase<T> : AttributeAdapterBase where T : Attribute
+    {
+        /// <summary> TargetType </summary>
+        protected sealed override Type TargetType => typeof(T);
+        /// <summary> FromAttribute </summary>
+        protected abstract void FromAttribute(T attribute);
+        /// <summary> FromAttribute </summary>
+        protected sealed override void FromAttribute(Attribute attribute)
+        {
+            FromAttribute(attribute as T);
+        }
+    }
+
+
     public abstract class AttributeAdapterBase
     {
-
         /// <summary> Default Enable </summary>
-        public virtual AttributeType AttributeType => AttributeType.Drawer;
+        public virtual AttributeUsage AttributeUsage => AttributeUsage.Drawer;
         
         /// <summary> Default Enable </summary>
         public virtual bool DefaultEnable => false;
@@ -41,56 +53,67 @@ namespace TinyDataTable.Editor
                 {
                     title = title.Substring(0, title.Length - "Attribute".Length);
                 }
-                
                 return ObjectNames.NicifyVariableName(title);;
             }
         }
-        
-        /// <summary>
-        /// To Code
-        /// </summary>
-        public abstract string[] ToCode();
-        
-        /// <summary>
-        /// From Code
-        /// </summary>
-        public abstract void FromCode( Type attributeType,  string[] code );
 
-        /// <summary>
-        /// Create UI
-        /// </summary>
+        /// <summary> TargetType </summary>        
+        protected abstract Type TargetType { get; }
+        
+        /// <summary> To Code </summary>
+        public abstract string[] ToAttributeArgs();
+
+        /// <summary> Initialize From Code </summary>
+        protected abstract void FromAttribute(Attribute attribute);
+
+        /// <summary> Create UI </summary>
         protected abstract void CreateUI(VisualElement root);
         
-        /// <summary>
-        /// Attribute Value tupple
-        /// </summary>
-        public (Type type,string[] args) AttributeValue
+        /// <summary> Attribute Value tupple </summary>
+        public (Type type,Attribute attribute,string text) AttributeValue
         {
             get
             {
                 var attr = this.GetType().GetCustomAttribute<AttributeOptionAttribute>();
                 if (attr != null)
                 {
-                    return (attr.AttributeType,ToCode());
+                    return (TargetType,attr,MakeAttributeCode());
                 }
-                return (null, null);
+                return (null,null, null);
             }
         }
         
+        /// <summary> AMake Attribute Code</summary>
+        private string MakeAttributeCode()
+        {
+            var attr = this.GetType().GetCustomAttribute<AttributeOptionAttribute>();
+            if (attr != null)
+            {
+                var args = ToAttributeArgs();
+                if (args.Length > 0)
+                {
+                    return $"{TargetType}({string.Join(",", args)})";
+                }
+                else
+                {
+                    return $"[{TargetType}]";
+                }
+            }
+            return string.Empty;
+        }
+
         
-        /// <summary>
-        /// Makr root UI
-        /// </summary>
+        /// <summary> Makr root UI </summary>
         internal void InitializeFormFiledInfo(FieldInfo fieldInfo)
         {
             if (fieldInfo != null)
             {
-                var attr = fieldInfo.CustomAttributes
+                var attr = fieldInfo.Attributes
                     .FirstOrDefault(t => t.Type == AttributeValue.type);
                 if (attr.Type != null)
                 {
                     IsEnable = true;
-                    FromCode( attr.Type, attr.args);
+                    FromAttribute(attr.Item2);
                 }
                 else
                 {
@@ -153,24 +176,6 @@ namespace TinyDataTable.Editor
         protected static string ToArgString( object argv)
         {
             return SerializableUtility.ToArgString(argv);
-        }
-
-        /// <summary>
-        /// String to argv
-        /// </summary>
-        protected static object FromArgv(string argvStr)
-        {
-            return SerializableUtility.StringToObj(argvStr);
-        }
-
-        protected static T FromArgv<T>(string argvStr , T defaultCValue )
-        {
-            var obj = FromArgv(argvStr);
-            if (obj == null || obj is not T)
-            {
-                return defaultCValue;
-            }
-            return (T)obj;
         }
         
         /// <summary>

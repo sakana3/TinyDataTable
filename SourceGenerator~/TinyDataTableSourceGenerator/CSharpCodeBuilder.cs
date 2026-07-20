@@ -14,6 +14,9 @@ namespace TinyDataTable.SourceGenerator
         /// </summary>
         private string CurrentIndent => string.Concat(Enumerable.Repeat(IndentString, _indentLevel));
 
+        public void IncIndent() => _indentLevel++;
+        public void DecIndent() => _indentLevel--;
+        
         /// <summary>
         /// 行を追加する
         /// </summary>

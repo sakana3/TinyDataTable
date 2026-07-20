@@ -8,19 +8,19 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption( typeof(TooltipAttribute) )]
-    public class AttributeAdapterTooltip : AttributeAdapterBase
+    [AttributeOption]
+    public class AttributeAdapterTooltip : AttributeAdapterBase<TooltipAttribute>
     {
-        public override AttributeType AttributeType => AttributeType.Additional;
-        
         private string tooltip = "";
 
-        public override string[] ToCode() => ToArgsStrings( tooltip);
+        public override AttributeUsage AttributeUsage => AttributeUsage.Additional;
 
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(TooltipAttribute attribute)
         {
-            tooltip = FromArgv<string>(code[0],tooltip);
+            tooltip = attribute.tooltip;
         }
+
+        public override string[] ToAttributeArgs() => ToArgsStrings( tooltip);
         
         protected override void CreateUI(VisualElement root)
         {

@@ -6,22 +6,22 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption(typeof(UnityEngine.RangeAttribute),
+    [AttributeOption(
         typeof(int),typeof(float),typeof(long),typeof(double) ,
         typeof(byte),typeof(short),typeof(ushort), typeof(uint),typeof(ulong)
     )]
-    public class AttributeAdapterRange : AttributeAdapterBase
+    public class AttributeAdapterRange : AttributeAdapterBase<RangeAttribute>
     {
         private float Min { get; set; } = 0;
         private float Max { get; set; } = 100;
         
-        public override string[] ToCode() => ToArgsStrings( Min , Max );
-        
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(RangeAttribute attribute)
         {
-            Min = FromArgv<float>(code[0],Min);
-            Max = FromArgv<float>(code[1],Max);
+            Min = attribute.min;
+            Max = attribute.max;
         }
+
+        public override string[] ToAttributeArgs() => ToArgsStrings( Min , Max );
         
         protected override void CreateUI(VisualElement root)
         {
