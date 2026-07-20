@@ -6,17 +6,17 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption(typeof(UnityEngine.MinAttribute), typeof(int), typeof(float) )]
-    public class AttributeAdapterMin : AttributeAdapterBase
+    [AttributeOption(typeof(int), typeof(float) )]
+    public class AttributeAdapterMin : AttributeAdapterBase<MinAttribute>
     {
         private float Min { get; set; } = 0;
 
-        public override string[] ToCode() => ToArgsStrings( Min );
-        
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(MinAttribute attribute)
         {
-            Min = FromArgv<float>(code[0],Min);
+            Min = attribute.min;
         }
+
+        public override string[] ToAttributeArgs() => ToArgsStrings( Min );
         
         protected override void CreateUI(VisualElement root)
         {

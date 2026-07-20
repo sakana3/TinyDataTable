@@ -32,7 +32,7 @@ namespace TinyDataTable.Editor
 
         public void ReloadInfo()
         {
-            FieldInfos = FieldInfo.FieldsFromType(TargeTableAsset.RecordType());
+            FieldInfos = FieldInfo.FieldsFromType(TargeTableAsset);
             
             RowHeaders = GetRowProperties()
                 .Select(p => new DataTableRecordBase.HeaderData()
@@ -286,14 +286,15 @@ namespace TinyDataTable.Editor
         public static List<string> ReserveWords { private set; get; } = new List<string>()
         {
             "ToString", "GetHashCode", "GetType", "Equals",
-            "Invalid", "IsValid", "IsInvalid"
-//            "Size"
+            "Invalid", "IsValid", "IsInvalid","Index",
+            "_index","_value","_recordArray","ID","__editorInfo",
+            "OnAfterDeserialize", "OnBeforeSerialize"
         };
     }
     
     internal static class DataTableRecordExtensions
     {
-        public static Type RecordType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
+        public static Type SchemaType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
         public static Type IdentifierType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
         public static Type EnumType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().EnumType;
         public static string BaseName(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().BaseName;

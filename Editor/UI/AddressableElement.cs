@@ -112,13 +112,6 @@ namespace TinyDataTable.Editor
             {
                 _target = target;
                 Initialize();
-
-                var so = new SerializedObject(target);
-                this.TrackSerializedObjectValue(so , (p) =>
-                {
-                    Debug.Log(111);
-                    ResetLables();
-                });
                 
                 RegisterCallback<AttachToPanelEvent>((evt) =>
                 {

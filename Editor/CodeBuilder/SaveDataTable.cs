@@ -73,9 +73,9 @@ namespace TinyDataTable.Editor
             
             List<FieldInfo> fileds = new();
             List<EnumInfo> enums = new();
-            if (recordAsset.RecordType() != null)
+            if (recordAsset.SchemaType() != null)
             {
-                fileds = FieldInfo.FieldsFromType(recordAsset.RecordType());
+                fileds = FieldInfo.FieldsFromType(recordAsset);
                 enums = EnumInfo.FormEnumType(recordAsset.EnumType());
             }
             
@@ -172,14 +172,14 @@ namespace TinyDataTable.Editor
        
             if (fields == null)
             {
-                fields = (dataTableAsset.RecordType() != null) ? 
-                    FieldInfo.FieldsFromType(dataTableAsset.RecordType()) :
+                fields = (dataTableAsset.SchemaType() != null) ? 
+                    FieldInfo.FieldsFromType(dataTableAsset) :
                     new List<FieldInfo>();
             }
 
             if (enums == null)
             {
-                enums = (dataTableAsset.RecordType() != null) ?
+                enums = (dataTableAsset.SchemaType() != null) ?
                     EnumInfo.FormEnumType(dataTableAsset.EnumType()):
                     new List<EnumInfo>();
             }

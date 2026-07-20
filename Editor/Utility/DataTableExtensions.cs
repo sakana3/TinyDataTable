@@ -44,6 +44,7 @@ namespace TinyDataTable.Editor
         {
             return GetEditorFieldValue(recordBase,"UsingNamespaces") as string[];
         }
+
         
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         public static void InjectRelation( this DataTableRecordBase target )
         {
-            var types = FieldInfo.FieldsFromType<IIdentifier>(target.RecordType())
+            var types = FieldInfo.FieldsFromType<IIdentifier>(target.GetType(),target.SchemaType())
                 .Select(t => t.Type.GetCustomAttribute<IDAttribute>()?.RecordType )
                 .Where(t => t != null && t != target.GetType())
                 .ToArray();
@@ -91,7 +92,7 @@ namespace TinyDataTable.Editor
                 }
             }
 
-            foreach (var member in target.RecordType().GetMembers())
+            foreach (var member in target.SchemaType().GetMembers())
             {
                 if (!hashSet.Add(member.Name))
                 {

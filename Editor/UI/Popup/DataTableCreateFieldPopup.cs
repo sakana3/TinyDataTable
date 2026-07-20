@@ -247,7 +247,7 @@ namespace TinyDataTable.Editor
         private void CreateAttributeSelector( Type type)
         {
             attributeRoot.Clear();
-            attributeOptions = AttributeAdapterBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.CustomAttributes.Select( t => t.Type ).ToArray());
+            attributeOptions = AttributeAdapterBase.FindAttributeOptions(type , (FieldInfo==null) ? null : FieldInfo.Attributes.Select( t => t.Type ).ToArray());
 
             if (attributeOptions.Any())
             {
@@ -265,9 +265,9 @@ namespace TinyDataTable.Editor
 
 
                 var mainAttributes = attributeOptions
-                    .Where(a => a.AttributeType == AttributeType.Drawer);
+                    .Where(a => a.AttributeUsage == AttributeUsage.Drawer);
 
-                if (mainAttributes.Any(a => a.AttributeType == AttributeType.Drawer))
+                if (mainAttributes.Any(a => a.AttributeUsage == AttributeUsage.Drawer))
                 {
                     var activeAttributes = mainAttributes
                         .FirstOrDefault(t => t.IsEnable);
@@ -310,7 +310,7 @@ namespace TinyDataTable.Editor
                 }
 
                 var additonalAttributes = attributeOptions
-                    .Where(a => a.AttributeType == AttributeType.Additional)
+                    .Where(a => a.AttributeUsage == AttributeUsage.Additional)
                     .ToList();
                 
                 if (additonalAttributes.Any())
@@ -450,9 +450,9 @@ namespace TinyDataTable.Editor
                 Name = PropertyName,
             };
           
-            info.CustomAttributes = attributeOptions
+            info.Attributes = attributeOptions
                 .Where(t => t.IsEnable)
-                .Select(t => t.AttributeValue )
+                .Select(t => (t.AttributeValue.type,t.AttributeValue.attribute,t.AttributeValue.text) )
                 .Where(t =>t.type != null )
                 .ToArray();
      

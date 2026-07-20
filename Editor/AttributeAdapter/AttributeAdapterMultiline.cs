@@ -6,18 +6,19 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption( typeof(MultilineAttribute),typeof(string) )]
-    public class AttributeAdapterMultiline : AttributeAdapterBase
+    [AttributeOption( typeof(string) )]
+    public class AttributeAdapterMultiline : AttributeAdapterBase<MultilineAttribute>
     {
         private int Lines { set; get; } = 3;
 
         public override bool DefaultEnable => false;
 
-        public override string[] ToCode() => ToArgsStrings(Lines);
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(MultilineAttribute attribute)
         {
-            Lines = FromArgv<int>(code[0],Lines);            
-        }
+            Lines = attribute.lines;
+        }        
+
+        public override string[] ToAttributeArgs() => ToArgsStrings(Lines);
         
         protected override void CreateUI(VisualElement root)
         {

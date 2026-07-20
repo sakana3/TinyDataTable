@@ -6,19 +6,19 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption(typeof(UnityEngine.ColorUsageAttribute), typeof(Color) )]
-    public class AttributeAdapterColorUsage : AttributeAdapterBase
+    [AttributeOption(typeof(Color) )]
+    public class AttributeAdapterColorUsage : AttributeAdapterBase<UnityEngine.ColorUsageAttribute>
     {
         private bool ShowAlpha { get; set; } = true;
         private bool HDR { get; set; } = true;
         
-        public override string[] ToCode() => ToArgsStrings( ShowAlpha,HDR );
-        
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(ColorUsageAttribute attribute)
         {
-            ShowAlpha = FromArgv<bool>(code[0],ShowAlpha);
-            HDR = FromArgv<bool>(code[1],HDR);
+            ShowAlpha = attribute.showAlpha;
+            HDR = attribute.hdr;
         }
+
+        public override string[] ToAttributeArgs() => ToArgsStrings( ShowAlpha,HDR );
         
         protected override void CreateUI(VisualElement root)
         {
@@ -30,5 +30,5 @@ namespace TinyDataTable.Editor
             hdrField.RegisterValueChangedCallback( evt => HDR = evt.newValue );
             root.Add( hdrField);
         }
-    }    
+    }
 }

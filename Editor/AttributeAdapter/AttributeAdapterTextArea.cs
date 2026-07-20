@@ -6,18 +6,20 @@ using UnityEngine.UIElements;
 
 namespace TinyDataTable.Editor
 {
-    [AttributeOption( typeof(TextAreaAttribute),typeof(string) )]
-    public class AttributeAdapterTextArea : AttributeAdapterBase
+    [AttributeOption(typeof(string) )]
+    public class AttributeAdapterTextArea : AttributeAdapterBase<TextAreaAttribute>
     {
         private int minLines = 1;
         private int maxLines = 3;
  
-        public override string[] ToCode() => ToArgsStrings( minLines,maxLines);
-        public override void FromCode( Type attributeType,  string[] code )
+        protected override void FromAttribute(TextAreaAttribute attribute)
         {
-            minLines = FromArgv<int>(code[0],minLines);
-            maxLines = FromArgv<int>(code[1],maxLines);
+            minLines = attribute.maxLines;
+            maxLines = attribute.maxLines;
         }
+
+        public override string[] ToAttributeArgs() => ToArgsStrings( minLines,maxLines);
+
         protected override void CreateUI(VisualElement root)
         {
             var minField = new IntegerField("Min Lines") { value = minLines };

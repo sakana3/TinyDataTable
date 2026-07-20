@@ -166,7 +166,7 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType());                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset);                        
                         fields.Insert(index>=0 ? index + 1 : fields.Count ,field);
                         var enumInfos = EnumInfo.FormEnumType(targetAsset.EnumType());
                         SaveDataTable.SaveScript(targetAsset, fields,enumInfos);
@@ -188,12 +188,12 @@ namespace TinyDataTable.Editor
                 {
                     if ( field.IsValid )
                     {
-                        var fields = FieldInfo.FieldsFromType(targetAsset.RecordType());                        
+                        var fields = FieldInfo.FieldsFromType(targetAsset);                        
                         fields[index] = field;
                         SaveDataTable.SaveScript(targetAsset, fields);
                     }
                 },
-                FieldInfo.FieldsFromType(targetAsset.RecordType())[index]);
+                FieldInfo.FieldsFromType(targetAsset)[index]);
         }
     }
 }
