@@ -13,7 +13,7 @@ namespace TinyDataTable.Editor
         {
             Type outerType = recordBase.GetType();
 
-            Type innerType = outerType.GetNestedType("__editorInfo", BindingFlags.NonPublic);
+            Type innerType = outerType.GetNestedType("__editorMetaData", BindingFlags.NonPublic);
 
             if (innerType == null)
             {
@@ -36,13 +36,13 @@ namespace TinyDataTable.Editor
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
         internal static string GetIDImplement(this DataTableRecordBase recordBase)
         {
-            return GetEditorFieldValue(recordBase,"CodeText") as string;
+            return GetEditorFieldValue(recordBase,"CodeTextMetaData") as string;
         }
 
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
         internal static string[] GetUsingImplement(this DataTableRecordBase recordBase)
         {
-            return GetEditorFieldValue(recordBase,"UsingNamespaces") as string[];
+            return GetEditorFieldValue(recordBase,"UsingNamespaceMetaData") as string[];
         }
 
         
