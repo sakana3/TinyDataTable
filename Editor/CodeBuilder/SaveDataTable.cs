@@ -252,9 +252,9 @@ namespace TinyDataTable.Editor
         
         
         /// <summary>
-        /// コンパイルが終了した後InitializeOnLoadMethodで呼び出される
+        /// コンパイルが終了した後DidReloadScriptsで呼び出される
         /// </summary>
-        [InitializeOnLoadMethod]
+        [UnityEditor.Callbacks.DidReloadScripts]
         private static void OnCompileFinished()
         {
             string scriptPath = SessionState.GetString(KeyScriptFullPath, string.Empty);

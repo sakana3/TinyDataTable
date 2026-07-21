@@ -117,10 +117,10 @@ namespace TinyDataTable.Editor
 
             Dictionary<string, (Type, string)[]> attributeDict = new Dictionary<string, (Type, string)[]>();
             
-            Type innerType = recordType.GetNestedType("__editorInfo", BindingFlags.NonPublic);
+            Type innerType = recordType.GetNestedType("__editorMetaData", BindingFlags.NonPublic);
             if (innerType != null)
             {
-                System.Reflection.FieldInfo fieldInfo = innerType.GetField("FieldAttributesCode", 
+                System.Reflection.FieldInfo fieldInfo = innerType.GetField("FieldAttributesMetaData", 
                     BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
                 if (fieldInfo != null)
                 {

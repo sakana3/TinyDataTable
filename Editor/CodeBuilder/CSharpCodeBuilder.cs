@@ -51,6 +51,12 @@ namespace TinyDataTable.Editor
             _sb.AppendLine(line);
             return this;
         }
+        
+        public CSharpCodeBuilder Append(string text)
+        {
+            _sb.Append(text);
+            return this;
+        }        
 
         /// <summary>
         /// ブロックを開始する {
