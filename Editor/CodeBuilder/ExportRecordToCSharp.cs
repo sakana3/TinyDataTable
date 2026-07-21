@@ -66,7 +66,7 @@ namespace TinyDataTable.Editor
             {
                 //Record ScriptableObject
                 cb.AddComment("Record ScriptableObject");
-                cb.AddAttribute(onsolete,$"Record(typeof({schemaTypeName}),typeof({enumTypeName}),typeof({idFullName}),\"{className}\")");
+                cb.AddAttribute(onsolete,$"Record(typeof({schemaTypeName}),typeof({enumTypeName}),typeof({idFullName}))");
                 using (cb.BeginClass($"{recordTypeName}", inherit: $"DataTableRecordBase<{schemaTypeName}>", isPartial: true))
                 {
                     //Record Struct
