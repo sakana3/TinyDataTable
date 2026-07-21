@@ -297,6 +297,6 @@ namespace TinyDataTable.Editor
         public static Type SchemaType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
         public static Type IdentifierType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
         public static Type EnumType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().EnumType;
-        public static string BaseName(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().BaseName;
+        public static string BaseName(this DataTableRecordBase record) => record.GetType().Name;
     }
 }
