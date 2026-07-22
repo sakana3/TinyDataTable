@@ -171,6 +171,12 @@ namespace TinyDataTable.Editor
                     if (GUILayout.Toggle(isOn, en.name ) != isOn )
                     {
                         value = value ^ en.flag;
+                        if (_property.enumValueFlag != value)
+                        {
+                            Undo.RecordObject(_property.serializedObject.targetObject, "Flag Changed");
+                            _property.intValue = value;
+                            _property.serializedObject.ApplyModifiedProperties();
+                        }
                     }
                 }
             }
@@ -180,9 +186,7 @@ namespace TinyDataTable.Editor
         {
             if (_property.enumValueFlag != value)
             {
-                Undo.RecordObject(_property.serializedObject.targetObject, "Flag Changed");
-                _property.intValue = value;
-                _property.serializedObject.ApplyModifiedProperties();
+
             }
         }
 

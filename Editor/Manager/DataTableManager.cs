@@ -7,7 +7,7 @@ using System.Reflection;
 namespace TinyDataTable.Editor
 {
     [Serializable]
-    internal class DataTableTree : SerializableTree<DataTableRecordBase>
+    internal class DataTableTree : SerializableTree<DataTableBase>
     {
         
     }
@@ -62,13 +62,13 @@ namespace TinyDataTable.Editor
             }
         }
 
-        public bool CheckDirty(DataTableRecordBase asset)
+        public bool CheckDirty(DataTableBase asset)
         {
             var dirdy = SaveDataTable.CheckScriptModified(asset);
             return dirdy;
         }
 
-        public static void OnCreateAsset(DataTableRecordBase asset)
+        public static void OnCreateAsset(DataTableBase asset)
         {
             var guids = AssetDatabase.FindAssets($"t:{typeof(DataTableManager)}");
             foreach (var guid in guids)

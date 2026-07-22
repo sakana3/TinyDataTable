@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -47,8 +48,9 @@ namespace TinyDataTable.Editor
         private VisualElement Root;
 
         private Toolbar toolbar;
+        private ToolbarButton toolbarBuildButton;
         private DataTableManagerTreeView treeView;
-        private bool isStructureMode => mode == Mode.BuildMode;
+        private bool IsBuildMode => mode == Mode.BuildMode;
         private DataTableManagerTableOperator tableOperator;
 
         private void CreateGUI()
@@ -58,18 +60,18 @@ namespace TinyDataTable.Editor
             toolbar = new Toolbar();
             Add(toolbar);
 
+            //Mode Select
             var modeMenu = new ToolbarMenu()
             {
                 text = ModeStr[(int)mode],
-                tooltip = "Change Mode",
+                tooltip = "Mode Select",
             };
             modeMenu.style.width = 120;
             modeMenu.menu.AppendAction(ModeStr[0],
                 action =>
                 {
                     modeMenu.text = action.name;
-                    mode = Mode.DesignMode;
-                    MakeTreeView();
+                    ModeChange(Mode.DesignMode);
                 },
                 a => mode == Mode.DesignMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );            
@@ -77,8 +79,7 @@ namespace TinyDataTable.Editor
                 action =>
                 {
                     modeMenu.text = action.name;
-                    mode = Mode.BuildMode;
-                    MakeTreeView();
+                    ModeChange(Mode.BuildMode);
                 },
                 a => mode == Mode.BuildMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
@@ -87,12 +88,24 @@ namespace TinyDataTable.Editor
                 action =>
                 {
                     modeMenu.text = action.name;
-                    mode = Mode.Preference;
-                    MakeTreeView();
+                    ModeChange(Mode.Preference);
                 },
                 a => mode == Mode.Preference ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
             toolbar.Add(modeMenu);
+
+            var spacer = new ToolbarSpacer()
+            {
+                flex = true
+            };
+            toolbar.Add(spacer);
+            
+            toolbarBuildButton = new ToolbarButton()
+            {
+                text = "Build All",
+            };
+            toolbarBuildButton.clicked += BuildAll;
+            toolbar.Add(toolbarBuildButton);
 
             this.style.flexGrow = 1;
 
@@ -100,9 +113,28 @@ namespace TinyDataTable.Editor
             Root.style.flexGrow = 1;
             Add(Root);
             
+            ModeChange(mode);
+        }
+
+        private void ModeChange( Mode mode )
+        {
+            this.mode = mode;
+            toolbarBuildButton.style.display = mode == Mode.BuildMode ? DisplayStyle.Flex : DisplayStyle.None;
             MakeTreeView();
         }
 
+        private void BuildAll()
+        {
+            var tables = manager.Tree.Nodes
+                .Where(t => t.IsFolder is false && t.Item != null)
+                .Select(t => t.Item);
+
+            foreach (var table in tables)
+            {
+                SaveDataTable.SaveScript(table);
+            }
+        }
+        
         
         private void MakeTreeView()
         {
@@ -126,7 +158,7 @@ namespace TinyDataTable.Editor
 
                 splitView.Add(treeViewRoot);
                 splitView.Add(tableViewRoot);
-                treeView = new DataTableManagerTreeView(manager, isStructureMode)
+                treeView = new DataTableManagerTreeView(manager, IsBuildMode)
                 {
                     OnSelectDataTableAsset = OnSelectDataTableAsset,
                 };
@@ -135,20 +167,20 @@ namespace TinyDataTable.Editor
             }
         }
 
-        private bool OnSelectDataTableAsset( string treeName, DataTableRecordBase asset , bool isFolder)
+        private bool OnSelectDataTableAsset( string treeName, DataTableBase asset , bool isFolder)
         {
             if ( tableOperator == null || tableOperator.OnChange(asset))
             {
                 tableViewRoot.Clear();
                 if (asset != null)
                 {
-                    if (isStructureMode)
+                    if (IsBuildMode)
                     {
                         asset.InjectRelation();
                         tableOperator = new DataTableManagerTableOperator(manager, asset);
                         tableViewRoot.Add(tableOperator);
                     }
-                    var tableView = new DataTableManagerTableView(manager, asset, isStructureMode);
+                    var tableView = new DataTableManagerTableView(manager, asset, IsBuildMode);
                     tableView.style.flexGrow = 1;
                     tableViewRoot.Add(tableView);
                 }
@@ -158,7 +190,7 @@ namespace TinyDataTable.Editor
                 }
                 else if( asset == null )
                 {
-                    if (isStructureMode)
+                    if (IsBuildMode)
                     {
                         var constructTableView = new DataTableConstructTableView(manager,treeName);
                         constructTableView.style.flexGrow = 1;

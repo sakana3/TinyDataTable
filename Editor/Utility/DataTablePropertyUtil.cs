@@ -9,7 +9,7 @@ namespace TinyDataTable.Editor
 {
     internal class RecordPropertyUtil
     {
-        public DataTableRecordBase TargeTableAsset { get; private set; }
+        public DataTableBase TargeTableAsset { get; private set; }
 
         public SerializedProperty HeaderProperty => _serializedObject.FindProperty("_headers");
         public SerializedProperty RecordProperty => _serializedObject.FindProperty("_records");
@@ -17,10 +17,10 @@ namespace TinyDataTable.Editor
         private SerializedObject _serializedObject;
         public SerializedObject SerializedObject => _serializedObject;
         
-        public List<DataTableRecordBase.HeaderData> RowHeaders { private set; get; }
+        public List<DataTableBase.HeaderData> RowHeaders { private set; get; }
         public List<FieldInfo> FieldInfos { private set; get; }
 
-        public RecordPropertyUtil( DataTableRecordBase targeTableAsset )
+        public RecordPropertyUtil( DataTableBase targeTableAsset )
         {
             this.TargeTableAsset = targeTableAsset;
             _serializedObject = new SerializedObject(TargeTableAsset);
@@ -35,12 +35,12 @@ namespace TinyDataTable.Editor
             FieldInfos = FieldInfo.FieldsFromType(TargeTableAsset);
             
             RowHeaders = GetRowProperties()
-                .Select(p => new DataTableRecordBase.HeaderData()
+                .Select(p => new DataTableBase.HeaderData()
                 {
-                    name = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.name)).stringValue ,
-                    id = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.id)).intValue,
-                    description = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.description)).stringValue,
-                    obsolete = p.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue,
+                    name = p.FindPropertyRelative( nameof(DataTableBase.HeaderData.name)).stringValue ,
+                    id = p.FindPropertyRelative( nameof(DataTableBase.HeaderData.id)).intValue,
+                    description = p.FindPropertyRelative( nameof(DataTableBase.HeaderData.description)).stringValue,
+                    obsolete = p.FindPropertyRelative( nameof(DataTableBase.HeaderData.obsolete)).boolValue,
                 } )
                 .ToList();
         }
@@ -56,7 +56,7 @@ namespace TinyDataTable.Editor
 
             var ids = Enumerable.Range(0, rowProp.arraySize)
                 .Select(i => rowProp.GetArrayElementAtIndex(i))
-                .Select(p => p.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue)
+                .Select(p => p.FindPropertyRelative(nameof(DataTableBase.HeaderData.id)).intValue)
                 .ToArray();
             
             var idCandidates = System.Security.Cryptography.RandomNumberGenerator.GetInt32(1, int.MaxValue);
@@ -81,9 +81,9 @@ namespace TinyDataTable.Editor
             var tmpName = $"";
             
             var newHeaderProp = headerProp.GetArrayElementAtIndex(idx);
-            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
-            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = tmpName;
-            newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
+            newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.id)).intValue = MakeNewID();
+            newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.name)).stringValue = tmpName;
+            newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.obsolete)).boolValue = false;
 
             _serializedObject.ApplyModifiedProperties();
 
@@ -139,10 +139,10 @@ namespace TinyDataTable.Editor
 
                     var tmpName = $"";
 
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.id)).intValue = MakeNewID();
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name)).stringValue = tmpName;
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = false;
-                    newHeaderProp.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.description)).stringValue = "";
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.id)).intValue = MakeNewID();
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.name)).stringValue = tmpName;
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.obsolete)).boolValue = false;
+                    newHeaderProp.FindPropertyRelative(nameof(DataTableBase.HeaderData.description)).stringValue = "";
                 }
                 else
                 {
@@ -224,7 +224,7 @@ namespace TinyDataTable.Editor
         {
             var headerProp = HeaderProperty;
             var header = headerProp.GetArrayElementAtIndex(iRow);
-            header.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete)).boolValue = isObsolete;
+            header.FindPropertyRelative(nameof(DataTableBase.HeaderData.obsolete)).boolValue = isObsolete;
             var t = RowHeaders[iRow];
             t.obsolete = isObsolete;
             RowHeaders[iRow] = t;
@@ -240,9 +240,9 @@ namespace TinyDataTable.Editor
                 for (int i = 0; i < headers.arraySize; i++)
                 {
                     var header = headers.GetArrayElementAtIndex(i);
-                    var idProp = header.FindPropertyRelative( nameof(DataTableRecordBase.HeaderData.id));
-                    var nameProp = header.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name));
-                    var isObs = header.FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.obsolete));
+                    var idProp = header.FindPropertyRelative( nameof(DataTableBase.HeaderData.id));
+                    var nameProp = header.FindPropertyRelative(nameof(DataTableBase.HeaderData.name));
+                    var isObs = header.FindPropertyRelative(nameof(DataTableBase.HeaderData.obsolete));
                     idList.Add((idProp.intValue,nameProp.stringValue,isObs.boolValue));
                 }
             }
@@ -253,7 +253,7 @@ namespace TinyDataTable.Editor
         {
             var nameProp = HeaderProperty
                 .GetArrayElementAtIndex(iRow)
-                .FindPropertyRelative(nameof(DataTableRecordBase.HeaderData.name));
+                .FindPropertyRelative(nameof(DataTableBase.HeaderData.name));
             return nameProp;
         }        
 
@@ -294,9 +294,23 @@ namespace TinyDataTable.Editor
     
     internal static class DataTableRecordExtensions
     {
-        public static Type SchemaType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
-        public static Type IdentifierType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
-        public static Type EnumType(this DataTableRecordBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().EnumType;
-        public static string BaseName(this DataTableRecordBase record) => record.GetType().Name;
+        public static Type SchemaType(this DataTableBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().SchemaType;
+        public static Type IdentifierType(this DataTableBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().IdentifierType;
+        public static Type EnumType(this DataTableBase record) => record.GetType().GetCustomAttribute<RecordAttribute>().EnumType;
+        public static string BaseName(this DataTableBase record) => record.GetType().Name;
+        public static string[] EnumNames(this DataTableBase record)
+        {
+            return record.EnumType().GetEnumNames();
+        }
+        public static IEnumerable<string> ValidEnumNames(this DataTableBase record)
+        {
+            foreach (var en in record.EnumType().GetMembers())
+            {
+                if (en.GetCustomAttribute<MissingAttribute>() == null)
+                {
+                    yield return en.Name;
+                }
+            }
+        }
     }
 }

@@ -25,11 +25,11 @@ namespace TinyDataTable.Editor
         private List<int> columnIDList = new List<int>();
         private DataTableManager Manager;
         private RecordPropertyUtil _recordPropertyUtil;
-        private DataTableRecordBase targetAsset => _recordPropertyUtil.TargeTableAsset;
+        private DataTableBase targetAsset => _recordPropertyUtil.TargeTableAsset;
 
         public DataSheetField( 
             DataTableManager manager,
-            DataTableRecordBase asset,
+            DataTableBase asset,
             bool IsStructureMode)
         {
             Manager = manager;

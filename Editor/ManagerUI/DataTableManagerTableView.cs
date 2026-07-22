@@ -9,10 +9,10 @@ namespace TinyDataTable.Editor
     internal class DataTableManagerTableView : VisualElement
     {
         private DataTableManager Manager = null;
-        private DataTableRecordBase asset;
+        private DataTableBase asset;
         private bool IsStructureMode { set; get; } = false;
 
-        public DataTableManagerTableView(DataTableManager manager,DataTableRecordBase asset,bool isStructureMode)
+        public DataTableManagerTableView(DataTableManager manager,DataTableBase asset,bool isStructureMode)
         {
             this.Manager = manager;
             this.IsStructureMode = isStructureMode;

@@ -13,7 +13,7 @@ namespace TinyDataTable.Editor
         private bool IsStructureMode = false;
         private bool isDirtySelf;
 
-        public Func<string,DataTableRecordBase,bool,bool> OnSelectDataTableAsset;
+        public Func<string,DataTableBase,bool,bool> OnSelectDataTableAsset;
         
         public DataTableManagerTreeView(DataTableManager manager,bool isStructureMode)
         {
@@ -26,7 +26,7 @@ namespace TinyDataTable.Editor
         {
             var so = new SerializedObject(Manager);
 
-            var treeView = new SerializableTreeView<DataTableRecordBase>(Manager.Tree,IsStructureMode);
+            var treeView = new SerializableTreeView<DataTableBase>(Manager.Tree,IsStructureMode);
             treeView.hierarchyChanged += tree =>
             {
                 isDirtySelf = true;
@@ -148,7 +148,7 @@ namespace TinyDataTable.Editor
         }
 
 
-        void RemoveDataTableAsset( IEnumerable<DataTableRecordBase> assets)
+        void RemoveDataTableAsset( IEnumerable<DataTableBase> assets)
         {
             if (assets == null) return;
 
