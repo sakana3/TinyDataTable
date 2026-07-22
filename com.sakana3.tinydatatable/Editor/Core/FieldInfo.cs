@@ -27,14 +27,10 @@ namespace TinyDataTable.Editor
         
         public string ToBaseAttributeString( bool isFiled )
         {
-            string str = isFiled ? "TINY" : "";
+            string str = "";
 
             if (Obsolete)
             {
-                if (string.IsNullOrEmpty(str) is false)
-                {
-                    str += ",";
-                }
                 str += $"Obsolete";
             }
             if (string.IsNullOrEmpty(Description) is false)
@@ -75,9 +71,9 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// フィールドを取得する
         /// </summary>
-        public static List<FieldInfo> FieldsFromType(DataTableRecordBase recordAsset)
+        public static List<FieldInfo> FieldsFromType(DataTableBase asset)
         {
-            return EnumrateFieldsFromType(recordAsset.GetType(),recordAsset.SchemaType()).ToList();
+            return EnumrateFieldsFromType(asset.GetType(),asset.SchemaType()).ToList();
         }
         
         /// <summary>

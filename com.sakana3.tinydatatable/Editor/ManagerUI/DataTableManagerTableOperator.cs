@@ -10,7 +10,7 @@ namespace TinyDataTable.Editor
     internal class DataTableManagerTableOperator : VisualElement
     {
         private DataTableManager manager = null;
-        private DataTableRecordBase asset { set; get; } = null;
+        private DataTableBase asset { set; get; } = null;
 
         private static Texture2D BuildIcon = EditorGUIUtility.IconContent("KnobCShape").image as Texture2D;
 
@@ -18,7 +18,7 @@ namespace TinyDataTable.Editor
 
         private bool isDirty = false;
         
-        public DataTableManagerTableOperator(DataTableManager manager, DataTableRecordBase asset)
+        public DataTableManagerTableOperator(DataTableManager manager, DataTableBase asset)
         {
             this.manager = manager;
             this.asset = asset;
@@ -26,7 +26,7 @@ namespace TinyDataTable.Editor
             var so = new SerializedObject(asset);
             CreateGUI(so);
             CheckDirty();
-            this.TrackPropertyValue(so.FindProperty( nameof(DataTableRecordBase.EditorFlags) ), (s) => CheckDirty());
+            this.TrackPropertyValue(so.FindProperty( nameof(DataTableBase.EditorFlags) ), (s) => CheckDirty());
             this.TrackPropertyValue(so.FindProperty( "_headers" ), (s) => CheckDirty());
         }
 
@@ -55,7 +55,7 @@ namespace TinyDataTable.Editor
                 
                 var assetField = new ObjectField();
                 assetField.name = "Asset";
-                assetField.objectType = typeof(DataTableRecordBase);
+                assetField.objectType = typeof(DataTableBase);
                 assetField.value = asset;
                 assetField.SetEnabled(false);
                 assetGroup.Add(assetField);
@@ -80,7 +80,7 @@ namespace TinyDataTable.Editor
             //Build Button
             exportButton = new Button()
             {
-                text = "Rebuild",
+                text = "Build",
             };
             exportButton.iconImage = Background.FromTexture2D(BuildIcon);
             exportButton.style.borderTopLeftRadius = 8f;
@@ -91,12 +91,14 @@ namespace TinyDataTable.Editor
             {
                 SaveDataTable.SaveScript(asset);
             };
-            exportButton.style.backgroundColor = isDirty ? new StyleColor(Color.cornflowerBlue) : StyleKeyword.Null;
+            exportButton.style.backgroundColor = isDirty ?
+                new StyleColor(Color.cornflowerBlue) :
+                StyleKeyword.Null;
             
             propGroup.Add(exportButton);
 
             //Flag
-            var prop = so.FindProperty(nameof(DataTableRecordBase.EditorFlags));
+            var prop = so.FindProperty(nameof(DataTableBase.EditorFlags));
             var editorFlagProp = new EnumFlagLabel(prop);
             editorFlagProp.style.height =　EditorGUIUtility.singleLineHeight;
             editorFlagProp.style.flexGrow = 1;
@@ -104,7 +106,7 @@ namespace TinyDataTable.Editor
         }
 
 
-        public bool OnChange(DataTableRecordBase target)
+        public bool OnChange(DataTableBase target)
         {
             if ( this.asset != target)
             {

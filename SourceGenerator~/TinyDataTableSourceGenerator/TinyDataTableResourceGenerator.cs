@@ -238,13 +238,27 @@ namespace TinyTable.SourceGenerator
                         foreach (var en in enumNames
                                      .Where(t => string.IsNullOrEmpty(t.Name) is false))
                         {
-                            if (en.IsObsolete)
+                            if (en.IsObsolete && en.IsMissing)
+                            {
+                                cb.AppendLine("[Missing,Obsolete]");
+                            }
+                            else if (en.IsObsolete)
                             {
                                 cb.AppendLine("[Obsolete]");
                             }
+                            else if (en.IsMissing)
+                            {
+                                cb.AppendLine("[Missing]");
+                            }
 
-                            cb.AddCode(
-                                $"public static readonly {idTypeName} {en.Name} = new ({enumTypeName}.{en.Name}, {en.ArrayIndex})");
+                            if (en.ArrayIndex >= 0)
+                            {
+                                cb.AddCode($"public static readonly {idTypeName} {en.Name} = new ({enumTypeName}.{en.Name}, {en.ArrayIndex})");
+                            }
+                            else
+                            {
+                                cb.AddCode($"public static readonly {idTypeName} {en.Name} = new ({enumTypeName}.{en.Name})");
+                            }
                         }
 
                         cb.AppendLine();
@@ -281,30 +295,19 @@ namespace TinyTable.SourceGenerator
 
                         //演算子オペレーター
                         cb.AddComment("Operators");
-                        cb.AppendLine(
-                            $"public bool Equals({idTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other._value);");
-                        cb.AppendLine(
-                            $"public bool Equals({enumTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other);");
-                        cb.AppendLine(
-                            $"public override bool Equals(object other) => (other is ID id) ? Equals(id) : (other is Enum en) ? Equals(en) : false;");
+                        cb.AppendLine($"public bool Equals({idTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other._value);");
+                        cb.AppendLine($"public bool Equals({enumTypeName} other) => EqualityComparer<Enum>.Default.Equals(_value, other);");
+                        cb.AppendLine($"public override bool Equals(object other) => (other is ID id) ? Equals(id) : (other is Enum en) ? Equals(en) : false;");
 
-                        cb.AppendLine(
-                            $"public static bool operator ==({idTypeName} left, {idTypeName} right) => left.Equals(right);");
-                        cb.AppendLine(
-                            $"public static bool operator !=({idTypeName} left, {idTypeName} right) => !left.Equals(right);");
-                        cb.AppendLine(
-                            $"public static bool operator ==({idTypeName} left, {enumTypeName} right) => left.Equals(right);");
-                        cb.AppendLine(
-                            $"public static bool operator !=({idTypeName} left, {enumTypeName} right) => !left.Equals(right);");
-                        cb.AppendLine(
-                            $"public static bool operator ==({enumTypeName} left, {idTypeName} right) => right.Equals(left);");
-                        cb.AppendLine(
-                            $"public static bool operator !=({enumTypeName} left, {idTypeName} right) => !right.Equals(left);");
+                        cb.AppendLine($"public static bool operator ==({idTypeName} left, {idTypeName} right) => left.Equals(right);");
+                        cb.AppendLine($"public static bool operator !=({idTypeName} left, {idTypeName} right) => !left.Equals(right);");
+                        cb.AppendLine($"public static bool operator ==({idTypeName} left, {enumTypeName} right) => left.Equals(right);");
+                        cb.AppendLine($"public static bool operator !=({idTypeName} left, {enumTypeName} right) => !left.Equals(right);");
+                        cb.AppendLine($"public static bool operator ==({enumTypeName} left, {idTypeName} right) => right.Equals(left);");
+                        cb.AppendLine($"public static bool operator !=({enumTypeName} left, {idTypeName} right) => !right.Equals(left);");
 
-                        cb.AppendLine(
-                            $"public static implicit operator {idTypeName}({enumTypeName} value) => new {idTypeName}(value);");
-                        cb.AppendLine(
-                            $"public static implicit operator {enumTypeName}({idTypeName} value) => value._value;");
+                        cb.AppendLine($"public static implicit operator {idTypeName}({enumTypeName} value) => new {idTypeName}(value);");
+                        cb.AppendLine($"public static implicit operator {enumTypeName}({idTypeName} value) => value._value;");
 
                         cb.AppendLine($"public override int GetHashCode() => (int)_value;");
                         cb.AppendLine($"public override string ToString() => _value.ToString();");
@@ -321,11 +324,9 @@ namespace TinyTable.SourceGenerator
                     cb.AppendLineNoIndent("#if UNITY_EDITOR");
 
                     cb.AddComment($"{idTypeName} Editor Part");
-                    using (cb.BeginScope(
-                               $"public partial struct {idTypeName} : ISerializationCallbackReceiver"))
+                    using (cb.BeginScope($"public partial struct {idTypeName} : ISerializationCallbackReceiver"))
                     {
-                        cb.AppendLine(
-                            $"void ISerializationCallbackReceiver.OnAfterDeserialize() => _index = {recordTypeName}.ToIndex(_value);");
+                        cb.AppendLine($"void ISerializationCallbackReceiver.OnAfterDeserialize() => _index = {recordTypeName}.ToIndex(_value);");
                         cb.AppendLine("void ISerializationCallbackReceiver.OnBeforeSerialize(){}");
 
                     }
@@ -446,16 +447,18 @@ namespace TinyTable.SourceGenerator
                 {
                     var obsolate = field.GetAttributes().FirstOrDefault(attr =>
                         (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("ObsoleteAttribute"));
+                    var missing = field.GetAttributes().FirstOrDefault(attr =>
+                        (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("MissingAttribute"));
 
                     var indexAttribute = field.GetAttributes().FirstOrDefault(attr =>
                         attr.AttributeClass?.ToDisplayString() == "TinyDataTable.EnumIndexAttribute");
-
+/*
                     if (indexAttribute == null)
                     {
                         return enumMembers.ToArray();
                     }
-
-                    int arrayIndex = indexAttribute.ConstructorArguments.FirstOrDefault().Value as int? ?? 0;
+*/
+                    int arrayIndex = indexAttribute == null ? -1 : indexAttribute.ConstructorArguments.FirstOrDefault().Value as int? ?? 0;
 
                     var enumDefinition = new EnumDefinition()
                     {
@@ -463,7 +466,8 @@ namespace TinyTable.SourceGenerator
                         Value = (field.ConstantValue is int) ? (int)field.ConstantValue : 0,
                         Index = index,
                         ArrayIndex = arrayIndex,
-                        IsObsolete = obsolate != null
+                        IsObsolete = obsolate != null,
+                        IsMissing = obsolate != null
                     };
                     enumMembers.Add(enumDefinition);
                     index++;
@@ -598,6 +602,7 @@ namespace TinyTable.SourceGenerator
             public int Index { get; set; } = 0;
             public int ArrayIndex { get; set; } = 0;
             public bool IsObsolete { get; set; } = false;
+            public bool IsMissing { get; set; } = false;
         }
 
         private class FieldDefinition

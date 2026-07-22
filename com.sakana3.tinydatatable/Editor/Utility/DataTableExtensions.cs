@@ -9,9 +9,9 @@ namespace TinyDataTable.Editor
 {
     public static class DataTableExtensions
     {
-        private static object GetEditorFieldValue(DataTableRecordBase recordBase , string fileName )
+        private static object GetEditorFieldValue(DataTableBase @base , string fileName )
         {
-            Type outerType = recordBase.GetType();
+            Type outerType = @base.GetType();
 
             Type innerType = outerType.GetNestedType("__editorMetaData", BindingFlags.NonPublic);
 
@@ -34,15 +34,15 @@ namespace TinyDataTable.Editor
         }
         
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
-        internal static string GetIDImplement(this DataTableRecordBase recordBase)
+        internal static string GetIDImplement(this DataTableBase @base)
         {
-            return GetEditorFieldValue(recordBase,"CodeTextMetaData") as string;
+            return GetEditorFieldValue(@base,"CodeTextMetaData") as string;
         }
 
         // SorceGeneratorが埋め込んだIDの実装部分を取得する
-        internal static string[] GetUsingImplement(this DataTableRecordBase recordBase)
+        internal static string[] GetUsingImplement(this DataTableBase @base)
         {
-            return GetEditorFieldValue(recordBase,"UsingNamespaceMetaData") as string[];
+            return GetEditorFieldValue(@base,"UsingNamespaceMetaData") as string[];
         }
 
         
@@ -50,7 +50,7 @@ namespace TinyDataTable.Editor
         /// <summary>
         /// Schema内のリレーション先を検索しRelationに登録する
         /// </summary>
-        public static void InjectRelation( this DataTableRecordBase target )
+        public static void InjectRelation( this DataTableBase target )
         {
             var types = FieldInfo.FieldsFromType<IIdentifier>(target.GetType(),target.SchemaType())
                 .Select(t => t.Type.GetCustomAttribute<IDAttribute>()?.RecordType )
@@ -61,7 +61,7 @@ namespace TinyDataTable.Editor
             {
                 var newItems = types
                     .SelectMany(t=> AssetDatabase.FindAssets($"t:{t}"))
-                    .Select(guid => AssetDatabase.LoadAssetAtPath<DataTableRecordBase>(AssetDatabase.GUIDToAssetPath(guid)))
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<DataTableBase>(AssetDatabase.GUIDToAssetPath(guid)))
                     .ToArray();
 
                 var so = new SerializedObject(target);
@@ -77,24 +77,20 @@ namespace TinyDataTable.Editor
             }
         }
 
-        public static bool CheckNameSafe( this DataTableRecordBase target )
+        public static bool CheckNameSafe( this DataTableBase target )
         {
             var hashSet = new HashSet<string>();
             foreach (var item in target.Headers)
             {
+                if (string.IsNullOrEmpty(item.name))
+                {
+                    continue;
+                }
                 if (SerializableUtility.CheckCSharpSafeName(item.name) is false)
                 {
                     return false;
                 }
                 if (!hashSet.Add(item.name))
-                {
-                    return false;
-                }
-            }
-
-            foreach (var member in target.SchemaType().GetMembers())
-            {
-                if (!hashSet.Add(member.Name))
                 {
                     return false;
                 }
