@@ -19,7 +19,7 @@ namespace TinyTable.SourceGenerator
             var typeDeclarations = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: (node, _) => node is TypeDeclarationSyntax t &&
-                                            (t is ClassDeclarationSyntax || t is StructDeclarationSyntax) &&
+                                            (t is ClassDeclarationSyntax ) &&
                                             t.AttributeLists.Count > 0,
                     transform: (ctx, _) => GetSemanticTargetForGeneration(ctx, "TinyDataTable.RecordAttribute"))
                 .Where(target => target != null);
@@ -169,7 +169,7 @@ namespace TinyTable.SourceGenerator
 
 
                     using (cb.BeginScope(
-                               $"public partial struct {idTypeName} : IEquatable<{idTypeName}>, IEquatable<{enumTypeName}>"))
+                               $"public partial struct {idTypeName} : IIdentifier, IEquatable<{idTypeName}>, IEquatable<{enumTypeName}>"))
                     {
                         //メンバー
                         cb.AddComment("Member");

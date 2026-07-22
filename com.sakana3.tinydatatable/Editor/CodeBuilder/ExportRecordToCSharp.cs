@@ -65,7 +65,7 @@ namespace TinyDataTable.Editor
             using (cb.BeginNamespace(namespaceName))
             {
                 //Record ScriptableObject
-                cb.AddComment("Record ScriptableObject");
+                cb.AddComment("Table ScriptableObject");
                 cb.AddAttribute(onsolete,$"Record(typeof({schemaTypeName}),typeof({enumTypeName}),typeof({idFullName}))");
                 using (cb.BeginClass($"{recordTypeName}", inherit: $"DataTableBase<{schemaTypeName}>", isPartial: true))
                 {
@@ -144,7 +144,7 @@ namespace TinyDataTable.Editor
                     // ID
                     cb.AddComment("ID");
                     cb.AddAttribute(onsolete,$"ID(typeof({recordTypeName}))", "Serializable");                    
-                    using (cb.BeginStruct(idName, inherit: $"IIdentifier", isPartial: true))
+                    using (cb.BeginStruct(idName, isPartial: true))
                     {
                         var idImplement = "            //If you need to implement it, please write it here.";
                         if (asset != null)
