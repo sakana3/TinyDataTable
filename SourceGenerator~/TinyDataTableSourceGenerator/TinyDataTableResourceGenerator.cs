@@ -95,7 +95,7 @@ namespace TinyTable.SourceGenerator
                 using (cb.BeginClass($"{recordTypeName}", isPartial: true))
                 {
                     // Valid Enum Table
-                    cb.AddComment("static valid enum table");
+                    cb.AddComment("Valid Enum list");
                     {
                         var validEnum = enumNames.Where(f => f.IsObsolete is false && f.Value != 0);
                         if (validEnum.Any())
@@ -119,7 +119,7 @@ namespace TinyTable.SourceGenerator
 
 
                     //静的テーブル
-                    cb.AddComment("static valid id table");
+                    cb.AddComment("Valid ID List");
                     {
                         var valids = enumNames.Where(t =>
                             t.IsObsolete is false && t.Value > 0 && string.IsNullOrEmpty(t.Name) is false);
@@ -488,10 +488,10 @@ namespace TinyTable.SourceGenerator
                     {
                         if (fieldSymbol.IsImplicitlyDeclared) continue;
 
-                        var tiny = fieldSymbol.GetAttributes().Any(attr =>
-                            (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute"));
+                        var hasHideInInspector = fieldSymbol.GetAttributes().Any(attr =>
+                            (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("HideInInspector"));
 
-                        if (tiny)
+                        if (hasHideInInspector is false)
                         {
                             fieldList.Add(new FieldDefinition
                             {
@@ -499,15 +499,9 @@ namespace TinyTable.SourceGenerator
                                 FieldType = fieldSymbol.Type.ToDisplayString(),
                                 Accessibility = fieldSymbol.DeclaredAccessibility.ToString(),
                                 Attributes = fieldSymbol.GetAttributes()
-                                    .Where(attr =>
-                                        (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute") is
-                                        false)
-                                    .Where(attr =>
-                                        (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("ObsoleteAttribute") is
-                                        false)
-                                    .Where(attr =>
-                                        (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("DescriptionAttribute")
-                                        is false)
+                                    .Where(attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("TINYAttribute") is false)
+                                    .Where(attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("ObsoleteAttribute") is false)
+                                    .Where(attr => (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("DescriptionAttribute") is false)
                                     .Select(attr => AttributeDefinition.Form(attr))
                                     .ToArray()
                             });
