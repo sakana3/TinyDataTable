@@ -71,10 +71,9 @@ namespace TinyDataTable.Editor
                     var item = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(id);
                     if (item != null)
                     {
-                        var node = treeView.GetItemDataForId<SerializableTree<ITEM>.TreeNode>(id).node;
                         bool isExpand = treeView.viewController.IsExpanded(id);
                         bool hasChildren = treeView.viewController.HasChildren(id);
-                        var ve = onMakeItem.Invoke(id, node, isExpand, hasChildren);
+                        var ve = onMakeItem.Invoke(id, item.node, isExpand, hasChildren);
                         element.Add(ve);
                     }
                 }

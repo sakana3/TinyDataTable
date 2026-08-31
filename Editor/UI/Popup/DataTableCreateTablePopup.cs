@@ -21,10 +21,12 @@ namespace TinyDataTable.Editor
         private string namespaceName;
 
         public Action<string> clickCreateButton;
+        private DataTableManager tableManager;
         
-        public DataTableCreateTablePopup(string name)
+        public DataTableCreateTablePopup( DataTableManager tableManager )
         {
-            namespaceName = name;
+            namespaceName = tableManager.DefaultNamespace;
+            this.tableManager = tableManager;
         }
         
         public override void OnOpen()
@@ -39,13 +41,17 @@ namespace TinyDataTable.Editor
             {
                 textField.Focus();
             }).StartingIn(50); // 50ms後くらい         
+
             textField.RegisterCallback<NavigationSubmitEvent>(evt =>
             {
-                if (confirmButton.enabledSelf)
+                if (CheckName(textField.value).enable)
                 {
-                    confirmButton.Focus();
+                    clickCreateButton?.Invoke(textField.value);         
+                    editorWindow.Close();
                 }
-            });            
+            });
+      
+            
             root.Add( textField);
 
             infoBox = new HelpBox("Input table name.", HelpBoxMessageType.Warning);
@@ -72,43 +78,48 @@ namespace TinyDataTable.Editor
 
         private void OnClassNameChangeCallback(TextField textField, ChangeEvent<string> evt)
         {
-            var className = textField.value;
+            var check = CheckName(textField.value);
+            confirmButton.SetEnabled( check.enable);           
+            infoBox.text = check.messageText;
+            infoBox.style.display = DisplayStyle.Flex;
+            infoBox.messageType = check.messageType;            
+        }
+        
+        private (bool enable,string messageText,HelpBoxMessageType messageType) CheckName(string className)
+        {
+            bool enable = false;
+            var messageText = string.Empty;
+            var messageType = HelpBoxMessageType.None;
             
             if (string.IsNullOrEmpty(className))
             {
-                confirmButton.SetEnabled( false);           
-                infoBox.text = "Input table name.";
-                infoBox.style.display = DisplayStyle.Flex;
-                infoBox.messageType = HelpBoxMessageType.Warning;
+                messageText = "Input table name.";
+                messageType = HelpBoxMessageType.Warning;
             }
             else if (SerializableUtility.CheckCSharpSafeName(className) is false )
             {
-                infoBox.text = "Invalid table name.";
-                confirmButton.SetEnabled( false);
-                infoBox.style.display = DisplayStyle.Flex;
-                infoBox.messageType = HelpBoxMessageType.Error;
+                messageText = "Invalid table name.";
+                messageType = HelpBoxMessageType.Error;
             }
-            else if (SerializableUtility.CheckExistClass( namespaceName,className) )
-            {
-                infoBox.text = "This name is already used.";
-                confirmButton.SetEnabled( false);              
-                infoBox.style.display = DisplayStyle.Flex;
-                infoBox.messageType = HelpBoxMessageType.Error;
+            else if (SerializableUtility.CheckExistClass( namespaceName,className) ||
+                     tableManager.Tree.Nodes.Any( t => t.IsFolder is false && t.Name == className )
+            ){
+                messageText = "This name is already used.";
+                messageType = HelpBoxMessageType.Error;
             }
             else if( Regex.IsMatch(className, @"[^\u0000-\u007F]") )
             {
-                infoBox.text = "The name can only use half-width characters.";
-                confirmButton.SetEnabled( false);
-                infoBox.style.display = DisplayStyle.Flex;
-                infoBox.messageType = HelpBoxMessageType.Error;
+                messageText = "The name can only use half-width characters.";
+                messageType = HelpBoxMessageType.Error;
             }
             else
             {
-                infoBox.text = "Press button to confirm.";                
-                infoBox.messageType = HelpBoxMessageType.Info;                
-                confirmButton.SetEnabled( true);
-                infoBox.style.display = DisplayStyle.Flex;
+                messageText = "Press button to confirm.";                
+                messageType = HelpBoxMessageType.Info;                
+                enable = true;
             }
+
+            return (enable, messageText, messageType);
         }
     }
 }

@@ -177,7 +177,7 @@ namespace TinyDataTable.Editor
         {
             if (isStatic)
             {
-                return BeginBlock($"{accessModifier} static{returnType} {methodName}({args})");
+                return BeginBlock($"{accessModifier} static {returnType} {methodName}({args})");
             }
             else
             {

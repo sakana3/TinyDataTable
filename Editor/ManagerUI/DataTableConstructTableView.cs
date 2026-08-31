@@ -37,7 +37,7 @@ namespace TinyDataTable.Editor
             AddSpace(root, 20);
             
             var button = new Button();
-            button.text = "Create";
+            button.text = "Construct";
             button.clicked += () =>
             {
                 button.enabledSelf = false;

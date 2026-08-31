@@ -20,27 +20,6 @@ namespace TinyDataTable.Editor
         private const string KeyAssetFilePath = "TinyDataTable_Asset_FilePath";
         private const string KeyBackupCode = "TinyDataTable_BackupCode";
 
-        private static (string assetpath, string address,string assetPath ) MakeInfo(DataTableBase dataTableAsset )
-        {
-            string assetpath = null;
-            string address = null;
-
-            var resourcePath = GetResourcePath(dataTableAsset);
-            if (resourcePath != null)
-            {
-                //リソースフォルダ以下に配置されているなら
-                assetpath = resourcePath;
-            }
-            else
-            {
-                address = GetAddressFromObject(dataTableAsset);
-            }
-
-            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(dataTableAsset);
-
-            return (assetpath,address,assetPath);
-        }
-        
         /// <summary>
         /// スクリプトが変更されているか確認する
         /// スクリプトの再生成と比較をするので結構重い
@@ -49,8 +28,6 @@ namespace TinyDataTable.Editor
         {
             var script = MonoScript.FromScriptableObject(asset);
             var scriptPath = AssetDatabase.GetAssetPath(script);
-            
-            var info = MakeInfo(asset);
 
             if (File.Exists(scriptPath) is false)
             {
@@ -70,10 +47,7 @@ namespace TinyDataTable.Editor
                 fileds,
                 enums,
                 asset.BaseName(),
-                asset.GetType().Namespace,
-                info.assetpath,
-                info.address,
-                info.assetPath
+                asset.GetType().Namespace
             );
 
             using (StreamReader reader = new StreamReader(scriptPath, System.Text.Encoding.UTF8))
@@ -110,8 +84,6 @@ namespace TinyDataTable.Editor
         {
             var script = MonoScript.FromScriptableObject(dataTableAsset);
             var scriptPath = AssetDatabase.GetAssetPath(script);
-            
-            var info = MakeInfo(dataTableAsset);
        
             if (fields == null)
             {
@@ -132,10 +104,7 @@ namespace TinyDataTable.Editor
                 fields,
                 enums,
                 dataTableAsset.BaseName(),
-                dataTableAsset.GetType().Namespace,
-                info.assetpath,
-                info.address,
-                info.assetPath
+                dataTableAsset.GetType().Namespace
             );
 /*
             if (File.Exists(scriptPath))
@@ -164,10 +133,7 @@ namespace TinyDataTable.Editor
                 new List<FieldInfo>(),
                 new List<EnumInfo>(),
                 newClassName,
-                newNamespace,
-                null,
-                null,//Path.Combine(assetPath, $"{newClassName}.asset"),
-                assetName
+                newNamespace
             );
 
             var fullPath = Path.Combine(scriptPath, $"{newClassName}.cs");
@@ -270,7 +236,7 @@ namespace TinyDataTable.Editor
             }
         }
         
-        private static string GetAddressFromObject(UnityEngine.Object obj)
+        public static string GetAddressFromObject(UnityEngine.Object obj)
         {
 #if USE_ADDRESSABLES            
             if (obj == null) return null;
@@ -295,7 +261,7 @@ namespace TinyDataTable.Editor
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static string GetResourcePath(UnityEngine.Object obj)
+        public static string GetResourcePath(UnityEngine.Object obj)
         {
             if (obj == null) return null;
 

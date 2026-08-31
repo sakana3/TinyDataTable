@@ -12,10 +12,7 @@ namespace TinyDataTable.Editor
             IList<FieldInfo> fieldInfos,
             IList<EnumInfo> enumInfos,
             string className,
-            string namespaceName,
-            string resourcePath,
-            string addressName,
-            string assetPath
+            string namespaceName
             )
         {
             CSharpCodeBuilder cb = new CSharpCodeBuilder();
@@ -35,7 +32,7 @@ namespace TinyDataTable.Editor
             {
                 cb.AddUsing("System");
                 cb.AddUsing("TinyDataTable");
-//                cb.AddUsing("UnityEngine");
+                cb.AddUsing("UnityEngine");
 //            cb.AddUsing("System.Collections.Generic");
 //            cb.AddUsing("System.Runtime.CompilerServices");
 //            cb.AddUsing("System.Linq");
@@ -55,11 +52,11 @@ namespace TinyDataTable.Editor
             cb.AppendLineNoIndent("#endif");
             cb.AppendLine();
 
-            string recordTypeName = $"{className}";
-            string enumTypeName = $"{recordTypeName}.Enum";
-            string schemaTypeName = $"{recordTypeName}.Schema";
+            string tableTypeName = $"{className}";
+            string enumTypeName = $"{tableTypeName}.Enum";
+            string schemaTypeName = $"{tableTypeName}.Schema";
             string idName = "ID";
-            string idFullName = $"{recordTypeName}.{idName}";
+            string idFullName = $"{tableTypeName}.{idName}";
             
             //Make ID
             using (cb.BeginNamespace(namespaceName))
@@ -67,7 +64,7 @@ namespace TinyDataTable.Editor
                 //Record ScriptableObject
                 cb.AddComment("Table ScriptableObject");
                 cb.AddAttribute(onsolete,$"Record(typeof({schemaTypeName}),typeof({enumTypeName}),typeof({idFullName}))");
-                using (cb.BeginClass($"{recordTypeName}", inherit: $"DataTableBase<{schemaTypeName}>", isPartial: true))
+                using (cb.BeginClass($"{tableTypeName}", inherit: $"DataTableBase<{schemaTypeName}>", isPartial: true))
                 {
                     //Record Struct
                     cb.AddComment("Schema struct");
@@ -143,7 +140,7 @@ namespace TinyDataTable.Editor
                     
                     // ID
                     cb.AddComment("ID");
-                    cb.AddAttribute(onsolete,$"ID(typeof({recordTypeName}))", "Serializable");                    
+                    cb.AddAttribute(onsolete,$"ID(typeof({tableTypeName}))", "Serializable");                    
                     using (cb.BeginStruct(idName, isPartial: true))
                     {
                         var idImplement = "            //If you need to implement it, please write it here.";
@@ -158,17 +155,71 @@ namespace TinyDataTable.Editor
                         cb.AppendLineNoIndent(idImplement);
                     }
 
-                    if (string.IsNullOrEmpty(addressName) is false)
+                    if (asset != null )
                     {
-                        cb.AppendLine();                    
-                        cb.AddComment("AddressableName");
-                        cb.AddField("string", $"AddressableName = \"{addressName}\"", "public const");
-                    }
-                    if (string.IsNullOrEmpty(resourcePath) is false)
-                    {
-                        cb.AppendLine();                    
-                        cb.AddComment("ResourcePath");
-                        cb.AddField("string", $"ResourcePath = \"{resourcePath}\"", "public const");
+                        if( asset.EditorFlags.HasFlag(DataTableBase.Flags.IncludeAssetPath))
+                        {
+                            var resourcePath = SaveDataTable.GetResourcePath(asset);
+                            if (string.IsNullOrEmpty(resourcePath) is false)
+                            {
+                                cb.AppendLine();
+                                cb.AddComment("ResourcePath");
+                                cb.AddField("string", $"ResourcePath = \"{resourcePath}\"", "public const");
+                            }
+                            else
+                            {
+                                var addressName = SaveDataTable.GetAddressFromObject(asset);
+                                if (string.IsNullOrEmpty(addressName) is false)
+                                {
+                                    cb.AppendLine();
+                                    cb.AddComment("AddressableName");
+                                    cb.AddField("string", $"AddressableName = \"{addressName}\"", "public const");
+                                    
+                                    
+                                }
+                            }
+                        }
+
+                        if (asset.EditorFlags.HasFlag(DataTableBase.Flags.IncludeGUID))
+                        {
+                            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(asset);
+                            cb.AppendLine();
+                            cb.AddComment("AssetGUID");
+                            if (string.IsNullOrEmpty(assetPath) is false)
+                            {
+                                string guid = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
+                                cb.AddField("string", $"AssetGUID = \"{guid}\"", "public const");
+                            }
+                            else
+                            {
+                                cb.AddField("string", $"AssetGUID = String.Empty", "public const");
+                            }
+                        }
+                        
+                        if (asset.EditorFlags.HasFlag(DataTableBase.Flags.IncludeEditorPath) |
+                            asset.EditorFlags.HasFlag(DataTableBase.Flags.InitializeOnLoadEditor) )
+                        {
+                            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(asset);
+                            if (string.IsNullOrEmpty(assetPath) is false)
+                            {
+                                cb.AppendLine();
+                                cb.AppendLineNoIndent("#if UNITY_EDITOR");                                
+                                cb.AddComment("EditorAssetPath");
+                                cb.AddField("string", $"EditorAssetPath = \"{assetPath}\"", "public const");
+                                cb.AppendLineNoIndent("#endif");
+                            }
+                            if (asset.EditorFlags.HasFlag(DataTableBase.Flags.InitializeOnLoadEditor))
+                            {
+                                cb.AddAttribute("UnityEditor.InitializeOnLoadMethod");
+                                using (cb.BeginMethod( "void","InitializeOnLoadMethod", accessModifier:"private",isStatic:true))
+                                {
+                                    using (cb.BeginBlock($"if({tableTypeName}._instance == null)"))
+                                    {
+                                        cb.AppendLine($"UnityEditor.AssetDatabase.LoadAssetAtPath<{tableTypeName}>(EditorAssetPath);");
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }   //End of namespace
