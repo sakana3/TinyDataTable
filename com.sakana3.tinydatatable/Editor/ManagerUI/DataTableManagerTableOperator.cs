@@ -10,7 +10,8 @@ namespace TinyDataTable.Editor
     internal class DataTableManagerTableOperator : VisualElement
     {
         private DataTableManager manager = null;
-        private DataTableBase asset { set; get; } = null;
+        private DataTableTree.Item item { set; get; } = null;
+        private DataTableBase asset => item.tableAsset;
 
         private static Texture2D BuildIcon = EditorGUIUtility.IconContent("KnobCShape").image as Texture2D;
 
@@ -18,10 +19,10 @@ namespace TinyDataTable.Editor
 
         private bool isDirty = false;
         
-        public DataTableManagerTableOperator(DataTableManager manager, DataTableBase asset)
+        public DataTableManagerTableOperator(DataTableManager manager, DataTableTree.Item item)
         {
             this.manager = manager;
-            this.asset = asset;
+            this.item = item;
             
             var so = new SerializedObject(asset);
             CreateGUI(so);
@@ -106,9 +107,9 @@ namespace TinyDataTable.Editor
         }
 
 
-        public bool OnChange(DataTableBase target)
+        public bool OnChange(DataTableTree.Item item)
         {
-            if ( this.asset != target)
+            if ( this.item != item)
             {
 /*
                 isDirty = manager.CheckDirty(this.asset);

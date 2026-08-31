@@ -1,15 +1,62 @@
 using UnityEngine;
 using UnityEditor;
 using System;
-using System.Linq;
 using System.Reflection;
 
 namespace TinyDataTable.Editor
 {
+
+    
+    
     [Serializable]
-    internal class DataTableTree : SerializableTree<DataTableBase>
+    internal class DataTableTree : SerializableTree<DataTableTree.Item>
     {
-        
+        [Serializable]
+        internal class Item
+        {
+            [SerializeField]
+            public LazyLoadReference<DataTableBase> lazeyTable;
+            public DataTableBase tableAsset
+            {
+                get
+                {
+                    return lazeyTable.asset;
+                }
+                set
+                {
+                    lazeyTable.asset = value;
+                }
+            }
+
+            private static readonly System.Reflection.FieldInfo InstanceIdField = 
+                typeof(LazyLoadReference<DataTableBase>).GetField("m_InstanceID", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            /// <summary>
+            /// Chashを汚さないようにinstanceIdからIconを取得する
+            /// </summary>
+            public Texture Icon
+            {
+                get
+                {
+                    if (!lazeyTable.isSet) return null;
+
+                    object fieldValue = InstanceIdField.GetValue(lazeyTable);
+                    if (fieldValue == null) return null;
+
+                    int instanceId = (int)fieldValue;
+                    if (instanceId == 0) return null;
+
+                    string path = AssetDatabase.GetAssetPath((EntityId)instanceId);
+                    if (string.IsNullOrEmpty(path)) return null;
+
+                    System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(path);
+                    if (assetType == null) return null;
+
+                    GUIContent content = EditorGUIUtility.ObjectContent(null, assetType);
+                    return content.image;
+                }
+            }
+        }
     }
 
     [Icon( "Packages/com.sakana3.tinydatatable//Editor/Assets/TinyDataTableIcon.png")]
@@ -80,7 +127,7 @@ namespace TinyDataTable.Editor
                 {
                     if (manager.Tree.Nodes[i].Name == asset.BaseName())
                     {
-                        manager.Tree.Nodes[i].Item = asset;
+                        manager.Tree.Nodes[i].Item.tableAsset = asset;
                         EditorUtility.SetDirty(manager);
                         AssetDatabase.SaveAssetIfDirty(manager);
                         AssetDatabase.Refresh();

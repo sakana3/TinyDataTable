@@ -24,10 +24,10 @@ namespace TinyDataTable.Editor
         {
             this.TargeTableAsset = targeTableAsset;
             _serializedObject = new SerializedObject(TargeTableAsset);
-                
+            
             ReloadInfo();
         }
-        
+
         public bool IsChanged => false;
 
         public void ReloadInfo()

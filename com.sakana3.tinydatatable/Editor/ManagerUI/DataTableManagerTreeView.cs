@@ -13,7 +13,7 @@ namespace TinyDataTable.Editor
         private bool IsStructureMode = false;
         private bool isDirtySelf;
 
-        public Func<string,DataTableBase,bool,bool> OnSelectDataTableAsset;
+        public Func<string,DataTableTree.Item,bool,bool> OnSelectDataTableAsset;
         
         public DataTableManagerTreeView(DataTableManager manager,bool isStructureMode)
         {
@@ -26,7 +26,7 @@ namespace TinyDataTable.Editor
         {
             var so = new SerializedObject(Manager);
 
-            var treeView = new SerializableTreeView<DataTableBase>(Manager.Tree,IsStructureMode);
+            var treeView = new SerializableTreeView<DataTableTree.Item>(Manager.Tree,IsStructureMode);
             treeView.hierarchyChanged += tree =>
             {
                 isDirtySelf = true;
@@ -97,14 +97,9 @@ namespace TinyDataTable.Editor
                 }
                 else
                 {
-                   Texture image = AssetPreview.GetMiniThumbnail(node.Item);
 
-                   if (image == null)
-                   {
-                       image = EditorResources.RefreshIcon;
-                   }
-
-                   icon.image = image;
+                   Texture image = node.Item != null ? node.Item.Icon : null;
+                   icon.image = image ?? EditorResources.RefreshIcon;
                     var label = new Label();
                     label.text = node.Name;
                     root.Add(label);
@@ -114,11 +109,13 @@ namespace TinyDataTable.Editor
             };
             treeView.onCreateItem = (Position, func) =>
             {
-                var popup = new DataTableCreateTablePopup(Manager.DefaultNamespace)
+                var popup = new DataTableCreateTablePopup(Manager)
                 {
                     clickCreateButton = className =>
                     {
-                        func(className,null);
+                        var newItem = new DataTableTree.Item();
+                        Debug.Log(newItem);
+                        func(className,newItem);
                     }
                 };
                 UnityEditor.PopupWindow.Show(Position, popup);                    
@@ -132,7 +129,7 @@ namespace TinyDataTable.Editor
                 button.text = "Add Table";
                 button.RegisterCallback<ClickEvent>(evt =>
                 {
-                    var popup = new DataTableCreateTablePopup(Manager.DefaultNamespace)
+                    var popup = new DataTableCreateTablePopup(Manager)
                     {
                         clickCreateButton = className =>
                         {
@@ -148,17 +145,17 @@ namespace TinyDataTable.Editor
         }
 
 
-        void RemoveDataTableAsset( IEnumerable<DataTableBase> assets)
+        void RemoveDataTableAsset( IEnumerable<DataTableTree.Item> assets)
         {
             if (assets == null) return;
 
             bool isREemoveAsset = false;
             foreach (var asset in assets)
             {
-                string assetPath = AssetDatabase.GetAssetPath(asset);
+                string assetPath = AssetDatabase.GetAssetPath(asset.tableAsset);
                 if (!string.IsNullOrEmpty(assetPath))
                 {
-                    var classScript = MonoScript.FromScriptableObject(asset);
+                    var classScript = MonoScript.FromScriptableObject(asset.tableAsset);
                     AssetDatabase.DeleteAsset(assetPath);
                     if (classScript != null)
                     {

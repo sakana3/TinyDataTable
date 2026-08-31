@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using System.Runtime.CompilerServices;
@@ -20,14 +21,17 @@ namespace TinyDataTable
         [Flags]
         public enum Flags
         {
-            IncludeAssetPath = 0x0001 ,
-            Embedded = 0x0001 << 1,
-            Obsolete = 0x0001 << 2,
-            InitializeOnLoad = 0x0001 << 3,
-            InitializeOnLoadEditor = 0x0001 << 4,
-            EditorOnly = 0x0001 << 5,
+//            Embedded = 0x0001 << 1,
+            Obsolete = 0x0001 << 4,
+            IncludeAssetPath = 0x0001 << 8 ,
+            IncludeGUID = 0x0001 << 9 ,
+            
+//            InitializeOnLoad = 0x0001 << 12,
+//            InitializeOnLoadEditor = 0x0001 << 13,
+//            EditorOnly = 0x0001 << 16,
+            IncludeEditorPath = 0x0001 << 17 ,
+            InitializeOnLoadEditor = 0x0001 << 18,
         }
-        
 
         [SerializeField] public Flags EditorFlags = Flags.IncludeAssetPath;
 #endif
@@ -72,40 +76,79 @@ namespace TinyDataTable
             return  index >= 0 ? index : 0;
         }
 
-        /// <summary> Get Schema form Index </summary>        
+        /// <summary> Get Record form Index </summary>        
         public TSchema this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Records[index]; }
         }
 
-        /// <summary> Get Schema form Name </summary>        
+        /// <summary> Get Record form Name </summary>
         public TSchema this[string name]  => Records[ToIndex(name)];
-        
-        protected static DataTableBase<TSchema> _instance;
-        /// <summary> Singleton Instance </summary>        
+
+        /// <summary> Get Schema form Name </summary>        
+        private static WeakReference<DataTableBase<TSchema>> _instanceRef = new WeakReference<DataTableBase<TSchema>>(null);
+
+        /// <summary> Singleton Instance </summary>
         public static DataTableBase<TSchema> Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _instance;
+            get
+            {
+                if( _instanceRef.TryGetTarget( out var target ) )
+                {
+                    Debug.Assert(target != null , $"The resource hasn't been loaded.");
+                    return target;
+                }
+                return null;
+            }
         }
 
-        protected virtual void OnEnable()
+        /// <summary> Singleton Instance Records </summary>        
+        public static TSchema[] InstanceRecords
         {
-//            if (_instance == null)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                _instance = this;
+                if( _instanceRef.TryGetTarget( out var target ) )
+                {
+                    Debug.Assert(target != null , $"The resource hasn't been loaded.");
+                    return target._records;
+                }
+                return null;
             }
         }
+
+        /// <summary> Singleton Instance Headers </summary>
+        public static bool isSet => _instanceRef.TryGetTarget( out var _ );
         
-        protected virtual void OnDisable()
+        ~DataTableBase()
         {
-//            if (_instance == this)
-            {
-                _instance = null;
-            }
+            Debug.Log($">>>{this.GetType().Name}.~DataTableBase.");
         }
         
+        /// <summary> OnEnable </summary>        
+        private void OnEnable()
+        {
+            Debug.Log($">>>{this.GetType().Name}.OnEnable.");
+            // NOTE : メモ
+            // AddressablesからUnloadされた時にはOnDisable/OnDestroyは呼ばれない
+            // TryGetTargetがfalseになるのでそれで判断
+            // Debug.Assert( Instance is null, "Can't create multiple instances.");
+            _instanceRef.SetTarget(this);
+        }
+
+        /// <summary> OnDisable </summary>        
+        private void OnDisable()
+        {
+            Debug.Log($">>>{this.GetType().Name}.OnDisable.");
+            _instanceRef.SetTarget(null);
+        }
+
+        
+        
+#if  UNITY_EDITOR
+        /// <summary> Reset </summary>                
         private void Reset()
         {
             _headers = new[]
@@ -120,5 +163,6 @@ namespace TinyDataTable
             };
             _records = new TSchema[1];
         }
+#endif        
     }
 }

@@ -9,21 +9,22 @@ namespace TinyDataTable.Editor
     internal class DataTableManagerTableView : VisualElement
     {
         private DataTableManager Manager = null;
-        private DataTableBase asset;
+        public DataTableTree.Item item { set; get; } = null;
+        private DataTableBase asset => item.tableAsset;
         private bool IsStructureMode { set; get; } = false;
 
-        public DataTableManagerTableView(DataTableManager manager,DataTableBase asset,bool isStructureMode)
+        public DataTableManagerTableView(DataTableManager manager,DataTableTree.Item item,bool isStructureMode)
         {
             this.Manager = manager;
             this.IsStructureMode = isStructureMode;
-            this.asset = asset;
+            this.item = item;
             viewDataKey = $"DataTableManagerTableView_{asset.name}";
             CreateGUI();
         }
 
         private void CreateGUI()
         {
-            var sheet = new DataSheetField(Manager,asset, IsStructureMode);
+            var sheet = new DataSheetField(Manager,item, IsStructureMode);
             Add( sheet);            
         }
     }

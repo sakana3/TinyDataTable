@@ -29,11 +29,11 @@ namespace TinyDataTable.Editor
 
         public DataSheetField( 
             DataTableManager manager,
-            DataTableBase asset,
+            DataTableTree.Item item,
             bool IsStructureMode)
         {
             Manager = manager;
-            _recordPropertyUtil = new(asset);
+            _recordPropertyUtil = new(item.tableAsset);
             this.IsStructureMode = IsStructureMode;
             
             if (EditorResources.DataTableStyleSheet != null)

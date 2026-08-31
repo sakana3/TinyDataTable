@@ -66,24 +66,24 @@ namespace TinyTable.SourceGenerator
 
                 // 型名定義
                 var recordTypeName = typeDef.TypeName;
-                var schemaTypeName = typeDef.attributeArgs[0].Value?.ToString() ?? string.Empty;
-                if (typeDef.attributeArgs[0].Kind == TypedConstantKind.Type &&
-                    typeDef.attributeArgs[0].Value is INamedTypeSymbol scemaTypeSymbol)
+                var schemaTypeName = typeDef.AttributeArgs[0].Value?.ToString() ?? string.Empty;
+                if (typeDef.AttributeArgs[0].Kind == TypedConstantKind.Type &&
+                    typeDef.AttributeArgs[0].Value is INamedTypeSymbol scemaTypeSymbol)
                 {
                     schemaTypeName = scemaTypeSymbol.ToMinimalDisplayString(typeDef.SemanticModel, typeDef.SpanStart);
                 }
 
-                var schemaFields = GetFieldInfo(typeDef.attributeArgs[0]);
-                var enumTypeName = typeDef.attributeArgs[1].Value?.ToString() ?? string.Empty;
-                if (typeDef.attributeArgs[1].Kind == TypedConstantKind.Type &&
-                    typeDef.attributeArgs[1].Value is INamedTypeSymbol enumTypeSymbol)
+                var schemaFields = GetFieldInfo(typeDef.AttributeArgs[0]);
+                var enumTypeName = typeDef.AttributeArgs[1].Value?.ToString() ?? string.Empty;
+                if (typeDef.AttributeArgs[1].Kind == TypedConstantKind.Type &&
+                    typeDef.AttributeArgs[1].Value is INamedTypeSymbol enumTypeSymbol)
                 {
                     enumTypeName = enumTypeSymbol.ToMinimalDisplayString(typeDef.SemanticModel, typeDef.SpanStart);
                 }
 
-                var enumNames = GetEnumNames(typeDef.attributeArgs[1]);
+                var enumNames = GetEnumNames(typeDef.AttributeArgs[1]);
 
-                var idTypeConstant = typeDef.attributeArgs[2];
+                var idTypeConstant = typeDef.AttributeArgs[2];
                 var idTypeName = idTypeConstant.Value?.ToString() ?? string.Empty;
                 if (idTypeConstant.Kind == TypedConstantKind.Type &&
                     idTypeConstant.Value is INamedTypeSymbol idTypeSymbol)
@@ -229,7 +229,7 @@ namespace TinyTable.SourceGenerator
                         using (cb.BeginScope($"private static {schemaTypeName}[] _recordArray"))
                         {
                             cb.AddAttribute("MethodImpl(MethodImplOptions.AggressiveInlining)");
-                            cb.AddCode($"get => {recordTypeName}.Instance.Records");
+                            cb.AddCode($"get => {recordTypeName}.InstanceRecords");
                         }
 
                         cb.AppendLine();
@@ -426,7 +426,7 @@ namespace TinyTable.SourceGenerator
                 NamespaceName = namespaceName,
                 TypeName = symbol.Name,
                 TypeKeyword = typeKeyword,
-                attributeArgs = attributeArgs,
+                AttributeArgs = attributeArgs,
                 OuterTypes = outerTypes,
                 CodeText = string.Concat(typeDeclaration.Members.Select(member => member.ToFullString())),
                 UsingNamespaces = compilationUnit?.Usings
@@ -488,10 +488,7 @@ namespace TinyTable.SourceGenerator
                     {
                         if (fieldSymbol.IsImplicitlyDeclared) continue;
 
-                        var hasHideInInspector = fieldSymbol.GetAttributes().Any(attr =>
-                            (attr.AttributeClass?.ToDisplayString() ?? "").EndsWith("HideInInspector"));
-
-                        if (hasHideInInspector is false)
+                        if (fieldSymbol.Name != "__dummy")
                         {
                             fieldList.Add(new FieldDefinition
                             {
@@ -583,7 +580,7 @@ namespace TinyTable.SourceGenerator
             public string NamespaceName { get; set; } = string.Empty;
             public string TypeName { get; set; } = string.Empty;
             public string TypeKeyword { get; set; } = string.Empty;
-            public TypedConstant[] attributeArgs { get; set; } = Array.Empty<TypedConstant>();
+            public TypedConstant[] AttributeArgs { get; set; } = Array.Empty<TypedConstant>();
             public List<OuterTypeInfo> OuterTypes { get; set; } = new List<OuterTypeInfo>();
             public string CodeText { get; set; } = string.Empty;
             public string[] UsingNamespaces { get; set; } = Array.Empty<string>();
@@ -628,7 +625,7 @@ namespace TinyTable.SourceGenerator
                 SyntaxReference? syntaxRef = attributeData.ApplicationSyntaxReference;
                 if (syntaxRef == null)
                 {
-                    return null;
+                    return string.Empty;
                 }
 
                 SyntaxNode syntaxNode = syntaxRef.GetSyntax();

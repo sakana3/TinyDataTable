@@ -15,7 +15,7 @@ namespace TinyDataTable.Editor
 
         public enum Mode
         {
-            DesignMode ,
+            EditMode ,
             BuildMode ,
             Preference,
             Addressable,
@@ -23,7 +23,11 @@ namespace TinyDataTable.Editor
 
         private string[] ModeStr = new[]
         {
-            "Design Mode","Build Mode","Preference","Addressable"
+            "Edit Mode","Build Mode","Preference","Addressable"
+        };
+        private Color[] ModeColor = new[]
+        {
+            Color.clear , Color.darkRed , Color.darkMagenta, Color.darkSlateBlue
         };
         
         public static Texture ItemIcon = EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image;
@@ -33,7 +37,7 @@ namespace TinyDataTable.Editor
         public Mode mode
         {
             private set => EditorPrefs.SetInt("DataTableManagerEditorMode", (int)value);
-            get => (Mode)EditorPrefs.GetInt("DataTableManagerEditorMode", (int)Mode.DesignMode);
+            get => (Mode)EditorPrefs.GetInt("DataTableManagerEditorMode", (int)Mode.EditMode);
         }
 
         public DataTableManagerEditor(DataTableManager manager)
@@ -48,10 +52,12 @@ namespace TinyDataTable.Editor
         private VisualElement Root;
 
         private Toolbar toolbar;
-        private ToolbarButton toolbarBuildButton;
+//        private ToolbarButton toolbarBuildButton;
         private DataTableManagerTreeView treeView;
-        private bool IsBuildMode => mode == Mode.BuildMode;
+        private DataTableManagerTableView tableView;
         private DataTableManagerTableOperator tableOperator;
+
+        private bool IsBuildMode => mode == Mode.BuildMode;
 
         private void CreateGUI()
         {
@@ -66,18 +72,21 @@ namespace TinyDataTable.Editor
                 text = ModeStr[(int)mode],
                 tooltip = "Mode Select",
             };
-            modeMenu.style.width = 120;
+            modeMenu.style.backgroundColor = ModeColor[(int)mode];
+            modeMenu.style.width = 100;
             modeMenu.menu.AppendAction(ModeStr[0],
                 action =>
                 {
+                    modeMenu.style.backgroundColor = ModeColor[0];
                     modeMenu.text = action.name;
-                    ModeChange(Mode.DesignMode);
+                    ModeChange(Mode.EditMode);
                 },
-                a => mode == Mode.DesignMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
+                a => mode == Mode.EditMode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );            
             modeMenu.menu.AppendAction(ModeStr[1],
                 action =>
                 {
+                    modeMenu.style.backgroundColor = ModeColor[1];
                     modeMenu.text = action.name;
                     ModeChange(Mode.BuildMode);
                 },
@@ -87,13 +96,29 @@ namespace TinyDataTable.Editor
             modeMenu.menu.AppendAction(ModeStr[2],
                 action =>
                 {
+                    modeMenu.style.backgroundColor = ModeColor[2];
                     modeMenu.text = action.name;
                     ModeChange(Mode.Preference);
                 },
                 a => mode == Mode.Preference ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal
             );
             toolbar.Add(modeMenu);
+            //Tool
+            var actionMenu = new ToolbarMenu()
+            {
+                text = "Utility",
+            };
+            actionMenu.menu.AppendAction( "Build All",
+                action =>
+                {
+                    BuildAll();
+                },
+                a => DropdownMenuAction.Status.Normal
+            );
+            toolbar.Add(modeMenu);            
+            toolbar.Add(actionMenu);
 
+/*            
             var spacer = new ToolbarSpacer()
             {
                 flex = true
@@ -106,7 +131,7 @@ namespace TinyDataTable.Editor
             };
             toolbarBuildButton.clicked += BuildAll;
             toolbar.Add(toolbarBuildButton);
-
+*/
             this.style.flexGrow = 1;
 
             Root = new VisualElement();
@@ -119,7 +144,6 @@ namespace TinyDataTable.Editor
         private void ModeChange( Mode mode )
         {
             this.mode = mode;
-            toolbarBuildButton.style.display = mode == Mode.BuildMode ? DisplayStyle.Flex : DisplayStyle.None;
             MakeTreeView();
         }
 
@@ -131,7 +155,7 @@ namespace TinyDataTable.Editor
 
             foreach (var table in tables)
             {
-                SaveDataTable.SaveScript(table);
+                SaveDataTable.SaveScript(table.tableAsset);
             }
         }
         
@@ -167,28 +191,40 @@ namespace TinyDataTable.Editor
             }
         }
 
-        private bool OnSelectDataTableAsset( string treeName, DataTableBase asset , bool isFolder)
+        private bool OnSelectDataTableAsset( string treeName, DataTableTree.Item item , bool isFolder)
         {
-            if ( tableOperator == null || tableOperator.OnChange(asset))
+            if ( tableOperator == null || tableOperator.OnChange(item))
             {
+                if (tableView != null)
+                {
+                    if (tableView.item != null )
+                    {
+                        if (tableView.item.lazeyTable.isSet )
+                        {
+//                          Resources.UnloadAsset(tableView.item.tableAsset);
+                        }
+                    }
+                    tableView = null;
+                }
                 tableViewRoot.Clear();
-                if (asset != null)
+                
+                if( isFolder )
+                {
+                    tableOperator = null;
+                }                
+                else if (item?.tableAsset != null)
                 {
                     if (IsBuildMode)
                     {
-                        asset.InjectRelation();
-                        tableOperator = new DataTableManagerTableOperator(manager, asset);
+                        item.tableAsset.InjectRelation();
+                        tableOperator = new DataTableManagerTableOperator(manager, item);
                         tableViewRoot.Add(tableOperator);
                     }
-                    var tableView = new DataTableManagerTableView(manager, asset, IsBuildMode);
+                    tableView = new DataTableManagerTableView(manager, item, IsBuildMode);
                     tableView.style.flexGrow = 1;
                     tableViewRoot.Add(tableView);
                 }
-                else if( isFolder )
-                {
-                    tableOperator = null;
-                }
-                else if( asset == null )
+                else
                 {
                     if (IsBuildMode)
                     {
